@@ -42,10 +42,10 @@ export default function DesktopSideNav(props: Omit<FlexProps, "children">) {
     >
       <Flex direction="column" flexShrink={0} gap="2">
         <Flex gap="2" alignItems="center" position="relative" my="2">
-          <Avatar src="/apple-touch-icon.png" size="md" />
+          <Avatar src="/transparent.png" size="md" />
           <Heading size="md">
             <LinkOverlay as={RouterLink} to="/">
-              noStrudel
+              moStard
             </LinkOverlay>
           </Heading>
           {offline && (

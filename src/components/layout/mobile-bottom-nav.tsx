@@ -24,7 +24,7 @@ export default function MobileBottomNav(props: Omit<FlexProps, "children">) {
         {account ? (
           <UserAvatar pubkey={account.pubkey} size="sm" onClick={onOpen} noProxy />
         ) : (
-          <Avatar size="sm" src="/apple-touch-icon.png" onClick={onOpen} cursor="pointer" />
+          <Avatar size="sm" src="/transparent.jpeg" onClick={onOpen} cursor="pointer" />
         )}
         <IconButton
           icon={<NotesIcon boxSize={6} />}

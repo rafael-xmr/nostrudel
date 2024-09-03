@@ -16,7 +16,7 @@ import PublishProvider from "./publish-provider";
 export const GlobalProviders = ({ children }: { children: React.ReactNode }) => {
   const { theme: themeName, primaryColor, maxPageWidth } = useAppSettings();
   const theme = useMemo(
-    () => buildTheme(themeName, primaryColor, maxPageWidth !== "none" ? maxPageWidth : undefined),
+    () => buildTheme(themeName, primaryColor, "md"),
     [themeName, primaryColor, maxPageWidth],
   );
 

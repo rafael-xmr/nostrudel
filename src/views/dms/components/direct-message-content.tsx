@@ -2,7 +2,6 @@ import { Box, BoxProps } from "@chakra-ui/react";
 import { EmbedableContent, embedUrls } from "../../../helpers/embeds";
 import { NostrEvent } from "../../../types/nostr-event";
 import {
-  embedCashuTokens,
   embedNostrLinks,
   renderAppleMusicUrl,
   renderGenericUrl,
@@ -49,9 +48,6 @@ export default function DirectMessageContent({
     renderAudioUrl,
     renderGenericUrl,
   ]);
-
-  // cashu
-  content = embedCashuTokens(content);
 
   return (
     <TrustProvider event={event}>

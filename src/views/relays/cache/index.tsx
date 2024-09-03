@@ -85,7 +85,7 @@ function HostedRelay() {
         </Button>
       </CardHeader>
       <CardBody p="4" pt="0">
-        <Text mb="2">Your installation of noStrudel is setup with a local relay that can be used as a cache</Text>
+        <Text mb="2">Your installation of moStard is setup with a local relay that can be used as a cache</Text>
         <Text>Maximum capacity: Unknown</Text>
         <Text>Performance: Unknown, but probably fast...</Text>
       </CardBody>

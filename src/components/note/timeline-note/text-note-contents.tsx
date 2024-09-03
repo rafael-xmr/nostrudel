@@ -21,7 +21,6 @@ import {
   embedImageGallery,
   renderGenericUrl,
   renderSongDotLinkUrl,
-  embedCashuTokens,
   renderStemstrUrl,
   renderSoundCloudUrl,
   renderSimpleXLink,
@@ -60,9 +59,6 @@ function buildContents(event: NostrEvent | EventTemplate, simpleLinks = false) {
 
   // bitcoin
   content = embedLightningInvoice(content);
-
-  // cashu
-  content = embedCashuTokens(content);
 
   // nostr
   content = embedNostrLinks(content);

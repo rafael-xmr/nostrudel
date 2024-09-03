@@ -106,7 +106,7 @@ function MailboxesPage() {
         <Heading size="md">Outbox</Heading>
       </Flex>
       <Text fontStyle="italic" mt="-2">
-        noStrudel will always publish to these relays so other users can find your notes
+        moStard will always publish to these relays so other users can find your notes
       </Text>
       {outbox?.urls
         .sort()

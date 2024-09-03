@@ -5,7 +5,6 @@ import { NostrEvent } from "../../../types/nostr-event";
 import { TrustProvider } from "../../../providers/local/trust";
 import { EmbedableContent, embedUrls } from "../../../helpers/embeds";
 import {
-  embedCashuTokens,
   embedEmoji,
   embedImageGallery,
   embedLightningInvoice,
@@ -59,9 +58,6 @@ const ChannelMessageContent = memo(({ message, children, ...props }: BoxProps & 
 
     // bitcoin
     c = embedLightningInvoice(c);
-
-    // cashu
-    c = embedCashuTokens(c);
 
     // nostr
     c = embedNostrLinks(c);

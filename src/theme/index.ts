@@ -5,47 +5,55 @@ import chroma from "chroma-js";
 import defaultTheme from "./default";
 
 function pallet(colors: string[]) {
-  return [50, 100, 200, 300, 400, 500, 600, 700, 800, 900].reduce(
-    (pallet, key, i) => ({ ...pallet, [key]: colors[i] }),
-    {},
-  );
+	return [50, 100, 200, 300, 400, 500, 600, 700, 800, 900].reduce(
+		(pallet, key, i) => ({ ...pallet, [key]: colors[i] }),
+		{},
+	);
 }
 
 function getTheme(name: string) {
-  if (name === "default") return defaultTheme;
-  return {};
+	if (name === "default") return defaultTheme;
+	return {};
 }
 
 const breakpoints = ["sm", "md", "lg", "xl", "2xl"] as const;
 
 export default function buildTheme(
-  themeName: string,
-  primaryColor: string = "#8DB600",
-  maxBreakpoint?: (typeof breakpoints)[number],
+	themeName: string,
+	primaryColor = "#ff6600",
+	maxBreakpoint?: (typeof breakpoints)[number],
 ) {
-  const theme = extendTheme(getTheme(themeName), {
-    colors: {
-      primary: pallet(chroma.scale([chroma(primaryColor).brighten(1), chroma(primaryColor).darken(1)]).colors(10)),
-    },
-    components: {
-      Container: containerTheme,
-    },
-    semanticTokens: {
-      colors: {
-        "card-hover-overlay": {
-          _light: "blackAlpha.50",
-          _dark: "whiteAlpha.50",
-        },
-      },
-    },
-  } as DeepPartial<Theme>);
+	const theme = extendTheme(getTheme(themeName), {
+		colors: {
+			primary: pallet(
+				chroma
+					.scale([chroma("#ff6600").brighten(1), chroma("#ff6600").darken(1)])
+					.colors(10),
+			),
+		},
+		components: {
+			Container: containerTheme,
+		},
+		semanticTokens: {
+			colors: {
+				"card-hover-overlay": {
+					_light: "blackAlpha.50",
+					_dark: "whiteAlpha.50",
+				},
+			},
+		},
+	} as DeepPartial<Theme>);
 
-  // if maxBreakpoint is set, set all breakpoints above it to a large number so they are never reached
-  if (maxBreakpoint && breakpoints.includes(maxBreakpoint)) {
-    for (let i = breakpoints.indexOf(maxBreakpoint) + 1; i < breakpoints.length; i++) {
-      theme.breakpoints[breakpoints[i]] = 50000;
-    }
-  }
+	// if maxBreakpoint is set, set all breakpoints above it to a large number so they are never reached
+	if (maxBreakpoint && breakpoints.includes(maxBreakpoint)) {
+		for (
+			let i = breakpoints.indexOf(maxBreakpoint) + 1;
+			i < breakpoints.length;
+			i++
+		) {
+			theme.breakpoints[breakpoints[i]] = 50000;
+		}
+	}
 
-  return theme;
+	return theme;
 }

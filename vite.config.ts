@@ -18,8 +18,8 @@ export default defineConfig({
         maximumFileSizeToCacheInBytes: 2097152 * 1.5,
       },
       manifest: {
-        name: "noStrudel",
-        short_name: "noStrudel",
+        name: "moStard",
+        short_name: "moStard",
         description: "A sandbox for exploring nostr",
         orientation: "any",
         theme_color: "#8DB600",

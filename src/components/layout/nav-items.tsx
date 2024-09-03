@@ -33,7 +33,6 @@ export default function NavItems() {
   const account = useCurrentAccount();
 
   const donateModal = useDisclosure();
-  const [lastDonate, setLastDonate] = useLocalStorage<number>("last-donate");
 
   const showShortcuts = useBreakpointValue({ base: false, md: true });
 
@@ -209,29 +208,6 @@ export default function NavItems() {
       >
         Settings
       </Button>
-      {(lastDonate === undefined || dayjs.unix(lastDonate).isBefore(dayjs().subtract(1, "week"))) && (
-        <Button
-          as={Link}
-          leftIcon={<LightningIcon boxSize={6} color="yellow.400" />}
-          href="https://geyser.fund/project/nostrudel"
-          isExternal
-          onClick={(e) => {
-            e.preventDefault();
-            donateModal.onOpen();
-          }}
-          {...buttonProps}
-        >
-          Donate
-        </Button>
-      )}
-      {donateModal.isOpen && (
-        <ZapModal
-          isOpen
-          pubkey="713978c3094081b34fcf2f5491733b0c22728cd3b7a6946519d40f5f08598af8"
-          onClose={donateModal.onClose}
-          onZapped={() => setLastDonate(dayjs().unix())}
-        />
-      )}
       {account && (
         <Button onClick={() => accountService.logout()} leftIcon={<LogoutIcon boxSize={6} />} {...buttonProps}>
           Logout

@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 
-const appName = "noStrudel";
+const appName = "moStard";
 
 export function useAppTitle(title?: string) {
   useEffect(() => {

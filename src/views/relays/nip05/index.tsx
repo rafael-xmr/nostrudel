@@ -29,7 +29,7 @@ export default function NIP05RelaysView() {
       </Flex>
 
       <Text fontStyle="italic" mt="-2">
-        These relays cant be modified by noStrudel, they must be set manually on your{" "}
+        These relays cant be modified by moStard, they must be set manually on your{" "}
         <Code>/.well-known/nostr.json</Code> file or by your identity provider
         <br />
         <Link

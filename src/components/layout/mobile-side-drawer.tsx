@@ -37,8 +37,8 @@ export default function MobileSideDrawer({ ...props }: Omit<DrawerProps, "childr
             <AccountSwitcher />
           ) : (
             <Flex gap="2" my="2" alignItems="center">
-              <Avatar src="/apple-touch-icon.png" size="md" />
-              <Text m={0}>Nostrudel</Text>
+              <Avatar src="/transparent.jpeg" size="md" />
+              <Text m={0}>moStard</Text>
             </Flex>
           )}
           <NavItems />

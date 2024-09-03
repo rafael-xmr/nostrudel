@@ -2,11 +2,9 @@
   <img src="screenshots/icon.svg" alt="Project Logo" width="21%">
 </p>
 
-# noStrudel
+# moStard
 
-> NOTE: This client is still in development and will have bugs
-
-noStrudel is a web app for exploring the [nostr](https://github.com/nostr-protocol) protocol.
+moStard is a web app for exploring the [nostr](https://github.com/nostr-protocol) protocol.
 
 The goal of this project is to build a nostr client that lets a user explore the nostr protocol by showing as much information as possible and letting the user view the underlying events.
 
@@ -30,7 +28,7 @@ docker run --rm -p 8080:80 ghcr.io/hzrd149/nostrudel:master
 
 ## Docker compose and other services
 
-noStrudels docker image has a few options for connecting to other services running locally
+moStards docker image has a few options for connecting to other services running locally
 
 - `CACHE_RELAY`: if set the client will use the relay to cache all of its events instead of storing them in the browser cache
 - `IMAGE_PROXY`: can be set to a local [imageproxy](https://github.com/willnorris/imageproxy) instance so the app can resize profile images

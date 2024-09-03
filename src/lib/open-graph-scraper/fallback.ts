@@ -155,8 +155,8 @@ export function fallback(ogObject: OgObjectInteral, $: CheerioAPI) {
       ogObject.favicon = $('link[rel="icon"]').attr("href");
     } else if (doesElementExist('link[rel="mask-icon"]', "href", $)) {
       ogObject.favicon = $('link[rel="mask-icon"]').attr("href");
-    } else if (doesElementExist('link[rel="apple-touch-icon"]', "href", $)) {
-      ogObject.favicon = $('link[rel="apple-touch-icon"]').attr("href");
+    } else if (doesElementExist('link[rel="transparent"]', "href", $)) {
+      ogObject.favicon = $('link[rel="transparent"]').attr("href");
     } else if (doesElementExist('link[type="image/png"]', "href", $)) {
       ogObject.favicon = $('link[type="image/png"]').attr("href");
     } else if (doesElementExist('link[type="image/ico"]', "href", $)) {

@@ -7,7 +7,7 @@ import "./services/username-search";
 
 // setup bitcoin connect
 import { init, onConnected } from "@getalby/bitcoin-connect-react";
-init({ appName: "noStrudel" });
+init({ appName: "moStard" });
 onConnected((provider) => {
   window.webln = provider;
 });

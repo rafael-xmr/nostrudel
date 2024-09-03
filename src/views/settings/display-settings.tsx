@@ -37,15 +37,6 @@ export default function DisplaySettings() {
       <AccordionPanel>
         <Flex direction="column" gap="4">
           <FormControl>
-            <FormLabel htmlFor="theme" mb="0">
-              Theme
-            </FormLabel>
-            <Select id="theme" {...register("theme")}>
-              <option value="default">Default</option>
-              <option value="chakraui">ChakraUI</option>
-            </Select>
-          </FormControl>
-          <FormControl>
             <FormLabel htmlFor="colorMode" mb="0">
               Color Mode
             </FormLabel>
@@ -54,31 +45,6 @@ export default function DisplaySettings() {
               <option value="light">Light</option>
               <option value="dark">Dark</option>
             </Select>
-          </FormControl>
-          <FormControl>
-            <Flex alignItems="center">
-              <FormLabel htmlFor="primaryColor" mb="0">
-                Primary Color
-              </FormLabel>
-              <Input id="primaryColor" type="color" maxW="120" size="sm" {...register("primaryColor")} />
-            </Flex>
-            <FormHelperText>
-              <span>The primary color of the theme</span>
-            </FormHelperText>
-          </FormControl>
-          <FormControl>
-            <FormLabel htmlFor="maxPageWidth" mb="0">
-              Max Page width
-            </FormLabel>
-            <Select id="maxPageWidth" {...register("maxPageWidth")}>
-              <option value="none">None</option>
-              <option value="md">Medium (~768px)</option>
-              <option value="lg">Large (~992px)</option>
-              <option value="xl">Extra Large (~1280px)</option>
-            </Select>
-            <FormHelperText>
-              <span>Setting this will restrict the width of app on desktop</span>
-            </FormHelperText>
           </FormControl>
           <FormControl>
             <Flex alignItems="center">
