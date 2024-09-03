@@ -54,7 +54,7 @@ function HomePage() {
   });
 
   const header = (
-    <Flex backgroundColor="#000" position="fixed" gap="2" wrap="wrap" alignItems="center">
+    <Flex gap="2" wrap="wrap" alignItems="center">
       <PeopleListSelection />
       <NoteFilterTypeButtons showReplies={showReplies} showReposts={showReposts} />
       <Spacer />
