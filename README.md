@@ -48,3 +48,7 @@ yarn dev
 ## Contributing
 
 This is only a personal project, so if you open any PRs please keep them small. thanks
+
+## Support
+
+<img src="public/donate_qr.png" alt="Donate QR" width="21%"> <img src="public/monero_chan.webp" alt="Monero Chan" width="21%"> You can send some xmr!!! thx!!
