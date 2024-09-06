@@ -52,3 +52,4 @@ This is only a personal project, so if you open any PRs please keep them small. 
 ## Support
 
 <img src="public/donate_qr.png" alt="Donate QR" width="21%"> <img src="public/monero_chan.webp" alt="Monero Chan" width="21%"> You can send some xmr!!! thx!!
+*85kUEzPzBopaXUJ5dL19J6deh5md6YZDZLUUpv63wXdCiRo3pPwrAJHAKAsSo4BgKQBpcs5hSth23hEFr5mmNxRxMeDY1Ng*
