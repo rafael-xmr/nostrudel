@@ -8,7 +8,7 @@ moStard is a web app for exploring the [nostr](https://github.com/nostr-protocol
 
 The goal of this project is to build a nostr client that lets a user explore the nostr protocol by showing as much information as possible and letting the user view the underlying events.
 
-Live Instance: [nostrudel.ninja](https://nostrudel.ninja)
+Live Instance: [mostard.org](https://mostard.org)
 
 There are many features missing from this client and I wont get around to implementing everything. but if you like the client you are welcome to use it.
 
@@ -23,7 +23,7 @@ I would recommend you use a browser extension like [Alby](https://getalby.com/) 
 ## Running with docker
 
 ```bash
-docker run --rm -p 8080:80 ghcr.io/hzrd149/nostrudel:master
+docker run --rm -p 8080:80 ghcr.io/rafael-xmr/nostrudel:mostard
 ```
 
 ## Docker compose and other services
@@ -39,7 +39,7 @@ You can find a full example of all these services in the [docker-compose.yaml](.
 ## Running locally
 
 ```bash
-git clone git@github.com:hzrd149/nostrudel.git
+git clone git@github.com:rafael-xmr/nostrudel.git --branch mostard
 cd nostrudel
 yarn install
 yarn dev
