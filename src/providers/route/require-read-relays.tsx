@@ -38,11 +38,25 @@ const OnionRelays = safeRelayUrls([
 	"ws://nerostrrgb5fhj6dnzhjbgmnkpy2berdlczh6tuh2jsqrjok3j4zoxid.onion",
 ]);
 
+const MoneroRelays = safeRelayUrls([
+	"wss://nostr.portemonero.com",
+	"wss://xmr.usenostr.org",
+	"wss://nostr.xmr.rocks",
+	"wss://nerostr.xmr.rocks",
+	"wss://xmr.ithurtswhenip.ee",
+]);
+
 function RelaySetCard({
 	label,
+	desc,
 	read,
 	write,
-}: { label: string; read: Iterable<string>; write: Iterable<string> }) {
+}: {
+	label: string;
+	desc?: JSX.Element | string;
+	read: Iterable<string>;
+	write: Iterable<string>;
+}) {
 	const handleClick = useCallback<MouseEventHandler>((e) => {
 		e.preventDefault();
 		clientRelaysService.readRelays.next(RelaySet.from(read));
@@ -53,20 +67,7 @@ function RelaySetCard({
 	return (
 		<>
 			<Heading size="sm">{label}:</Heading>
-			{label.toLowerCase().includes("onion") ? (
-				<Text fontStyle="italic">
-					Find them at{" "}
-					<Link
-						href="https://github.com/0xtrr/onion-service-nostr-relays"
-						isExternal
-						color="blue.500"
-					>
-						https://github.com/0xtrr/onion-service-nostr-relays
-					</Link>
-				</Text>
-			) : (
-				<></>
-			)}
+			{desc ? <Text fontStyle="italic">{desc}</Text> : <></>}
 			<Card w="full" variant="outline">
 				<CardHeader px="4" pt="4" pb="2">
 					<Heading>
@@ -147,14 +148,46 @@ export default function RequireReadRelays({ children }: PropsWithChildren) {
 					</Button>
 				)}
 				<RelaySetCard
-					label="Popular Relays"
-					read={recommendedReadRelays}
-					write={recommendedWriteRelays}
+					label="Monero Relays"
+					desc={
+						<>
+							Find them at{" "}
+							<Link
+								href="https://github.com/0xtrr/onion-service-nostr-relays"
+								isExternal
+								color="blue.500"
+							>
+								https://github.com/hundehausen/monero-nostr-relays
+							</Link>
+							These relays are whitelisted or require a Monero payment to use. (so less spam)
+						</>
+					}
+					read={MoneroRelays}
+					write={MoneroRelays}
 				/>
+				{/* TODO: check if onion connection (?) */}
 				<RelaySetCard
 					label="Onion Relays"
+					desc={
+						<>
+							Find them at{" "}
+							<Link
+								href="https://github.com/0xtrr/onion-service-nostr-relays"
+								isExternal
+								color="blue.500"
+							>
+								https://github.com/0xtrr/onion-service-nostr-relays
+							</Link>
+						</>
+					}
 					read={OnionRelays}
 					write={OnionRelays}
+				/>
+				<RelaySetCard
+					label="Popular Relays"
+					desc="Mainstream relays, find most activity (and spam) here."
+					read={recommendedReadRelays}
+					write={recommendedWriteRelays}
 				/>
 				<Card w="full" variant="outline">
 					<CardHeader px="4" pt="4" pb="2">
