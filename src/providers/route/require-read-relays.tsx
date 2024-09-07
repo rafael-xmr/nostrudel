@@ -153,11 +153,11 @@ export default function RequireReadRelays({ children }: PropsWithChildren) {
 						<>
 							Find them at{" "}
 							<Link
-								href="https://github.com/0xtrr/onion-service-nostr-relays"
+								href="https://github.com/hundehausen/monero-nostr-relays"
 								isExternal
 								color="blue.500"
 							>
-								https://github.com/0xtrr/onion-service-nostr-relays
+								https://github.com/hundehausen/monero-nostr-relays
 							</Link>
 							{" "}These relays are whitelisted or require a Monero payment to use. (so less spam)
 						</>
