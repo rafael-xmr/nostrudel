@@ -157,9 +157,9 @@ export default function RequireReadRelays({ children }: PropsWithChildren) {
 								isExternal
 								color="blue.500"
 							>
-								https://github.com/hundehausen/monero-nostr-relays
+								https://github.com/0xtrr/onion-service-nostr-relays
 							</Link>
-							These relays are whitelisted or require a Monero payment to use. (so less spam)
+							{" "}These relays are whitelisted or require a Monero payment to use. (so less spam)
 						</>
 					}
 					read={MoneroRelays}
