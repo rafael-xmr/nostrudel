@@ -5,7 +5,7 @@ import {
 	Link,
 	Text,
 	useDisclosure,
-  Image,
+	Image,
 } from "@chakra-ui/react";
 import { Link as RouterLink, useLocation } from "react-router-dom";
 import { nip19 } from "nostr-tools";
@@ -230,8 +230,26 @@ export default function NavItems() {
 				</Button>
 			)}
 			<Image src="/donate_qr.png" />
-      <Text>Pls donate!! thx</Text>
-      <Image src="/monero_chan.webp" />
+			<Text>
+				<Link
+					href="monero:85kUEzPzBopaXUJ5dL19J6deh5md6YZDZLUUpv63wXdCiRo3pPwrAJHAKAsSo4BgKQBpcs5hSth23hEFr5mmNxRxMeDY1Ng"
+					isExternal
+					color="blue.500"
+					fontStyle="initial"
+				>
+					donate!!
+				</Link>{" "}
+				or{" "}
+				<Link
+					href="https://relay.mostard.org"
+					isExternal
+					color="blue.500"
+					fontStyle="initial"
+				>
+					join the relay!!
+				</Link>
+			</Text>
+			<Image src="/monero_chan.webp" />
 		</>
 	);
 }
