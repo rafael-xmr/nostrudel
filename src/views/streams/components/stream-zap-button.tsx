@@ -1,11 +1,11 @@
 import { Button, IconButton, useDisclosure } from "@chakra-ui/react";
 import { ParsedStream } from "../../../helpers/nostr/stream";
 import { LightningIcon } from "../../../components/icons";
-import useUserXMRMetadata from "../../hooks/use-user-xmr-metadata";
 import ZapModal from "../../../components/event-zap-modal";
 import useStreamGoal from "../../../hooks/use-stream-goal";
 import { useReadRelays } from "../../../hooks/use-client-relays";
 import { useAdditionalRelayContext } from "../../../providers/local/additional-relay-context";
+import useUserXMRMetadata from "../../../hooks/use-user-xmr-metadata";
 
 export default function StreamZapButton({
 	stream,
@@ -19,7 +19,6 @@ export default function StreamZapButton({
 	label?: string;
 }) {
 	const zapModal = useDisclosure();
-	const zapMetadata = useUserXMRMetadata(stream.host);
 	const relays = useReadRelays(useAdditionalRelayContext());
 	const goal = useStreamGoal(stream);
 
@@ -28,7 +27,7 @@ export default function StreamZapButton({
 		borderColor: "yellow.400",
 		variant: "outline",
 		onClick: zapModal.onOpen,
-		isDisabled: !zapMetadata.metadata?.allowsNostr,
+		isDisabled: false,
 	};
 
 	// const zapEvent = goal || stream.event

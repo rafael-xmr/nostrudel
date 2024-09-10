@@ -57,7 +57,7 @@ export default function InvoiceModalProvider({ children }: { children: React.Rea
   return (
     <InvoiceModalContext.Provider value={{ requestPay }}>
       {children}
-      {invoice && <InvoiceModal isOpen onClose={handleClose} invoice={invoice} onPaid={handlePaid} />}
+      {/*invoice && <InvoiceModal isOpen onClose={handleClose} invoice={invoice} onPaid={handlePaid} />*/}
     </InvoiceModalContext.Provider>
   );
 }
