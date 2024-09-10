@@ -23,7 +23,7 @@ export function InvoiceModalContent({ address, amount, onPaid }: CommonProps) {
 	const isMobile = useBreakpointValue({ base: true, md: false });
 	const showQr = useDisclosure({ isOpen: !isMobile });
 	const [payingApp, setPayingApp] = useState(false);
-	const uri = `monero:${address}?tx_amount=${amount}`;
+	const uri = `monero:${address?.replace(/\s/g, "")}?tx_amount=${amount}`;
 
 	const payWithApp = async () => {
 		setPayingApp(true);
