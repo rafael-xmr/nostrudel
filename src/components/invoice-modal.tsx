@@ -43,7 +43,7 @@ export function InvoiceModalContent({ address, amount, onPaid }: CommonProps) {
 
 	return (
 		<Flex gap="2" direction="column">
-			{showQr.isOpen && <QrCodeSvg content={uri} />}
+			{showQr.isOpen && <QrCodeSvg content={uri} xmrIcon />}
 			<Flex gap="2">
 				<Input value={uri} readOnly />
 				<IconButton
