@@ -6,7 +6,7 @@ import {
 } from "@chakra-ui/react";
 
 // import { totalZaps } from "../../helpers/nostr/zaps";
-import useCurrentAccount from "../../hooks/use-current-account";
+// import useCurrentAccount from "../../hooks/use-current-account";
 import useEventZaps from "../../hooks/use-event-zaps";
 import clientRelaysService from "../../services/client-relays";
 import eventZapsService from "../../services/event-zaps";
@@ -29,7 +29,7 @@ export default function NoteZapButton({
 	showEventPreview,
 	...props
 }: NoteZapButtonProps) {
-	const account = useCurrentAccount();
+	// const account = useCurrentAccount();
 	const { address } = useUserXMRMetadata(event.pubkey);
 	const zaps = useEventZaps(getEventUID(event));
 	const { isOpen, onOpen, onClose } = useDisclosure();

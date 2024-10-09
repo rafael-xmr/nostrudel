@@ -185,7 +185,7 @@ export default function RequireReadRelays({ children }: PropsWithChildren) {
 				/>
 				<RelaySetCard
 					label="Popular Relays"
-					desc="Mainstream relays, find most activity (and spam) here."
+					desc="Mainstream relays, find most normie activity (and spam) here."
 					read={recommendedReadRelays}
 					write={recommendedWriteRelays}
 				/>
