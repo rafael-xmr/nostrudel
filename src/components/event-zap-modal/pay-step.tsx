@@ -31,20 +31,22 @@ function PayRequestCard({
 	address,
 	amount,
 	onPaid,
-}: { pubkey: string; address?: string; amount: number; onPaid: () => void }) {
+}: { pubkey?: string; address?: string; amount: number; onPaid: () => void }) {
 	const showMore = useDisclosure({ defaultIsOpen: !window.webln });
 
 	return (
 		<Flex direction="column" gap="2">
-			<UserCard pubkey={pubkey}>
-				<ButtonGroup size="sm">
-					<IconButton
-						icon={showMore.isOpen ? <ChevronUpIcon /> : <ChevronDownIcon />}
-						aria-label="More Options"
-						onClick={showMore.onToggle}
-					/>
-				</ButtonGroup>
-			</UserCard>
+			{pubkey && (
+				<UserCard pubkey={pubkey}>
+					<ButtonGroup size="sm">
+						<IconButton
+							icon={showMore.isOpen ? <ChevronUpIcon /> : <ChevronDownIcon />}
+							aria-label="More Options"
+							onClick={showMore.onToggle}
+						/>
+					</ButtonGroup>
+				</UserCard>
+			)}
 			{showMore.isOpen && (
 				<InvoiceModalContent
 					address={address}

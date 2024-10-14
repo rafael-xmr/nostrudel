@@ -7,7 +7,7 @@ import {
 
 // import { totalZaps } from "../../helpers/nostr/zaps";
 // import useCurrentAccount from "../../hooks/use-current-account";
-import useEventZaps from "../../hooks/use-event-zaps";
+// import useEventZaps from "../../hooks/use-event-zaps";
 import clientRelaysService from "../../services/client-relays";
 import eventZapsService from "../../services/event-zaps";
 import ZapModal from "../event-zap-modal";
@@ -16,6 +16,7 @@ import { getEventUID } from "../../helpers/nostr/event";
 
 import type { NostrEvent } from "nostr-tools";
 import Monero from "../icons/monero";
+import { getXMR } from "../../helpers/monero";
 
 export type NoteZapButtonProps = Omit<ButtonProps, "children"> & {
 	event: NostrEvent;
@@ -30,8 +31,10 @@ export default function NoteZapButton({
 	...props
 }: NoteZapButtonProps) {
 	// const account = useCurrentAccount();
-	const { address } = useUserXMRMetadata(event.pubkey);
-	const zaps = useEventZaps(getEventUID(event));
+	const { address: userAddress } = useUserXMRMetadata(event.pubkey);
+	const contentAddress = getXMR(event.content);
+	const address = userAddress || contentAddress;
+	// const zaps = useEventZaps(getEventUID(event));
 	const { isOpen, onOpen, onClose } = useDisclosure();
 
 	// const hasZapped =

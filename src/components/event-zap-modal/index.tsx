@@ -17,9 +17,10 @@ import PayStep from "./pay-step";
 import UserLink from "../user/user-link";
 import useUserXMRMetadata from "../../hooks/use-user-xmr-metadata";
 import { useBreakpointValue } from "../../providers/global/breakpoint-provider";
+import { getXMR } from "../../helpers/monero";
 
 export type PayRequest = {
-	pubkey: string;
+	pubkey?: string;
 	address?: string;
 	amount: number;
 	comment?: string;
@@ -45,7 +46,8 @@ async function getPayRequestsForEvent(
 }
 
 export type ZapModalProps = Omit<ModalProps, "children"> & {
-	pubkey: string;
+	address?: string;
+	pubkey?: string;
 	event?: NostrEvent;
 	relays?: string[];
 	initialComment?: string;
@@ -58,6 +60,7 @@ export type ZapModalProps = Omit<ModalProps, "children"> & {
 };
 
 export default function ZapModal({
+	address: addressParam,
 	event,
 	pubkey,
 	relays,
@@ -71,7 +74,15 @@ export default function ZapModal({
 	onZapped,
 	...props
 }: ZapModalProps) {
-	const { address } = useUserXMRMetadata(pubkey);
+	let address = addressParam;
+
+	if (!address) {
+		const { address: userAddress } = useUserXMRMetadata(
+			event?.pubkey || pubkey!,
+		);
+		const contentAddress = event && getXMR(event.content);
+		address = addressParam || contentAddress || userAddress;
+	}
 	const [callbacks, setCallbacks] = useState<PayRequest[]>();
 
 	const renderContent = () => {
@@ -122,11 +133,13 @@ export default function ZapModal({
 			<ModalContent>
 				<ModalCloseButton />
 				<ModalHeader px="4" pb="0" pt="4">
-					{event ? (
+					{addressParam ? (
+						"Tip Address"
+					) : event ? (
 						"Tip Event"
 					) : (
 						<>
-							Tip <UserLink pubkey={pubkey} fontWeight="bold" />
+							Tip <UserLink pubkey={pubkey!} fontWeight="bold" />
 						</>
 					)}
 				</ModalHeader>

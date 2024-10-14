@@ -231,7 +231,7 @@ export default function NavItems() {
 			)}
 			<Image src="/donate_qr.png" />
 			<Text>
-				to support, please{" "}
+				To support{" "}
 				<Link
 					href="monero:85kUEzPzBopaXUJ5dL19J6deh5md6YZDZLUUpv63wXdCiRo3pPwrAJHAKAsSo4BgKQBpcs5hSth23hEFr5mmNxRxMeDY1Ng"
 					isExternal
@@ -249,8 +249,9 @@ export default function NavItems() {
 				>
 					join the relay!!
 				</Link>{" "}
-				(don't forget to add it to your relay list). Thank you!
+				(and add it to your list).
 			</Text>
+			<Text>Cheers!</Text>
 			<Image src="/monero_chan.webp" />
 		</>
 	);

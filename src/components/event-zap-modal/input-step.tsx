@@ -31,7 +31,7 @@ function UserCard({ pubkey, percent }: { pubkey: string; percent?: number }) {
 }
 
 export type InputStepProps = {
-	pubkey: string;
+	pubkey?: string;
 	event?: NostrEvent;
 	initialComment?: string;
 	initialAmount?: number;
