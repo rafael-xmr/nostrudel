@@ -39,6 +39,7 @@ const OnionRelays = safeRelayUrls([
 ]);
 
 const MoneroRelays = safeRelayUrls([
+	"wss://relay.mostard.org",
 	"wss://nostr.portemonero.com",
 	"wss://xmr.usenostr.org",
 	"wss://nostr.xmr.rocks",
