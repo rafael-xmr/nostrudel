@@ -1,9 +1,8 @@
 import { useCallback } from "react";
 import { kinds } from "nostr-tools";
-import { Flex } from "@chakra-ui/react";
+import { Flex, SimpleGrid } from "@chakra-ui/react";
 
 import useTimelineLoader from "../../hooks/use-timeline-loader";
-import useSubject from "../../hooks/use-subject";
 import { useTimelineCurserIntersectionCallback } from "../../hooks/use-timeline-cursor-intersection-callback";
 import VerticalPageLayout from "../../components/vertical-page-layout";
 import IntersectionObserverProvider from "../../providers/local/intersection-observer";
@@ -27,15 +26,13 @@ function ChannelsHomePage() {
     },
     [clientMuteFilter],
   );
-  const timeline = useTimelineLoader(
+  const { loader, timeline: channels } = useTimelineLoader(
     `${listId}-channels`,
     relays,
     filter ? { ...filter, kinds: [kinds.ChannelCreation] } : undefined,
     { eventFilter },
   );
-  const channels = useSubject(timeline.timeline);
-
-  const callback = useTimelineCurserIntersectionCallback(timeline);
+  const callback = useTimelineCurserIntersectionCallback(loader);
 
   return (
     <VerticalPageLayout>
@@ -43,11 +40,13 @@ function ChannelsHomePage() {
         <PeopleListSelection />
       </Flex>
       <IntersectionObserverProvider callback={callback}>
-        {channels.map((channel) => (
-          <ErrorBoundary key={channel.id}>
-            <ChannelCard channel={channel} additionalRelays={relays} />
-          </ErrorBoundary>
-        ))}
+        <SimpleGrid columns={{ base: 1, xl: 2 }} spacing="2">
+          {channels?.map((channel) => (
+            <ErrorBoundary key={channel.id}>
+              <ChannelCard channel={channel} additionalRelays={relays} />
+            </ErrorBoundary>
+          ))}
+        </SimpleGrid>
       </IntersectionObserverProvider>
     </VerticalPageLayout>
   );

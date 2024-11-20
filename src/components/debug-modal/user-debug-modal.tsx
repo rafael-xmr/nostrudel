@@ -9,23 +9,19 @@ import {
 import type { ModalProps } from "@chakra-ui/react";
 import { kinds, nip19 } from "nostr-tools";
 
-import useUserMetadata from "../../hooks/use-user-metadata";
+import useUserProfile from "../../hooks/use-user-profile";
 import RawValue from "./raw-value";
 import RawJson from "./raw-json";
 import { useSharableProfileId } from "../../hooks/use-shareable-profile-id";
-import replaceableEventsService from "../../services/replaceable-events";
+import useUserLNURLMetadata from "../../hooks/use-user-lnurl-metadata";
+import useReplaceableEvent from "../../hooks/use-replaceable-event";
 
-export default function UserDebugModal({
-	pubkey,
-	...props
-}: { pubkey: string } & Omit<ModalProps, "children">) {
-	const npub = nip19.npubEncode(pubkey);
-	const metadata = useUserMetadata(pubkey);
-	const nprofile = useSharableProfileId(pubkey);
-	const relays = replaceableEventsService.getEvent(
-		kinds.RelayList,
-		pubkey,
-	).value;
+export default function UserDebugModal({ pubkey, ...props }: { pubkey: string } & Omit<ModalProps, "children">) {
+  const npub = nip19.npubEncode(pubkey);
+  const metadata = useUserProfile(pubkey);
+  const nprofile = useSharableProfileId(pubkey);
+  const relays = useReplaceableEvent({ kind: kinds.RelayList, pubkey });
+  const tipMetadata = useUserLNURLMetadata(pubkey);
 
 	return (
 		<Modal {...props}>

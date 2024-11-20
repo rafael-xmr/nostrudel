@@ -12,13 +12,11 @@ export default function useClientSideMuteFilter() {
 	const wordMuteFilter = useWordMuteFilter();
 	const mustListFilter = useUserMuteFilter(account?.pubkey);
 
-	return useCallback(
-		(event: NostrEvent, userMetadata?: Kind0ParsedContent) => {
-			return (
-				wordMuteFilter(event, userMetadata) ||
-				mustListFilter(event, userMetadata)
-			);
-		},
-		[wordMuteFilter, mustListFilter],
-	);
+  return useCallback(
+    (event: NostrEvent) => {
+      if (event.pubkey === account?.pubkey) return false;
+      return wordMuteFilter(event) || mustListFilter(event);
+    },
+    [wordMuteFilter, mustListFilter, account?.pubkey],
+  );
 }

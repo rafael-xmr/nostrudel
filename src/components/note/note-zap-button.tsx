@@ -1,18 +1,9 @@
-import {
-	// Button,
-	type ButtonProps,
-	IconButton,
-	useDisclosure,
-} from "@chakra-ui/react";
-
-// import { totalZaps } from "../../helpers/nostr/zaps";
-// import useCurrentAccount from "../../hooks/use-current-account";
-// import useEventZaps from "../../hooks/use-event-zaps";
-import clientRelaysService from "../../services/client-relays";
+import { type ButtonProps, IconButton, useDisclosure } from "@chakra-ui/react";
 import eventZapsService from "../../services/event-zaps";
 import ZapModal from "../event-zap-modal";
 import useUserXMRMetadata from "../../hooks/use-user-xmr-metadata";
 import { getEventUID } from "../../helpers/nostr/event";
+import { useReadRelays } from "../../hooks/use-client-relays";
 
 import type { NostrEvent } from "nostr-tools";
 import Monero from "../icons/monero";
@@ -37,16 +28,10 @@ export default function NoteZapButton({
 	// const zaps = useEventZaps(getEventUID(event));
 	const { isOpen, onOpen, onClose } = useDisclosure();
 
-	// const hasZapped =
-	// 	!!account && zaps.some((zap) => zap.request.pubkey === account.pubkey);
-
+	const readRelays = useReadRelays();
 	const onZapped = () => {
 		onClose();
-		eventZapsService.requestZaps(
-			getEventUID(event),
-			clientRelaysService.outbox,
-			true,
-		);
+		eventZapsService.requestZaps(getEventUID(event), readRelays, true);
 	};
 
 	// const total = totalZaps(zaps);

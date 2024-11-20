@@ -2,8 +2,8 @@ import { Link, LinkProps } from "@chakra-ui/react";
 import { Link as RouterLink } from "react-router-dom";
 import { nip19 } from "nostr-tools";
 
-import { getUserDisplayName } from "../../helpers/nostr/user-metadata";
-import useUserMetadata from "../../hooks/use-user-metadata";
+import { getDisplayName } from "../../helpers/nostr/user-metadata";
+import useUserProfile from "../../hooks/use-user-profile";
 import useAppSettings from "../../hooks/use-app-settings";
 import useCurrentAccount from "../../hooks/use-current-account";
 
@@ -14,14 +14,21 @@ export type UserLinkProps = LinkProps & {
 };
 
 export default function UserLink({ pubkey, showAt, tab, ...props }: UserLinkProps) {
-  const metadata = useUserMetadata(pubkey);
+  const metadata = useUserProfile(pubkey);
   const account = useCurrentAccount();
-  const { hideUsernames } = useAppSettings();
+  const { hideUsernames, removeEmojisInUsernames, showPubkeyColor } = useAppSettings();
+  const color = "#" + pubkey.slice(0, 6);
 
   return (
-    <Link as={RouterLink} to={`/u/${nip19.npubEncode(pubkey)}` + (tab ? "/" + tab : "")} whiteSpace="nowrap" {...props}>
+    <Link
+      as={RouterLink}
+      to={`/u/${nip19.npubEncode(pubkey)}` + (tab ? "/" + tab : "")}
+      whiteSpace="nowrap"
+      textDecoration={showPubkeyColor === "underline" ? `underline ${color} solid 2px` : undefined}
+      {...props}
+    >
       {showAt && "@"}
-      {hideUsernames && pubkey !== account?.pubkey ? "Anon" : getUserDisplayName(metadata, pubkey)}
+      {hideUsernames && pubkey !== account?.pubkey ? "Anon" : getDisplayName(metadata, pubkey, removeEmojisInUsernames)}
     </Link>
   );
 }

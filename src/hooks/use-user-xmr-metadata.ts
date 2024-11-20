@@ -1,7 +1,7 @@
-import useUserMetadata from "./use-user-metadata";
+import useUserProfile from "./use-user-profile";
 
 export default function useUserXMRMetadata(pubkey: string) {
-	const userMetadata = useUserMetadata(pubkey);
+	const userMetadata = useUserProfile(pubkey);
 	let address = userMetadata?.cryptocurrency_addresses?.monero;
 
 	if (!address) {

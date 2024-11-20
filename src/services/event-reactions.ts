@@ -1,91 +1,53 @@
-import { Filter, kinds, nip25 } from "nostr-tools";
+import { kinds } from "nostr-tools";
 import _throttle from "lodash.throttle";
+import { AbstractRelay } from "nostr-tools/abstract-relay";
 
-import NostrRequest from "../classes/nostr-request";
-import Subject from "../classes/subject";
 import SuperMap from "../classes/super-map";
-import { NostrEvent } from "../types/nostr-event";
 import { localRelay } from "./local-relay";
-import { relayRequest } from "../helpers/relay";
-
-type eventId = string;
-type relay = string;
+import relayPoolService from "./relay-pool";
+import Process from "../classes/process";
+import { LightningIcon } from "../components/icons";
+import processManager from "./process-manager";
+import BatchRelationLoader from "../classes/batch-relation-loader";
+import { logger } from "../helpers/debug";
 
 class EventReactionsService {
-  subjects = new SuperMap<eventId, Subject<NostrEvent[]>>(() => new Subject<NostrEvent[]>([]));
-  pending = new SuperMap<eventId, Set<relay>>(() => new Set());
+  log = logger.extend("EventReactionsService");
+  process: Process;
 
-  requestReactions(eventId: string, relays: Iterable<string>, alwaysRequest = true) {
-    const subject = this.subjects.get(eventId);
+  private loaded = new Map<string, boolean>();
+  loaders = new SuperMap<AbstractRelay, BatchRelationLoader>((relay) => {
+    const loader = new BatchRelationLoader(relay, [kinds.Reaction], this.log.extend(relay.url));
+    this.process.addChild(loader.process);
+    return loader;
+  });
 
-    if (!subject.value || alwaysRequest) {
-      for (const relay of relays) {
-        this.pending.get(eventId).add(relay);
-      }
-    }
-    this.throttleBatchRequest();
+  constructor() {
+    this.process = new Process("EventReactionsService", this);
+    this.process.icon = LightningIcon;
+    this.process.active = true;
 
-    return subject;
+    processManager.registerProcess(this.process);
   }
 
-  handleEvent(event: NostrEvent, cache = true) {
-    if (event.kind !== kinds.Reaction) return;
-    const pointer = nip25.getReactedEventPointer(event);
-    if (!pointer?.id) return;
+  requestReactions(uid: string, urls: Iterable<string | URL | AbstractRelay>, alwaysRequest = false) {
+    if (this.loaded.get(uid) && !alwaysRequest) return;
 
-    const subject = this.subjects.get(pointer.id);
-    if (!subject.value) {
-      subject.next([event]);
-    } else if (!subject.value.some((e) => e.id === event.id)) {
-      subject.next([...subject.value, event]);
+    if (localRelay) {
+      this.loaders.get(localRelay as AbstractRelay).requestEvents(uid);
     }
 
-    if (cache) localRelay.publish(event);
-  }
-
-  throttleBatchRequest = _throttle(this.batchRequests, 2000);
-  batchRequests() {
-    if (this.pending.size === 0) return;
-
-    // load events from cache
-    const uids = Array.from(this.pending.keys());
-    const ids = uids.filter((id) => !id.includes(":"));
-    const cords = uids.filter((id) => id.includes(":"));
-    const filters: Filter[] = [];
-    if (ids.length > 0) filters.push({ "#e": ids, kinds: [kinds.Reaction] });
-    if (cords.length > 0) filters.push({ "#a": cords, kinds: [kinds.Reaction] });
-    if (filters.length > 0)
-      relayRequest(localRelay, filters).then((events) => events.forEach((e) => this.handleEvent(e, false)));
-
-    const idsFromRelays: Record<relay, eventId[]> = {};
-    for (const [id, relays] of this.pending) {
-      for (const relay of relays) {
-        idsFromRelays[relay] = idsFromRelays[relay] ?? [];
-        idsFromRelays[relay].push(id);
-      }
+    const relays = relayPoolService.getRelays(urls);
+    for (const relay of relays) {
+      this.loaders.get(relay).requestEvents(uid);
     }
-
-    for (const [relay, ids] of Object.entries(idsFromRelays)) {
-      const eventIds = ids.filter((id) => !id.includes(":"));
-      const coordinates = ids.filter((id) => id.includes(":"));
-      const filters: Filter[] = [];
-      if (eventIds.length > 0) filters.push({ "#e": eventIds, kinds: [kinds.Reaction] });
-      if (coordinates.length > 0) filters.push({ "#a": coordinates, kinds: [kinds.Reaction] });
-
-      if (filters.length > 0) {
-        const request = new NostrRequest([relay]);
-        request.onEvent.subscribe((e) => this.handleEvent(e));
-        request.start(filters);
-      }
-    }
-    this.pending.clear();
   }
 }
 
 const eventReactionsService = new EventReactionsService();
 
 if (import.meta.env.DEV) {
-  //@ts-expect-error
+  // @ts-ignore
   window.eventReactionsService = eventReactionsService;
 }
 

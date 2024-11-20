@@ -1,4 +1,4 @@
-import { MenuItem, useConst, useDisclosure, useToast } from "@chakra-ui/react";
+import { MenuItem, useDisclosure, useToast } from "@chakra-ui/react";
 import { Link as RouterLink } from "react-router-dom";
 import { nip19 } from "nostr-tools";
 
@@ -15,16 +15,14 @@ import {
   ShareIcon,
 } from "../../../components/icons";
 import accountService from "../../../services/account";
-import useUserMetadata from "../../../hooks/use-user-metadata";
-import { getUserDisplayName } from "../../../helpers/nostr/user-metadata";
 import UserDebugModal from "../../../components/debug-modal/user-debug-modal";
 import { useSharableProfileId } from "../../../hooks/use-shareable-profile-id";
-import { truncatedId } from "../../../helpers/nostr/event";
 import useUserMuteActions from "../../../hooks/use-user-mute-actions";
 import useCurrentAccount from "../../../hooks/use-current-account";
-import userMailboxesService from "../../../services/user-mailboxes";
 import { useContext } from "react";
 import { AppHandlerContext } from "../../../providers/route/app-handler-provider";
+import PubkeyAccount from "../../../classes/accounts/pubkey-account";
+import Telescope from "../../../components/icons/telescope";
 
 export const UserProfileMenu = ({
   pubkey,
@@ -33,22 +31,13 @@ export const UserProfileMenu = ({
 }: { pubkey: string; showRelaySelectionModal?: () => void } & Omit<MenuIconButtonProps, "children">) => {
   const toast = useToast();
   const account = useCurrentAccount();
-  const metadata = useUserMetadata(pubkey);
   const infoModal = useDisclosure();
   const sharableId = useSharableProfileId(pubkey);
   const { isMuted, mute, unmute } = useUserMuteActions(pubkey);
   const { openAddress } = useContext(AppHandlerContext);
 
   const loginAsUser = () => {
-    const relays = userMailboxesService.getMailboxes(pubkey).value?.outbox.urls;
-    if (!accountService.hasAccount(pubkey)) {
-      accountService.addAccount({
-        type: "pubkey",
-        pubkey,
-        relays,
-        readonly: true,
-      });
-    }
+    if (!accountService.hasAccount(pubkey)) accountService.addAccount(new PubkeyAccount(pubkey));
     accountService.switchAccount(pubkey);
   };
 
@@ -66,8 +55,15 @@ export const UserProfileMenu = ({
         <MenuItem icon={<DirectMessagesIcon fontSize="1.5em" />} as={RouterLink} to={`/dm/${nip19.npubEncode(pubkey)}`}>
           Direct messages
         </MenuItem>
+        <MenuItem
+          icon={<Telescope fontSize="1.5em" />}
+          as={RouterLink}
+          to={`/discovery/blindspot/${nip19.npubEncode(pubkey)}`}
+        >
+          Blind spot
+        </MenuItem>
         <MenuItem icon={<SpyIcon fontSize="1.5em" />} onClick={() => loginAsUser()}>
-          Login as {truncatedId(getUserDisplayName(metadata, pubkey))}
+          Login as user
         </MenuItem>
         <MenuItem
           onClick={() => {

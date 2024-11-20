@@ -1,6 +1,12 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { VitePWA } from "vite-plugin-pwa";
+import fundingPlugin from "vite-plugin-funding";
+
+console.log("Build with:");
+for (const [key, value] of Object.entries(process.env)) {
+  if (key.startsWith("VITE_")) console.log(`${key}: ${value}`);
+}
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -13,17 +19,26 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: "prompt",
+      // strategies: "injectManifest",
+      // srcDir: "src",
+      // filename: "sw.ts",
+      // devOptions: {
+      //   // NOTE: ESM service workers is not supported by firefox
+      //   type: "module",
+      //   enabled: true,
+      // },
       workbox: {
-        // This increase the cache limit to 3mB
-        maximumFileSizeToCacheInBytes: 2097152 * 1.5,
+        // This increase the cache limit to 4mB
+        maximumFileSizeToCacheInBytes: 2097152 * 2,
       },
       manifest: {
         name: "moStard",
         short_name: "moStard",
         description: "A sandbox for exploring nostr",
-        orientation: "any",
+        display: "standalone",
+        orientation: "portrait-primary",
         theme_color: "#8DB600",
-        categories: ["nostr"],
+        categories: ["social"],
         icons: [
           { src: "/favicon.ico", type: "image/x-icon", sizes: "16x16 32x32" },
           { src: "/icon-192.png", type: "image/png", sizes: "192x192" },
@@ -31,19 +46,53 @@ export default defineConfig({
           { src: "/icon-192-maskable.png", type: "image/png", sizes: "192x192", purpose: "maskable" },
           { src: "/icon-512-maskable.png", type: "image/png", sizes: "512x512", purpose: "maskable" },
         ],
-        // TODO: actually handle this share data
-        // @ts-ignore
-        share_target: {
-          action: "/share",
-          method: "GET",
-          enctype: "application/x-www-form-urlencoded",
-          params: {
-            title: "title",
-            text: "text",
-            url: "url",
+        lang: "en",
+        start_url: "/",
+        scope: "/",
+        shortcuts: [
+          {
+            name: "Notifications",
+            url: "/#/notifications",
+            description: "",
           },
-        },
+          {
+            name: "Notes",
+            url: "/#/",
+            description: "",
+          },
+          {
+            name: "Notifications",
+            url: "/#/notifications",
+            description: "",
+          },
+          {
+            name: "Messages",
+            url: "/#/dm",
+            description: "",
+          },
+          {
+            name: "Streams",
+            url: "/#/streams",
+            description: "",
+          },
+          {
+            name: "Wiki",
+            url: "/#/wiki",
+            description: "",
+          },
+        ],
+        protocol_handlers: [
+          {
+            protocol: "web+nostr",
+            url: "/l/%s",
+          },
+          {
+            protocol: "nostr",
+            url: "/l/%s",
+          },
+        ],
       },
     }),
+    fundingPlugin({ types: ["lightning"] }),
   ],
 });

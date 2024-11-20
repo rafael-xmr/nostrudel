@@ -1,42 +1,30 @@
 import { useContext, useMemo } from "react";
 import { Box, Button, ButtonGroup, Card, CardBody, CardHeader, CardProps, Text } from "@chakra-ui/react";
+import { useRenderedContent } from "applesauce-react/hooks";
 
-import { getSharableEventAddress } from "../../../helpers/nip19";
 import { NostrEvent } from "../../../types/nostr-event";
 import UserAvatarLink from "../../user/user-avatar-link";
 import UserLink from "../../user/user-link";
-import { UserDnsIdentityIcon } from "../../user/user-dns-identity-icon";
-import {
-  embedEmoji,
-  embedNostrHashtags,
-  embedNostrLinks,
-  renderGenericUrl,
-  renderImageUrl,
-  renderVideoUrl,
-} from "../../embed-types";
-import { EmbedableContent, embedUrls } from "../../../helpers/embeds";
+import UserDnsIdentity from "../../user/user-dns-identity";
+import { renderGenericUrl, renderImageUrl, renderVideoUrl } from "../../content/links";
 import Timestamp from "../../timestamp";
 import { ExternalLinkIcon } from "../../icons";
-import { renderAudioUrl } from "../../embed-types/audio";
+import { renderAudioUrl } from "../../content/links/audio";
 import DebugEventButton from "../../debug-modal/debug-event-button";
 import DebugEventTags from "../../debug-modal/event-tags";
 import { AppHandlerContext } from "../../../providers/route/app-handler-provider";
+import { getSharableEventAddress } from "../../../services/event-relay-hint";
+import { components } from "../../content";
+
+const UnknownEventContentSymbol = Symbol.for("unknown-event-content");
+const linkRenderers = [renderImageUrl, renderVideoUrl, renderAudioUrl, renderGenericUrl];
 
 export default function EmbeddedUnknown({ event, ...props }: Omit<CardProps, "children"> & { event: NostrEvent }) {
-  const address = getSharableEventAddress(event);
+  const address = useMemo(() => getSharableEventAddress(event), [event]);
   const { openAddress } = useContext(AppHandlerContext);
 
   const alt = event.tags.find((t) => t[0] === "alt")?.[1];
-  const content = useMemo(() => {
-    let jsx: EmbedableContent = [event.content];
-    jsx = embedNostrLinks(jsx);
-    jsx = embedNostrHashtags(jsx, event);
-    jsx = embedEmoji(jsx, event);
-
-    jsx = embedUrls(jsx, [renderImageUrl, renderVideoUrl, renderAudioUrl, renderGenericUrl]);
-
-    return jsx;
-  }, [event.content]);
+  const content = useRenderedContent(event, components, { linkRenderers, cacheKey: UnknownEventContentSymbol });
 
   return (
     <>
@@ -44,7 +32,7 @@ export default function EmbeddedUnknown({ event, ...props }: Omit<CardProps, "ch
         <CardHeader display="flex" gap="2" alignItems="center" p="2" pb="0" flexWrap="wrap">
           <UserAvatarLink pubkey={event.pubkey} size="xs" />
           <UserLink pubkey={event.pubkey} isTruncated fontWeight="bold" fontSize="md" />
-          <UserDnsIdentityIcon pubkey={event.pubkey} onlyIcon />
+          <UserDnsIdentity pubkey={event.pubkey} onlyIcon />
           <Text>kind: {event.kind}</Text>
           <Timestamp timestamp={event.created_at} />
           <ButtonGroup ml="auto">

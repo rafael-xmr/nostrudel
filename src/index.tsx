@@ -2,14 +2,21 @@ import "./polyfill";
 import { createRoot } from "react-dom/client";
 import { App } from "./app";
 import { GlobalProviders } from "./providers/global";
+
+import funding from "virtual:funding";
+console.log("Funding", funding);
+
 import "./services/user-event-sync";
 import "./services/username-search";
+import "./services/page-api";
 
-// setup bitcoin connect
-import { init, onConnected } from "@getalby/bitcoin-connect-react";
-init({ appName: "moStard" });
-onConnected((provider) => {
-  window.webln = provider;
+// When the app closes, remove the bitcoin-connect config if its set to extension
+// This prevents it from prompting the user to authorize or unlock their extension when the app is opened
+window.addEventListener("unload", () => {
+  const config = localStorage.getItem("bc:config");
+  if (config && JSON.parse(config).connectorType === "extension.generic") {
+    localStorage.removeItem("bc:config");
+  }
 });
 
 // setup dayjs

@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   Box,
   Button,
@@ -19,24 +19,22 @@ import {
   Text,
 } from "@chakra-ui/react";
 import { NostrEvent, kinds, nip19 } from "nostr-tools";
-import { encodeDecodeResult } from "../../helpers/nip19";
+import { encodeDecodeResult } from "applesauce-core/helpers";
+
 import { ExternalLinkIcon } from "../icons";
 import useTimelineLoader from "../../hooks/use-timeline-loader";
 import useSingleEvent from "../../hooks/use-single-event";
 import useReplaceableEvent from "../../hooks/use-replaceable-event";
 import { useReadRelays } from "../../hooks/use-client-relays";
-import useSubject from "../../hooks/use-subject";
-import { Kind0ParsedContent, getUserDisplayName, parseMetadataContent } from "../../helpers/nostr/user-metadata";
+import { Kind0ParsedContent, getDisplayName, parseMetadataContent } from "../../helpers/nostr/user-metadata";
 import { MetadataAvatar } from "../user/user-avatar";
 import HoverLinkOverlay from "../hover-link-overlay";
 import ArrowRight from "../icons/arrow-right";
 import { useTimelineCurserIntersectionCallback } from "../../hooks/use-timeline-cursor-intersection-callback";
-import IntersectionObserverProvider, {
-  useRegisterIntersectionEntity,
-} from "../../providers/local/intersection-observer";
-import { getEventUID } from "nostr-idb";
 import { useBreakpointValue } from "../../providers/global/breakpoint-provider";
 import { CopyIconButton } from "../copy-icon-button";
+import useEventIntersectionRef from "../../hooks/use-event-intersection-ref";
+import IntersectionObserverProvider from "../../providers/local/intersection-observer";
 
 function useEventFromDecode(decoded: nip19.DecodeResult) {
   switch (decoded.type) {
@@ -70,8 +68,7 @@ function AppHandler({ app, decoded }: { app: NostrEvent; decoded: nip19.DecodeRe
     return tag ? tag[1].replace("<bech32>", encodeDecodeResult(decoded)) : undefined;
   }, [decoded, app]);
 
-  const ref = useRef<HTMLDivElement | null>(null);
-  useRegisterIntersectionEntity(ref, getEventUID(app));
+  const ref = useEventIntersectionRef(app);
 
   if (!link) return null;
   return (
@@ -79,7 +76,7 @@ function AppHandler({ app, decoded }: { app: NostrEvent; decoded: nip19.DecodeRe
       <MetadataAvatar metadata={metadata} />
       <Box overflow="hidden">
         <HoverLinkOverlay fontWeight="bold" href={link} isExternal>
-          {getUserDisplayName(metadata, app.pubkey)}
+          {getDisplayName(metadata, app.pubkey)}
         </HoverLinkOverlay>
         <Text noOfLines={3}>{metadata.about}</Text>
       </Box>
@@ -98,28 +95,31 @@ export default function AppHandlerModal({
   const kind = event?.kind ?? getKindFromDecoded(decoded);
   const alt = event?.tags.find((t) => t[0] === "alt")?.[1];
   const address = encodeDecodeResult(decoded);
-  const timeline = useTimelineLoader(
+  const eventFilter = useCallback((event: NostrEvent) => {
+    return event.content.length > 0;
+  }, []);
+  const { loader, timeline: apps } = useTimelineLoader(
     `${kind}-apps`,
     readRelays,
     kind ? { kinds: [kinds.Handlerinformation], "#k": [String(kind)] } : { kinds: [kinds.Handlerinformation] },
+    { eventFilter },
   );
 
   const autofocus = useBreakpointValue({ base: false, lg: true });
   const [search, setSearch] = useState("");
-  const apps = useSubject(timeline.timeline).filter((a) => a.content.length > 0);
 
   const filteredApps = apps.filter((app) => {
     if (search.length > 1) {
       try {
         const parsed = JSON.parse(app.content) as Kind0ParsedContent;
-        if (getUserDisplayName(parsed, app.pubkey).toLowerCase().includes(search.toLowerCase())) {
+        if (getDisplayName(parsed, app.pubkey).toLowerCase().includes(search.toLowerCase())) {
           return true;
         }
       } catch (error) {}
       return false;
     } else return true;
   });
-  const callback = useTimelineCurserIntersectionCallback(timeline);
+  const callback = useTimelineCurserIntersectionCallback(loader);
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} size="xl">

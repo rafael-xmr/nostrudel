@@ -1,2 +1,6 @@
 import debug from "debug";
-export const logger = debug("moStard");
+
+if (!localStorage.getItem("debug") && import.meta.env.DEV)
+  debug.enable("noStrudel,noStrudel:*,applesauce,applesauce:*");
+
+export const logger = debug("noStrudel");

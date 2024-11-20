@@ -1,80 +1,36 @@
-import React, { Suspense } from "react";
-import { Box, type BoxProps, Spinner } from "@chakra-ui/react";
-import type { EventTemplate, NostrEvent } from "nostr-tools";
+import React, { Suspense, useMemo } from "react";
+import { Box, BoxProps, Spinner } from "@chakra-ui/react";
+import { EventTemplate, NostrEvent } from "nostr-tools";
+import { useRenderedContent } from "applesauce-react/hooks";
+import { textNoteTransformers, TextNoteContentSymbol, galleries } from "applesauce-content/text";
 
 import {
-	type EmbedableContent,
-	embedUrls,
-	truncateEmbedableContent,
-} from "../../../helpers/embeds";
-import {
-	embedLightningInvoice,
-	embedNostrLinks,
-	embedNostrMentions,
-	embedNostrHashtags,
-	renderWavlakeUrl,
-	renderYoutubeUrl,
-	renderImageUrl,
-	renderTwitterUrl,
-	renderAppleMusicUrl,
-	renderSpotifyUrl,
-	renderTidalUrl,
-	renderVideoUrl,
-	embedEmoji,
-	renderOpenGraphUrl,
-	embedImageGallery,
-	renderGenericUrl,
-	renderSongDotLinkUrl,
-	renderStemstrUrl,
-	renderSoundCloudUrl,
-	renderSimpleXLink,
-	renderRedditUrl,
-	embedNipDefinitions,
-	renderAudioUrl,
-	renderModelUrl,
-	embedMoneroAddress,
-} from "../../embed-types";
+  renderWavlakeUrl,
+  renderYoutubeURL,
+  renderImageUrl,
+  renderTwitterUrl,
+  renderAppleMusicUrl,
+  renderSpotifyUrl,
+  renderTidalUrl,
+  renderVideoUrl,
+  renderOpenGraphUrl,
+  renderSongDotLinkUrl,
+  renderStemstrUrl,
+  renderSoundCloudUrl,
+  renderSimpleXLink,
+  renderRedditUrl,
+  renderAudioUrl,
+  renderModelUrl,
+  renderCodePenURL,
+  renderArchiveOrgURL,
+  renderStreamUrl,
+} from "../../content/links";
 import { LightboxProvider } from "../../lightbox-provider";
+import MediaOwnerProvider from "../../../providers/local/media-owner-provider";
+import { components } from "../../content";
+import { nipDefinitions } from "../../content/transform/nip-notation";
 
-function buildContents(event: NostrEvent | EventTemplate, simpleLinks = false) {
-	let content: EmbedableContent = [event.content.trim()];
-
-	// image gallery
-	content = embedImageGallery(content, event as NostrEvent);
-
-	// common
-	content = embedUrls(content, [
-		renderSimpleXLink,
-		renderYoutubeUrl,
-		renderTwitterUrl,
-		renderRedditUrl,
-		renderWavlakeUrl,
-		renderAppleMusicUrl,
-		renderSpotifyUrl,
-		renderTidalUrl,
-		renderSongDotLinkUrl,
-		renderStemstrUrl,
-		renderSoundCloudUrl,
-		renderImageUrl,
-		renderVideoUrl,
-		renderAudioUrl,
-		renderModelUrl,
-		simpleLinks ? renderGenericUrl : renderOpenGraphUrl,
-	]);
-
-	// bitcoin
-	content = embedLightningInvoice(content);
-
-	// nostr
-	content = embedNostrLinks(content);
-	content = embedNostrMentions(content, event);
-	content = embedNostrHashtags(content, event);
-	content = embedNipDefinitions(content);
-	content = embedEmoji(content, event);
-	content = embedMoneroAddress(content);
-
-	return content;
-}
+const transformers = [...textNoteTransformers, galleries, nipDefinitions];
 
 export type TextNoteContentsProps = {
 	event: NostrEvent | EventTemplate;
@@ -82,29 +38,49 @@ export type TextNoteContentsProps = {
 	maxLength?: number;
 };
 
+const linkRenderers = [
+  renderSimpleXLink,
+  renderYoutubeURL,
+  renderTwitterUrl,
+  renderRedditUrl,
+  renderWavlakeUrl,
+  renderAppleMusicUrl,
+  renderSpotifyUrl,
+  renderTidalUrl,
+  renderSongDotLinkUrl,
+  renderStemstrUrl,
+  renderSoundCloudUrl,
+  renderImageUrl,
+  renderVideoUrl,
+  renderStreamUrl,
+  renderAudioUrl,
+  renderModelUrl,
+  renderCodePenURL,
+  renderArchiveOrgURL,
+  renderOpenGraphUrl,
+];
+
 export const TextNoteContents = React.memo(
-	({
-		event,
-		noOpenGraphLinks,
-		maxLength,
-		...props
-	}: TextNoteContentsProps & Omit<BoxProps, "children">) => {
-		let content = buildContents(event, noOpenGraphLinks);
+  ({ event, noOpenGraphLinks, maxLength, ...props }: TextNoteContentsProps & Omit<BoxProps, "children">) => {
+    const content = useRenderedContent(event, components, {
+      linkRenderers,
+      transformers,
+      maxLength,
+      cacheKey: TextNoteContentSymbol,
+    });
 
-		if (maxLength !== undefined) {
-			content = truncateEmbedableContent(content, maxLength);
-		}
-
-		return (
-			<LightboxProvider>
-				<Suspense fallback={<Spinner />}>
-					<Box whiteSpace="pre-wrap" {...props}>
-						{content}
-					</Box>
-				</Suspense>
-			</LightboxProvider>
-		);
-	},
+    return (
+      <MediaOwnerProvider owner={(event as NostrEvent).pubkey as string | undefined}>
+        <LightboxProvider>
+          <Suspense fallback={<Spinner />}>
+            <Box whiteSpace="pre-wrap" dir="auto" {...props}>
+              {content}
+            </Box>
+          </Suspense>
+        </LightboxProvider>
+      </MediaOwnerProvider>
+    );
+  },
 );
 
 export default TextNoteContents;

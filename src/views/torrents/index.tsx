@@ -1,8 +1,6 @@
 import { ChangeEventHandler, useCallback, useMemo, useState } from "react";
 import { Alert, Button, Flex, Spacer, Table, TableContainer, Tbody, Th, Thead, Tr, useToast } from "@chakra-ui/react";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
-import { generateSecretKey, getPublicKey } from "nostr-tools";
-import { bytesToHex } from "@noble/hashes/utils";
 
 import PeopleListSelection from "../../components/people-list-selection/people-list-selection";
 import VerticalPageLayout from "../../components/vertical-page-layout";
@@ -11,32 +9,29 @@ import useTimelineLoader from "../../hooks/use-timeline-loader";
 import useClientSideMuteFilter from "../../hooks/use-client-side-mute-filter";
 import { NostrEvent } from "../../types/nostr-event";
 import { TORRENT_KIND, validateTorrent } from "../../helpers/nostr/torrents";
-import useSubject from "../../hooks/use-subject";
 import TorrentTableRow from "./components/torrent-table-row";
 import { useTimelineCurserIntersectionCallback } from "../../hooks/use-timeline-cursor-intersection-callback";
 import IntersectionObserverProvider from "../../providers/local/intersection-observer";
 import useCurrentAccount from "../../hooks/use-current-account";
-import useUserMetadata from "../../hooks/use-user-metadata";
+import useUserProfile from "../../hooks/use-user-profile";
 import accountService from "../../services/account";
-import signingService from "../../services/signing";
 import CategorySelect from "./components/category-select";
 import useRouteSearchValue from "../../hooks/use-route-search-value";
 import { useReadRelays } from "../../hooks/use-client-relays";
+import NsecAccount from "../../classes/accounts/nsec-account";
 
 function Warning() {
   const navigate = useNavigate();
   const toast = useToast();
   const account = useCurrentAccount()!;
-  const metadata = useUserMetadata(account.pubkey);
+  const metadata = useUserProfile(account.pubkey);
   const [loading, setLoading] = useState(false);
   const createAnonAccount = async () => {
     setLoading(true);
     try {
-      const secKey = generateSecretKey();
-      const encrypted = await signingService.encryptSecKey(bytesToHex(secKey));
-      const pubkey = getPublicKey(secKey);
-      accountService.addAccount({ type: "local", ...encrypted, pubkey, readonly: false });
-      accountService.switchAccount(pubkey);
+      const account = NsecAccount.newKey();
+      accountService.addAccount(account);
+      accountService.switchAccount(account.pubkey);
       navigate("/relays");
     } catch (e) {
       if (e instanceof Error) toast({ description: e.message, status: "error" });
@@ -86,12 +81,10 @@ function TorrentsPage() {
     if (tags.length > 0) return { ...filter, kinds: [TORRENT_KIND], "#t": tags };
     else return { ...filter, kinds: [TORRENT_KIND] };
   }, [tags.join(","), filter]);
-  const timeline = useTimelineLoader(`${listId || "global"}-torrents`, relays, query, {
+  const { loader, timeline: torrents } = useTimelineLoader(`${listId || "global"}-torrents`, relays, query, {
     eventFilter,
   });
-
-  const torrents = useSubject(timeline.timeline);
-  const callback = useTimelineCurserIntersectionCallback(timeline);
+  const callback = useTimelineCurserIntersectionCallback(loader);
 
   const account = useCurrentAccount();
 
@@ -119,11 +112,7 @@ function TorrentsPage() {
                 <Th />
               </Tr>
             </Thead>
-            <Tbody>
-              {torrents.map((torrent) => (
-                <TorrentTableRow key={torrent.id} torrent={torrent} />
-              ))}
-            </Tbody>
+            <Tbody>{torrents?.map((torrent) => <TorrentTableRow key={torrent.id} torrent={torrent} />)}</Tbody>
           </Table>
         </TableContainer>
       </IntersectionObserverProvider>

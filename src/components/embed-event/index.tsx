@@ -1,12 +1,11 @@
 import { Suspense, lazy } from "react";
-import type { DecodeResult } from "nostr-tools/lib/types/nip19";
+import type { DecodeResult } from "nostr-tools/nip19";
 import { CardProps, Spinner } from "@chakra-ui/react";
 import { kinds } from "nostr-tools";
 
 import EmbeddedNote from "./event-types/embedded-note";
 import useSingleEvent from "../../hooks/use-single-event";
 import { NostrEvent } from "../../types/nostr-event";
-import { STREAM_CHAT_MESSAGE_KIND, STREAM_KIND } from "../../helpers/nostr/stream";
 import { GOAL_KIND } from "../../helpers/nostr/goal";
 import { EMOJI_PACK_KIND } from "../../helpers/nostr/emoji-packs";
 import {
@@ -18,29 +17,34 @@ import {
 } from "../../helpers/nostr/lists";
 import { COMMUNITY_DEFINITION_KIND } from "../../helpers/nostr/communities";
 import { STEMSTR_TRACK_KIND } from "../../helpers/nostr/stemstr";
+import { TORRENT_COMMENT_KIND, TORRENT_KIND } from "../../helpers/nostr/torrents";
+import { FLARE_VIDEO_KIND } from "../../helpers/nostr/flare";
+import { WIKI_PAGE_KIND } from "../../helpers/nostr/wiki";
 import useReplaceableEvent from "../../hooks/use-replaceable-event";
 import { safeDecode } from "../../helpers/nip19";
+import type { EmbeddedGoalOptions } from "./event-types/embedded-goal";
 
+import LoadingNostrLink from "../loading-nostr-link";
 import RelayCard from "../../views/relays/components/relay-card";
-import EmbeddedStream from "./event-types/embedded-stream";
-import EmbeddedEmojiPack from "./event-types/embedded-emoji-pack";
-import EmbeddedGoal, { EmbeddedGoalOptions } from "./event-types/embedded-goal";
-import EmbeddedUnknown from "./event-types/embedded-unknown";
+import EmbeddedRepost from "./event-types/embedded-repost";
 import EmbeddedList from "./event-types/embedded-list";
-import EmbeddedArticle from "./event-types/embedded-article";
-import EmbeddedBadge from "./event-types/embedded-badge";
-import EmbeddedStreamMessage from "./event-types/embedded-stream-message";
-import EmbeddedCommunity from "./event-types/embedded-community";
 import EmbeddedReaction from "./event-types/embedded-reaction";
 import EmbeddedDM from "./event-types/embedded-dm";
-import { TORRENT_COMMENT_KIND, TORRENT_KIND } from "../../helpers/nostr/torrents";
-import EmbeddedTorrent from "./event-types/embedded-torrent";
-import EmbeddedTorrentComment from "./event-types/embedded-torrent-comment";
-import EmbeddedChannel from "./event-types/embedded-channel";
-import { FLARE_VIDEO_KIND } from "../../helpers/nostr/flare";
-import EmbeddedFlareVideo from "./event-types/embedded-flare-video";
-import LoadingNostrLink from "../loading-nostr-link";
-import EmbeddedRepost from "./event-types/embedded-repost";
+import EmbeddedUnknown from "./event-types/embedded-unknown";
+
+const EmbeddedGoal = lazy(() => import("./event-types/embedded-goal"));
+const EmbeddedArticle = lazy(() => import("./event-types/embedded-article"));
+const EmbeddedCommunity = lazy(() => import("./event-types/embedded-community"));
+const EmbeddedBadge = lazy(() => import("./event-types/embedded-badge"));
+const EmbeddedTorrent = lazy(() => import("./event-types/embedded-torrent"));
+const EmbeddedTorrentComment = lazy(() => import("./event-types/embedded-torrent-comment"));
+const EmbeddedChannel = lazy(() => import("./event-types/embedded-channel"));
+const EmbeddedFlareVideo = lazy(() => import("./event-types/embedded-flare-video"));
+const EmbeddedEmojiPack = lazy(() => import("./event-types/embedded-emoji-pack"));
+const EmbeddedZapRecept = lazy(() => import("./event-types/embedded-zap-receipt"));
+const EmbeddedWikiPage = lazy(() => import("./event-types/embedded-wiki-page"));
+const EmbeddedStream = lazy(() => import("./event-types/embedded-stream"));
+const EmbeddedStreamMessage = lazy(() => import("./event-types/embedded-stream-message"));
 const EmbeddedStemstrTrack = lazy(() => import("./event-types/embedded-stemstr-track"));
 
 export type EmbedProps = {
@@ -60,7 +64,7 @@ export function EmbedEvent({
         return <EmbeddedReaction event={event} {...cardProps} />;
       case kinds.EncryptedDirectMessage:
         return <EmbeddedDM dm={event} {...cardProps} />;
-      case STREAM_KIND:
+      case kinds.LiveEvent:
         return <EmbeddedStream event={event} {...cardProps} />;
       case GOAL_KIND:
         return <EmbeddedGoal goal={event} {...cardProps} {...goalProps} />;
@@ -76,7 +80,7 @@ export function EmbedEvent({
         return <EmbeddedArticle article={event} {...cardProps} />;
       case kinds.BadgeDefinition:
         return <EmbeddedBadge badge={event} {...cardProps} />;
-      case STREAM_CHAT_MESSAGE_KIND:
+      case kinds.LiveChatMessage:
         return <EmbeddedStreamMessage message={event} {...cardProps} />;
       case COMMUNITY_DEFINITION_KIND:
         return <EmbeddedCommunity community={event} {...cardProps} />;
@@ -93,6 +97,10 @@ export function EmbedEvent({
       case kinds.Repost:
       case kinds.GenericRepost:
         return <EmbeddedRepost repost={event} {...cardProps} />;
+      case WIKI_PAGE_KIND:
+        return <EmbeddedWikiPage page={event} {...cardProps} />;
+      case kinds.Zap:
+        return <EmbeddedZapRecept zap={event} {...cardProps} />;
     }
 
     return <EmbeddedUnknown event={event} {...cardProps} />;
@@ -118,8 +126,6 @@ export function EmbedEventPointer({ pointer, ...props }: { pointer: DecodeResult
       if (!event) return <LoadingNostrLink link={pointer} />;
       return <EmbedEvent event={event} {...props} />;
     }
-    case "nrelay":
-      return <RelayCard url={pointer.data} />;
   }
   return null;
 }

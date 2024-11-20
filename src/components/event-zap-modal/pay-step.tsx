@@ -11,7 +11,8 @@ import UserAvatar from "../user/user-avatar";
 import UserLink from "../user/user-link";
 import { ChevronDownIcon, ChevronUpIcon } from "../icons";
 import { InvoiceModalContent } from "../invoice-modal";
-import type { PropsWithChildren } from "react";
+import { PropsWithChildren, useEffect, useState } from "react";
+import useAppSettings from "../../hooks/use-app-settings";
 
 function UserCard({
 	children,
@@ -32,7 +33,7 @@ function PayRequestCard({
 	amount,
 	onPaid,
 }: { pubkey?: string; address?: string; amount: number; onPaid: () => void }) {
-	const showMore = useDisclosure({ defaultIsOpen: !window.webln });
+	const showMore = useDisclosure({ defaultIsOpen: true });
 
 	return (
 		<Flex direction="column" gap="2">
@@ -57,22 +58,57 @@ function PayRequestCard({
 		</Flex>
 	);
 }
-export default function PayStep({
-	callbacks,
-}: { callbacks: PayRequest[]; onComplete: () => void }) {
-	return (
-		<Flex direction="column" gap="4">
-			{callbacks.map((callback) => {
-				return (
-					<PayRequestCard
-						key={callback.pubkey}
-						pubkey={callback.pubkey}
-						address={callback.address}
-						amount={callback.amount}
-						onPaid={() => {}}
-					/>
-				);
-			})}
-		</Flex>
-	);
+function ErrorCard({ pubkey, error }: { pubkey: string; error: any }) {
+  const showMore = useDisclosure();
+
+  return (
+    <Flex direction="column" gap="2">
+      <UserCard pubkey={pubkey}>
+        <Button size="sm" variant="outline" colorScheme="red" leftIcon={<ErrorIcon />} onClick={showMore.onToggle}>
+          Error
+        </Button>
+      </UserCard>
+      {showMore.isOpen && <Alert status="error">{error.message}</Alert>}
+    </Flex>
+  );
+}
+
+export default function PayStep({ callbacks, onComplete }: { callbacks: PayRequest[]; onComplete: () => void }) {
+  const [paid, setPaid] = useState<string[]>([]);
+
+  const [payingAll, setPayingAll] = useState(false);
+
+  useEffect(() => {
+    const withInvoice = callbacks.filter((p) => !!p.invoice);
+    const hasUnpaid = withInvoice.some(({ pubkey }) => !paid.includes(pubkey));
+    if (withInvoice.length > 0 && !hasUnpaid) {
+      onComplete();
+    }
+  }, [paid]);
+
+  return (
+    <Flex direction="column" gap="4">
+      {callbacks.map(({ pubkey, invoice, error }) => {
+        if (paid.includes(pubkey))
+          return (
+            <UserCard key={pubkey} pubkey={pubkey}>
+              <Button size="sm" variant="outline" colorScheme="green" leftIcon={<CheckIcon />}>
+                Paid
+              </Button>
+            </UserCard>
+          );
+        if (error) return <ErrorCard key={pubkey} pubkey={pubkey} error={error} />;
+        if (invoice)
+          return (
+            <PayRequestCard
+              key={pubkey}
+              pubkey={pubkey}
+              invoice={invoice}
+              onPaid={() => setPaid((a) => a.concat(pubkey))}
+            />
+          );
+        return null;
+      })}
+    </Flex>
+  );
 }

@@ -38,16 +38,15 @@ import {
 import { getImageSize } from "../../helpers/image";
 import { useReadRelays } from "../../hooks/use-client-relays";
 import useTimelineLoader from "../../hooks/use-timeline-loader";
-import useSubject from "../../hooks/use-subject";
 import useUserMuteFilter from "../../hooks/use-user-mute-filter";
 import { useTimelineCurserIntersectionCallback } from "../../hooks/use-timeline-cursor-intersection-callback";
 import useReplaceableEvents from "../../hooks/use-replaceable-events";
 import { getEventCoordinate, sortByDate } from "../../helpers/nostr/event";
 import IntersectionObserverProvider from "../../providers/local/intersection-observer";
 import ApprovedEvent from "../community/components/community-approved-post";
-import TimelineActionAndStatus from "../../components/timeline-page/timeline-action-and-status";
+import TimelineActionAndStatus from "../../components/timeline/timeline-action-and-status";
 import { usePublishEvent } from "../../providers/global/publish-provider";
-import { createCoordinate } from "../../classes/batch-kind-loader";
+import { createCoordinate } from "../../classes/batch-kind-pubkey-loader";
 
 function CommunitiesHomePage() {
   const publish = usePublishEvent();
@@ -85,10 +84,10 @@ function CommunitiesHomePage() {
 
     const pub = await publish("Create Community", draft, values.relays, false);
 
-    navigate(`/c/${getCommunityName(pub.event)}/${pub.event.pubkey}`);
+    if (pub) navigate(`/c/${getCommunityName(pub.event)}/${pub.event.pubkey}`);
   };
 
-  const timeline = useTimelineLoader(
+  const { loader, timeline: events } = useTimelineLoader(
     `all-communities-timeline`,
     readRelays,
     communityCoordinates.length > 0
@@ -111,7 +110,6 @@ function CommunitiesHomePage() {
     return Array.from(set);
   }, [communities]);
 
-  const events = useSubject(timeline.timeline);
   const approvalMap = buildApprovalMap(events, mods);
 
   const approved = events
@@ -119,7 +117,7 @@ function CommunitiesHomePage() {
     .map((event) => ({ event, approvals: approvalMap.get(event.id) }))
     .filter((e) => !muteFilter(e.event));
 
-  const callback = useTimelineCurserIntersectionCallback(timeline);
+  const callback = useTimelineCurserIntersectionCallback(loader);
 
   const communityDrawer = useDisclosure();
 
@@ -152,12 +150,12 @@ function CommunitiesHomePage() {
                   <ApprovedEvent key={event.id} event={event} approvals={approvals ?? []} showCommunity />
                 ))}
               </IntersectionObserverProvider>
-              <TimelineActionAndStatus timeline={timeline} />
+              <TimelineActionAndStatus timeline={loader} />
             </Flex>
             <Flex gap="2" direction="column" w="md" flexShrink={0} hideBelow="xl">
               <Heading size="md">Joined Communities</Heading>
               {communities.map((community) => (
-                <ErrorBoundary key={getEventCoordinate(community)}>
+                <ErrorBoundary key={getEventCoordinate(community)} event={community}>
                   <CommunityCard community={community} />
                 </ErrorBoundary>
               ))}
@@ -187,7 +185,7 @@ function CommunitiesHomePage() {
 
           <DrawerBody display="flex" flexDirection="column" gap="2" px="4" pt="0" pb="8" overflowY="auto">
             {communities.map((community) => (
-              <ErrorBoundary key={getEventCoordinate(community)}>
+              <ErrorBoundary key={getEventCoordinate(community)} event={community}>
                 <CommunityCard community={community} flexShrink={0} />
               </ErrorBoundary>
             ))}

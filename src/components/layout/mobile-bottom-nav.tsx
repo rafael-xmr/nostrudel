@@ -20,7 +20,7 @@ export default function MobileBottomNav(props: Omit<FlexProps, "children">) {
 
   return (
     <>
-      <Flex {...props} gap="2" padding="2" alignItems="center">
+      <Flex {...props} gap="2" p="2" alignItems="center" pb="calc(var(--chakra-space-2) + env(safe-area-inset-bottom))">
         {account ? (
           <UserAvatar pubkey={account.pubkey} size="sm" onClick={onOpen} noProxy />
         ) : (
@@ -63,12 +63,6 @@ export default function MobileBottomNav(props: Omit<FlexProps, "children">) {
           onClick={() => navigate("/notifications")}
           flexGrow="1"
           size="md"
-        />
-        <IconButton
-          icon={<Rocket02 boxSize={6} />}
-          aria-label="Launchpad"
-          onClick={() => navigate("/launchpad")}
-          isDisabled={account?.readonly ?? true}
         />
       </Flex>
       <MobileSideDrawer isOpen={isOpen} onClose={onClose} />

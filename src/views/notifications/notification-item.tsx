@@ -38,7 +38,7 @@ import useSingleEvent from "../../hooks/use-single-event";
 import { TORRENT_COMMENT_KIND } from "../../helpers/nostr/torrents";
 import NotificationIconEntry from "./components/notification-icon-entry";
 import { getPubkeysMentionedInContent } from "../../helpers/nostr/post";
-import useUserMetadata from "../../hooks/use-user-metadata";
+import useUserProfile from "../../hooks/use-user-profile";
 import useClientSideMuteFilter from "../../hooks/use-client-side-mute-filter";
 
 export const ExpandableToggleButton = ({
@@ -236,7 +236,7 @@ const ZapNotification = forwardRef<HTMLDivElement, { event: NostrEvent }>(
 const NotificationItem = ({ event }: { event: NostrEvent }) => {
 	const ref = useRef<HTMLDivElement | null>(null);
 	useRegisterIntersectionEntity(ref, getEventUID(event));
-	const userMetadata = useUserMetadata(event.pubkey);
+  const useMetadata = useUserProfile(pubkey, contextRelays);
 	const muteFilter = useClientSideMuteFilter();
 	const isMuted = muteFilter(event, userMetadata);
 

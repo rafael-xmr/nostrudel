@@ -1,6 +1,9 @@
-import { type NostrEvent, nip19 } from "nostr-tools";
+import { NostrEvent, nip19 } from "nostr-tools";
+import emojiRegex from "emoji-regex";
 import { truncatedId } from "./event";
+import { ProfileContent } from "applesauce-core/helpers";
 
+/** @deprecated use ProfileContent instead */
 export type Kind0ParsedContent = {
 	pubkey?: string;
 	name?: string;
@@ -20,6 +23,7 @@ export type Kind0ParsedContent = {
 	nip05?: string;
 };
 
+/** @deprecated use getProfileContent instead */
 export function parseMetadataContent(event: NostrEvent): Kind0ParsedContent {
 	try {
 		const metadata = JSON.parse(event.content) as Kind0ParsedContent;
@@ -37,24 +41,22 @@ export function parseMetadataContent(event: NostrEvent): Kind0ParsedContent {
 	return {};
 }
 
-export function getSearchNames(metadata: Kind0ParsedContent) {
-	if (!metadata) return [];
+export function getSearchNames(profile: ProfileContent) {
+  if (!profile) return [];
 
-	return [metadata.displayName, metadata.display_name, metadata.name].filter(
-		Boolean,
-	) as string[];
+  return [profile.displayName, profile.display_name, profile.name].filter(Boolean) as string[];
 }
 
-export function getUserDisplayName(
-	metadata: Kind0ParsedContent | undefined,
-	pubkey: string,
-) {
-	return (
-		metadata?.displayName ||
-		metadata?.display_name ||
-		metadata?.name ||
-		truncatedId(nip19.npubEncode(pubkey))
-	);
+const matchEmoji = emojiRegex();
+export function getDisplayName(metadata: Kind0ParsedContent | undefined, pubkey: string, removeEmojis = false) {
+  let displayName = metadata?.displayName || metadata?.display_name || metadata?.name;
+
+  if (displayName) {
+    if (removeEmojis) displayName = displayName.replaceAll(matchEmoji, "");
+    return displayName;
+  }
+
+  return truncatedId(nip19.npubEncode(pubkey));
 }
 
 export function fixWebsiteUrl(website: string) {

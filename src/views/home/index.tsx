@@ -14,14 +14,7 @@ import NoteFilterTypeButtons from "../../components/note-filter-type-buttons";
 import KindSelectionProvider, { useKindSelectionContext } from "../../providers/local/kind-selection-provider";
 import { useReadRelays } from "../../hooks/use-client-relays";
 
-const defaultKinds = [
-  kinds.ShortTextNote,
-  kinds.Repost,
-  kinds.GenericRepost,
-  kinds.LongFormArticle,
-  kinds.RecommendRelay,
-  kinds.BadgeAward,
-];
+const defaultKinds = [kinds.ShortTextNote, kinds.Repost, kinds.GenericRepost];
 
 function HomePage() {
   const showReplies = useDisclosure({ defaultIsOpen: localStorage.getItem("show-replies") === "true" });
@@ -49,9 +42,14 @@ function HomePage() {
   const { listId, filter } = usePeopleListContext();
   const { kinds } = useKindSelectionContext();
 
-  const timeline = useTimelineLoader(`${listId}-home-feed`, relays, filter ? { ...filter, kinds } : undefined, {
-    eventFilter,
-  });
+  const { loader, timeline } = useTimelineLoader(
+    `${listId}-home-feed`,
+    relays,
+    filter ? { ...filter, kinds } : undefined,
+    {
+      eventFilter,
+    },
+  );
 
   const header = (
     <Flex gap="2" wrap="wrap" alignItems="center">
@@ -62,7 +60,7 @@ function HomePage() {
     </Flex>
   );
 
-  return <TimelinePage timeline={timeline} header={header} pt="2" pb="12" px="2" />;
+  return <TimelinePage loader={loader} timeline={timeline} header={header} pt="2" pb="12" px="2" />;
 }
 
 export default function HomeView() {

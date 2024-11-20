@@ -1,15 +1,13 @@
 import {
 	Box,
 	Button,
-	ButtonProps,
+	type ButtonProps,
 	Link,
 	Text,
-	useDisclosure,
 	Image,
 } from "@chakra-ui/react";
 import { Link as RouterLink, useLocation } from "react-router-dom";
 import { nip19 } from "nostr-tools";
-import dayjs from "dayjs";
 
 import {
 	DirectMessagesIcon,
@@ -22,25 +20,18 @@ import {
 	SettingsIcon,
 	LogoutIcon,
 	NotesIcon,
-	LightningIcon,
 	ChannelsIcon,
 } from "../icons";
 import useCurrentAccount from "../../hooks/use-current-account";
 import accountService from "../../services/account";
-import { useLocalStorage } from "react-use";
-import ZapModal from "../event-zap-modal";
 import PuzzlePiece01 from "../icons/puzzle-piece-01";
 import Package from "../icons/package";
-import Rocket02 from "../icons/rocket-02";
 import { useBreakpointValue } from "../../providers/global/breakpoint-provider";
 import KeyboardShortcut from "../keyboard-shortcut";
-import Mail02 from "../icons/mail-02";
 
 export default function NavItems() {
 	const location = useLocation();
 	const account = useCurrentAccount();
-
-	const donateModal = useDisclosure();
 
 	const showShortcuts = useBreakpointValue({ base: false, md: true });
 
@@ -52,7 +43,6 @@ export default function NavItems() {
 
 	let active = "notes";
 	if (location.pathname.startsWith("/notifications")) active = "notifications";
-	else if (location.pathname.startsWith("/launchpad")) active = "launchpad";
 	else if (location.pathname.startsWith("/dvm")) active = "dvm";
 	else if (location.pathname.startsWith("/dm")) active = "dm";
 	else if (location.pathname.startsWith("/streams")) active = "streams";
@@ -76,24 +66,14 @@ export default function NavItems() {
 	else if (location.pathname.startsWith("/other-stuff")) active = "other-stuff";
 	else if (
 		account &&
-		(location.pathname.startsWith("/u/" + nip19.npubEncode(account.pubkey)) ||
-			location.pathname.startsWith("/u/" + account.pubkey))
+		(location.pathname.startsWith(`/u/${nip19.npubEncode(account.pubkey)}`) ||
+			location.pathname.startsWith(`/u/${account.pubkey}`))
 	) {
 		active = "profile";
 	}
 
 	return (
 		<>
-			<Button
-				as={RouterLink}
-				to="/launchpad"
-				leftIcon={<Rocket02 boxSize={6} />}
-				colorScheme={active === "launchpad" ? "primary" : undefined}
-				{...buttonProps}
-			>
-				Launchpad
-				{showShortcuts && <KeyboardShortcut letter="l" requireMeta ml="auto" />}
-			</Button>
 			<Button
 				as={RouterLink}
 				to="/"
@@ -105,7 +85,7 @@ export default function NavItems() {
 			</Button>
 			<Button
 				as={RouterLink}
-				to="/dvm"
+				to="/discovery"
 				leftIcon={<PuzzlePiece01 boxSize={6} />}
 				colorScheme={active === "dvm" ? "primary" : undefined}
 				{...buttonProps}
@@ -153,7 +133,7 @@ export default function NavItems() {
 			{account?.pubkey && (
 				<Button
 					as={RouterLink}
-					to={"/u/" + nip19.npubEncode(account.pubkey)}
+					to={`/u/${nip19.npubEncode(account.pubkey)}`}
 					leftIcon={<ProfileIcon boxSize={6} />}
 					colorScheme={active === "profile" ? "primary" : undefined}
 					{...buttonProps}

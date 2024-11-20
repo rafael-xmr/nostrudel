@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useState } from "react";
 import {
   Box,
   Spinner,
@@ -14,30 +14,25 @@ import {
   Tr,
   useColorMode,
 } from "@chakra-ui/react";
+import { getSeenRelays } from "applesauce-core/helpers";
 
 import TimelineLoader from "../../../classes/timeline-loader";
-import useSubject from "../../../hooks/use-subject";
-import { getEventRelays } from "../../../services/event-relays";
 import { NostrEvent } from "../../../types/nostr-event";
-import { useRegisterIntersectionEntity } from "../../../providers/local/intersection-observer";
 import { RelayFavicon } from "../../relay-favicon";
 import { NoteLink } from "../../note/note-link";
 import { BroadcastEventIcon } from "../../icons";
-import { getEventUID } from "../../../helpers/nostr/event";
 import Timestamp from "../../timestamp";
 import { usePublishEvent } from "../../../providers/global/publish-provider";
+import useEventIntersectionRef from "../../../hooks/use-event-intersection-ref";
 
 function EventRow({
   event,
   relays,
   ...props
 }: { event: NostrEvent; relays: string[] } & Omit<TableRowProps, "children">) {
-  const sub = useMemo(() => getEventRelays(event.id), [event.id]);
-  const seenRelays = useSubject(sub);
   const publish = usePublishEvent();
 
-  const ref = useRef<HTMLTableRowElement | null>(null);
-  useRegisterIntersectionEntity(ref, getEventUID(event));
+  const ref = useEventIntersectionRef(event);
 
   const { colorMode } = useColorMode();
   const yes = colorMode === "light" ? "green.200" : "green.800";
@@ -46,7 +41,7 @@ function EventRow({
   const [broadcasting, setBroadcasting] = useState(false);
   const broadcast = async () => {
     setBroadcasting(true);
-    await publish("Broadcast", event);
+    await publish("Broadcast", event, relays);
     setBroadcasting(false);
   };
 
@@ -67,7 +62,7 @@ function EventRow({
         {broadcasting ? <Spinner size="xs" /> : <BroadcastEventIcon />}
       </Td>
       {relays.map((relay) => (
-        <Td key={relay} title={relay} p="2" backgroundColor={seenRelays.includes(relay) ? yes : no}>
+        <Td key={relay} title={relay} p="2" backgroundColor={getSeenRelays(event)?.has(relay) ? yes : no}>
           <RelayFavicon relay={relay} size="2xs" />
         </Td>
       ))}
@@ -75,9 +70,8 @@ function EventRow({
   );
 }
 
-export default function TimelineHealth({ timeline }: { timeline: TimelineLoader }) {
-  const events = useSubject(timeline.timeline);
-  const relays = Array.from(Object.keys(timeline.queryMap));
+export default function TimelineHealth({ timeline, loader }: { loader: TimelineLoader; timeline: NostrEvent[] }) {
+  const relays = loader.relays.map((r) => r.url);
 
   return (
     <>
@@ -105,7 +99,7 @@ export default function TimelineHealth({ timeline }: { timeline: TimelineLoader 
             </Tr>
           </Thead>
           <Tbody>
-            {events.map((event) => (
+            {timeline.map((event) => (
               <EventRow key={event.id} event={event} relays={relays} />
             ))}
           </Tbody>

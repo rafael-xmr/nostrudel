@@ -1,10 +1,9 @@
-import accountService from "./account";
+import { NostrEvent } from "nostr-tools";
+import { BehaviorSubject } from "rxjs";
+
 import { RelayMode } from "../classes/relay";
-import userMailboxesService from "./user-mailboxes";
-import { PersistentSubject } from "../classes/subject";
 import { logger } from "../helpers/debug";
 import RelaySet from "../classes/relay-set";
-import { NostrEvent } from "nostr-tools";
 import { safeRelayUrls } from "../helpers/relay";
 
 export type RelayDirectory = Record<string, { read: boolean; write: boolean }>;
@@ -24,8 +23,8 @@ export const recommendedWriteRelays = new RelaySet(
 );
 
 class ClientRelayService {
-  readRelays = new PersistentSubject(new RelaySet());
-  writeRelays = new PersistentSubject(new RelaySet());
+  readRelays = new BehaviorSubject(new RelaySet());
+  writeRelays = new BehaviorSubject(new RelaySet());
 
   log = logger.extend("ClientRelays");
 
@@ -62,25 +61,13 @@ class ClientRelayService {
   }
   setRelaysFromRelaySet(event: NostrEvent) {
     this.writeRelays.next(RelaySet.fromNIP65Event(event, RelayMode.WRITE));
-    this.readRelays.next(RelaySet.fromNIP65Event(event, RelayMode.READ));
+    this.readRelays.next(RelaySet.fromNIP65Event(event, RelayMode.ALL));
     this.saveRelays();
   }
 
   saveRelays() {
     localStorage.setItem("read-relays", this.readRelays.value.urls.join(","));
     localStorage.setItem("write-relays", this.writeRelays.value.urls.join(","));
-  }
-
-  get outbox(): Iterable<string> {
-    const account = accountService.current.value;
-    if (account) return userMailboxesService.getMailboxes(account.pubkey).value?.outbox ?? [];
-    return [];
-  }
-
-  get inbox(): Iterable<string> {
-    const account = accountService.current.value;
-    if (account) return userMailboxesService.getMailboxes(account.pubkey).value?.inbox ?? [];
-    return [];
   }
 }
 

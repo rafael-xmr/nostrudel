@@ -1,23 +1,19 @@
+import { useMemo } from "react";
 import { Flex, SimpleGrid } from "@chakra-ui/react";
 import { useOutletContext } from "react-router-dom";
 import { Event, kinds } from "nostr-tools";
 
 import { useReadRelays } from "../../hooks/use-client-relays";
 import useTimelineLoader from "../../hooks/use-timeline-loader";
-import useSubject from "../../hooks/use-subject";
 import { useTimelineCurserIntersectionCallback } from "../../hooks/use-timeline-cursor-intersection-callback";
-import IntersectionObserverProvider, {
-  useRegisterIntersectionEntity,
-} from "../../providers/local/intersection-observer";
-import TimelineActionAndStatus from "../../components/timeline-page/timeline-action-and-status";
-import { useMemo, useRef } from "react";
-import { getEventUID } from "../../helpers/nostr/event";
+import IntersectionObserverProvider from "../../providers/local/intersection-observer";
+import TimelineActionAndStatus from "../../components/timeline/timeline-action-and-status";
 import UserLink from "../../components/user/user-link";
 import UserAvatarLink from "../../components/user/user-avatar-link";
+import useEventIntersectionRef from "../../hooks/use-event-intersection-ref";
 
 function FollowerItem({ event }: { event: Event }) {
-  const ref = useRef<HTMLDivElement | null>(null);
-  useRegisterIntersectionEntity(ref, getEventUID(event));
+  const ref = useEventIntersectionRef(event);
 
   return (
     <Flex gap="2" overflow="hidden" alignItems="center" ref={ref}>
@@ -31,22 +27,20 @@ export default function UserFollowersTab() {
   const { pubkey } = useOutletContext() as { pubkey: string };
   const readRelays = useReadRelays();
 
-  const timeline = useTimelineLoader(`${pubkey}-followers`, readRelays, {
+  const { loader, timeline: events } = useTimelineLoader(`${pubkey}-followers`, readRelays, {
     "#p": [pubkey],
     kinds: [kinds.Contacts],
   });
 
-  const lists = useSubject(timeline.timeline);
-  const followerEvents = useSubject(timeline.timeline);
-  const callback = useTimelineCurserIntersectionCallback(timeline);
+  const callback = useTimelineCurserIntersectionCallback(loader);
 
   const followers = useMemo(() => {
     const dedupe = new Map<string, Event>();
-    for (const event of followerEvents) {
+    for (const event of events) {
       dedupe.set(event.pubkey, event);
     }
     return Array.from(dedupe.values());
-  }, [followerEvents]);
+  }, [events]);
 
   return (
     <IntersectionObserverProvider callback={callback}>
@@ -55,7 +49,7 @@ export default function UserFollowersTab() {
           <FollowerItem key={event.pubkey} event={event} />
         ))}
       </SimpleGrid>
-      <TimelineActionAndStatus timeline={timeline} />
+      <TimelineActionAndStatus timeline={loader} />
     </IntersectionObserverProvider>
   );
 }

@@ -16,14 +16,11 @@ import {
   Spinner,
   useDisclosure,
 } from "@chakra-ui/react";
-import { useParams, Navigate, useSearchParams, useNavigate } from "react-router-dom";
-import { nip19 } from "nostr-tools";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { Global, css } from "@emotion/react";
 
-import { ParsedStream, STREAM_KIND, parseStreamEvent } from "../../../helpers/nostr/stream";
-import { useReadRelays } from "../../../hooks/use-client-relays";
-import { unique } from "../../../helpers/array";
-import { LiveVideoPlayer } from "../../../components/live-video-player";
+import { ParsedStream, parseStreamEvent } from "../../../helpers/nostr/stream";
+import LiveVideoPlayer from "../../../components/live-video-player";
 import StreamChat, { ChatDisplayMode } from "./stream-chat";
 import UserAvatarLink from "../../../components/user/user-avatar-link";
 import UserLink from "../../../components/user/user-link";
@@ -31,8 +28,6 @@ import StreamSummaryContent from "../components/stream-summary-content";
 import { ChevronLeftIcon, ExternalLinkIcon } from "../../../components/icons";
 import useSetColorMode from "../../../hooks/use-set-color-mode";
 import { CopyIconButton } from "../../../components/copy-icon-button";
-import replaceableEventsService from "../../../services/replaceable-events";
-import useSubject from "../../../hooks/use-subject";
 import StreamerCards from "../components/streamer-cards";
 import { useAppTitle } from "../../../hooks/use-app-title";
 import StreamSatsPerMinute from "../components/stream-sats-per-minute";
@@ -49,6 +44,8 @@ import VerticalPageLayout from "../../../components/vertical-page-layout";
 import { useBreakpointValue } from "../../../providers/global/breakpoint-provider";
 import { AdditionalRelayProvider } from "../../../providers/local/additional-relay-context";
 import DebugEventButton from "../../../components/debug-modal/debug-event-button";
+import useParamsAddressPointer from "../../../hooks/use-params-address-pointer";
+import useReplaceableEvent from "../../../hooks/use-replaceable-event";
 
 function DesktopStreamPage({ stream }: { stream: ParsedStream }) {
   useAppTitle(stream.title);
@@ -85,7 +82,7 @@ function DesktopStreamPage({ stream }: { stream: ParsedStream }) {
   return (
     <VerticalPageLayout>
       <Flex gap="2" alignItems="center">
-        <Button onClick={() => navigate(-1)} leftIcon={<ChevronLeftIcon />}>
+        <Button onClick={() => navigate(-1)} leftIcon={<ChevronLeftIcon boxSize={6} />}>
           Back
         </Button>
         <UserAvatarLink pubkey={stream.host} size="sm" display={{ base: "none", md: "block" }} />
@@ -122,7 +119,6 @@ function DesktopStreamPage({ stream }: { stream: ParsedStream }) {
           <UserLink pubkey={stream.host} />
         </Box>
         <Spacer />
-        {!!window.webln && <StreamSatsPerMinute pubkey={stream.host} />}
       </Flex>
       <StreamSummaryContent stream={stream} />
       {stream.tags.length > 0 && (
@@ -203,7 +199,7 @@ function StreamPage({ stream }: { stream: ParsedStream }) {
   const Layout = isMobile ? MobileStreamPage : DesktopStreamPage;
 
   // const chatTimeline = useStreamChatTimeline(stream);
-  // const chatLog = useSubject(chatTimeline.timeline);
+  // const chatLog = useObservable(chatTimeline.timeline);
   // const pubkeysInChat = useMemo(() => {
   //   const set = new Set<string>();
   //   for (const event of chatLog) {
@@ -235,36 +231,14 @@ function ChatWidget({ stream, displayMode }: { stream: ParsedStream; displayMode
 }
 
 export default function StreamView() {
-  const { naddr } = useParams();
   const [params] = useSearchParams();
   useSetColorMode();
 
-  if (!naddr) return <Navigate replace to="/streams" />;
-
-  const readRelays = useReadRelays();
+  const pointer = useParamsAddressPointer("naddr", true);
   const [streamRelays, setStreamRelays] = useState<string[]>([]);
 
-  const subject = useMemo(() => {
-    try {
-      const parsed = nip19.decode(naddr);
-      if (parsed.type !== "naddr") throw new Error("Invalid stream address");
-      if (parsed.data.kind !== STREAM_KIND) throw new Error("Invalid stream kind");
-
-      const addrRelays = parsed.data.relays ?? [];
-      return replaceableEventsService.requestEvent(
-        unique([...readRelays, ...streamRelays, ...addrRelays]),
-        parsed.data.kind,
-        parsed.data.pubkey,
-        parsed.data.identifier,
-        { alwaysRequest: true },
-      );
-    } catch (e) {
-      console.log(e);
-    }
-  }, [naddr, streamRelays.join("|")]);
-
-  const streamEvent = useSubject(subject);
-  const stream = useMemo(() => streamEvent && parseStreamEvent(streamEvent), [streamEvent]);
+  const event = useReplaceableEvent(pointer, streamRelays);
+  const stream = useMemo(() => event && parseStreamEvent(event), [event]);
 
   // refetch the stream from the correct relays when its loaded to ensure we have the latest
   useEffect(() => {

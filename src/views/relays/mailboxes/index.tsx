@@ -1,36 +1,24 @@
-import {
-  Button,
-  Card,
-  CardBody,
-  CardFooter,
-  CardHeader,
-  Flex,
-  Heading,
-  IconButton,
-  Link,
-  Text,
-} from "@chakra-ui/react";
+import { useCallback } from "react";
+import { Flex, Heading, IconButton, Link, Text } from "@chakra-ui/react";
 import { CloseIcon } from "@chakra-ui/icons";
 import { Link as RouterLink } from "react-router-dom";
 
-import VerticalPageLayout from "../../../components/vertical-page-layout";
 import RequireCurrentAccount from "../../../providers/route/require-current-account";
 import useUserMailboxes from "../../../hooks/use-user-mailboxes";
 import useCurrentAccount from "../../../hooks/use-current-account";
 import { InboxIcon, OutboxIcon } from "../../../components/icons";
-import { RelayUrlInput } from "../../../components/relay-url-input";
-import { RelayFavicon } from "../../../components/relay-favicon";
+import MediaServerFavicon from "../../../components/media-server/media-server-favicon";
 import { RelayMode } from "../../../classes/relay";
-import { useCallback } from "react";
 import { NostrEvent } from "../../../types/nostr-event";
-import { addRelayModeToMailbox, removeRelayModeFromMailbox } from "../../../helpers/nostr/mailbox";
 import useAsyncErrorHandler from "../../../hooks/use-async-error-handler";
-import { useForm } from "react-hook-form";
-import { safeRelayUrl } from "../../../helpers/relay";
 import { usePublishEvent } from "../../../providers/global/publish-provider";
 import { COMMON_CONTACT_RELAY } from "../../../const";
 import BackButton from "../../../components/router/back-button";
+import { addRelayModeToMailbox, removeRelayModeFromMailbox } from "../../../helpers/nostr/mailbox";
 import AddRelayForm from "../app/add-relay-form";
+import DebugEventButton from "../../../components/debug-modal/debug-event-button";
+import useReplaceableEvent from "../../../hooks/use-replaceable-event";
+import { kinds } from "nostr-tools";
 
 function RelayLine({ relay, mode, list }: { relay: string; mode: RelayMode; list?: NostrEvent }) {
   const publish = usePublishEvent();
@@ -41,7 +29,7 @@ function RelayLine({ relay, mode, list }: { relay: string; mode: RelayMode; list
 
   return (
     <Flex key={relay} gap="2" alignItems="center" overflow="hidden">
-      <RelayFavicon relay={relay} size="xs" />
+      <MediaServerFavicon server={relay} size="xs" />
       <Link as={RouterLink} to={`/r/${encodeURIComponent(relay)}`} isTruncated>
         {relay}
       </Link>
@@ -61,7 +49,8 @@ function RelayLine({ relay, mode, list }: { relay: string; mode: RelayMode; list
 function MailboxesPage() {
   const account = useCurrentAccount()!;
   const publish = usePublishEvent();
-  const { inbox, outbox, event } = useUserMailboxes(account.pubkey, { alwaysRequest: true, ignoreCache: true }) || {};
+  const mailboxes = useUserMailboxes(account.pubkey, undefined, { alwaysRequest: true, ignoreCache: true });
+  const event = useReplaceableEvent({ kind: kinds.RelayList, pubkey: account.pubkey });
 
   const addRelay = useCallback(
     async (relay: string, mode: RelayMode) => {
@@ -76,6 +65,7 @@ function MailboxesPage() {
       <Flex gap="2" alignItems="center">
         <BackButton hideFrom="lg" size="sm" />
         <Heading size="lg">Mailboxes</Heading>
+        {event && <DebugEventButton event={event} size="sm" ml="auto" />}
       </Flex>
       <Text fontStyle="italic" mt="-2">
         Mailbox relays are a way for other users to find your events, or send you events. they are defined in{" "}
@@ -96,9 +86,11 @@ function MailboxesPage() {
       <Text fontStyle="italic" mt="-2">
         These relays are used by other users to send DMs and notes to you
       </Text>
-      {inbox?.urls
+      {Array.from(mailboxes?.inboxes ?? [])
         .sort()
-        .map((url) => <RelayLine key={url} relay={url} mode={RelayMode.READ} list={event ?? undefined} />)}
+        .map((url) => (
+          <RelayLine key={url} relay={url} mode={RelayMode.READ} list={event ?? undefined} />
+        ))}
       <AddRelayForm onSubmit={(r) => addRelay(r, RelayMode.READ)} />
 
       <Flex gap="2" mt="4">
@@ -108,9 +100,11 @@ function MailboxesPage() {
       <Text fontStyle="italic" mt="-2">
         moStard will always publish to these relays so other users can find your notes
       </Text>
-      {outbox?.urls
+      {Array.from(mailboxes?.outboxes ?? [])
         .sort()
-        .map((url) => <RelayLine key={url} relay={url} mode={RelayMode.WRITE} list={event ?? undefined} />)}
+        .map((url) => (
+          <RelayLine key={url} relay={url} mode={RelayMode.WRITE} list={event ?? undefined} />
+        ))}
       <AddRelayForm onSubmit={(r) => addRelay(r, RelayMode.WRITE)} />
     </Flex>
   );
