@@ -1,18 +1,19 @@
 import { useRef, memo } from "react";
 import {
-  Box,
-  ButtonGroup,
-  Card,
-  CardBody,
-  CardFooter,
-  CardHeader,
-  CardProps,
-  Flex,
-  IconButton,
-  Link,
-  LinkBox,
-  Text,
-  useDisclosure,
+	Box,
+	ButtonGroup,
+	Card,
+	CardBody,
+	CardFooter,
+	CardHeader,
+	CardProps,
+	Flex,
+	Heading,
+	IconButton,
+	Link,
+	LinkBox,
+	Text,
+	useDisclosure,
 } from "@chakra-ui/react";
 import { NostrEvent } from "../../../types/nostr-event";
 import UserAvatarLink from "../../user/user-avatar-link";
@@ -54,161 +55,214 @@ import { nip19 } from "nostr-tools";
 import POWIcon from "../../pow/pow-icon";
 
 function ReplyToE({ pointer }: { pointer: EventPointer }) {
-  const event = useSingleEvent(pointer.id, pointer.relays);
+	const event = useSingleEvent(pointer.id, pointer.relays);
 
-  if (!event) {
-    const nevent = nip19.neventEncode(pointer);
-    return (
-      <Text>
-        Replying to{" "}
-        <Link as={RouterLink} to={`/l/${nevent}`} color="blue.500">
-          {truncatedId(nevent)}
-        </Link>
-      </Text>
-    );
-  }
+	if (!event) {
+		const nevent = nip19.neventEncode(pointer);
+		return (
+			<Text>
+				Replying to{" "}
+				<Link as={RouterLink} to={`/l/${nevent}`} color="blue.500">
+					{truncatedId(nevent)}
+				</Link>
+			</Text>
+		);
+	}
 
-  return (
-    <>
-      <Text>
-        Replying to <UserLink pubkey={event.pubkey} fontWeight="bold" />
-      </Text>
-      <CompactNoteContent event={event} maxLength={96} isTruncated textOnly />
-    </>
-  );
+	return (
+		<>
+			<Text>
+				Replying to <UserLink pubkey={event.pubkey} fontWeight="bold" />
+			</Text>
+			<CompactNoteContent event={event} maxLength={96} isTruncated textOnly />
+		</>
+	);
 }
 function ReplyToA({ pointer }: { pointer: AddressPointer }) {
-  const naddr = nip19.naddrEncode(pointer);
+	const naddr = nip19.naddrEncode(pointer);
 
-  return (
-    <Text>
-      Replying to{" "}
-      <Link as={RouterLink} to={`/l/${naddr}`} color="blue.500">
-        {truncatedId(naddr)}
-      </Link>
-    </Text>
-  );
+	return (
+		<Text>
+			Replying to{" "}
+			<Link as={RouterLink} to={`/l/${naddr}`} color="blue.500">
+				{truncatedId(naddr)}
+			</Link>
+		</Text>
+	);
 }
 
 function ReplyLine({ event }: { event: NostrEvent }) {
-  const refs = getThreadReferences(event);
-  if (!refs.reply) return null;
+	const refs = getThreadReferences(event);
+	if (!refs.reply) return null;
 
-  return (
-    <Flex gap="2" fontStyle="italic" alignItems="center" whiteSpace="nowrap">
-      <ReplyIcon />
-      {refs.reply.e ? <ReplyToE pointer={refs.reply.e} /> : <ReplyToA pointer={refs.reply.a} />}
-    </Flex>
-  );
+	return (
+		<Flex gap="2" fontStyle="italic" alignItems="center" whiteSpace="nowrap">
+			<ReplyIcon />
+			{refs.reply.e ? (
+				<ReplyToE pointer={refs.reply.e} />
+			) : (
+				<ReplyToA pointer={refs.reply.a} />
+			)}
+		</Flex>
+	);
 }
 
 export type NoteProps = Omit<CardProps, "children"> & {
-  event: NostrEvent;
-  variant?: CardProps["variant"];
-  showReplyButton?: boolean;
-  showReplyLine?: boolean;
-  hideDrawerButton?: boolean;
-  registerIntersectionEntity?: boolean;
-  clickable?: boolean;
+	event: NostrEvent;
+	variant?: CardProps["variant"];
+	showReplyButton?: boolean;
+	showReplyLine?: boolean;
+	hideDrawerButton?: boolean;
+	registerIntersectionEntity?: boolean;
+	clickable?: boolean;
 };
 export function TimelineNote({
-  event,
-  variant = "outline",
-  showReplyButton,
-  showReplyLine = true,
-  hideDrawerButton,
-  registerIntersectionEntity = true,
-  clickable = true,
-  ...props
+	event,
+	variant = "outline",
+	showReplyButton,
+	showReplyLine = true,
+	hideDrawerButton,
+	registerIntersectionEntity = true,
+	clickable = true,
+	...props
 }: NoteProps) {
-  const account = useCurrentAccount();
-  const { showReactions, showSignatureVerification } = useSubject(appSettings);
-  const replyForm = useDisclosure();
-  const detailsModal = useDisclosure();
+	const account = useCurrentAccount();
+	const { showReactions, showSignatureVerification } = useSubject(appSettings);
+	const replyForm = useDisclosure();
+	const detailsModal = useDisclosure();
 
-  const ref = useRef<HTMLDivElement | null>(null);
-  useRegisterIntersectionEntity(ref, event.id);
+	const ref = useRef<HTMLDivElement | null>(null);
+	useRegisterIntersectionEntity(ref, event.id);
 
-  const showReactionsOnNewLine = useBreakpointValue({ base: true, lg: false });
+	const showReactionsOnNewLine = useBreakpointValue({ base: true, lg: false });
 
-  const reactionButtons = showReactions && <NoteReactions event={event} flexWrap="wrap" variant="ghost" size="sm" />;
+	const reactionButtons = showReactions && (
+		<NoteReactions event={event} flexWrap="wrap" variant="ghost" size="sm" />
+	);
 
-  return (
-    <TrustProvider event={event}>
-      <ExpandProvider>
-        <Card
-          as={LinkBox}
-          variant={variant}
-          ref={registerIntersectionEntity ? ref : undefined}
-          data-event-id={event.id}
-          {...props}
-        >
-          {clickable && (
-            <HoverLinkOverlay
-              as={RouterLink}
-              to={`/n/${getSharableEventAddress(event)}`}
-              onClick={() => singleEventService.handleEvent(event)}
-            />
-          )}
-          <CardHeader p="2">
-            <Flex flex="1" gap="2" alignItems="center">
-              <UserAvatarLink pubkey={event.pubkey} size={["xs", "sm"]} />
-              <UserLink pubkey={event.pubkey} isTruncated fontWeight="bold" fontSize="lg" />
-              <UserDnsIdentityIcon pubkey={event.pubkey} onlyIcon />
-              <POWIcon event={event} boxSize={5} />
-              <Flex grow={1} />
-              {showSignatureVerification && <EventVerificationIcon event={event} />}
-              {!hideDrawerButton && (
-                <OpenInDrawerButton
-                  to={`/n/${getSharableEventAddress(event)}`}
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => singleEventService.handleEvent(event)}
-                />
-              )}
-              <Link as={RouterLink} whiteSpace="nowrap" color="current" to={`/n/${getSharableEventAddress(event)}`}>
-                <Timestamp timestamp={event.created_at} />
-              </Link>
-            </Flex>
-            <NoteCommunityMetadata event={event} />
-            {showReplyLine && <ReplyLine event={event} />}
-          </CardHeader>
-          <CardBody p="0">
-            <NoteContentWithWarning event={event} />
-          </CardBody>
-          <CardFooter padding="2" display="flex" gap="2" flexDirection="column" alignItems="flex-start">
-            {showReactionsOnNewLine && reactionButtons}
-            <Flex gap="2" w="full" alignItems="center">
-              <ButtonGroup size="sm" variant="ghost" isDisabled={account?.readonly ?? true}>
-                {showReplyButton && (
-                  <IconButton icon={<ReplyIcon />} aria-label="Reply" title="Reply" onClick={replyForm.onOpen} />
-                )}
-                <RepostButton event={event} />
-                <QuoteRepostButton event={event} />
-                <NoteZapButton event={event} />
-              </ButtonGroup>
-              {!showReactionsOnNewLine && reactionButtons}
-              <Box flexGrow={1} />
-              <ButtonGroup size="sm" variant="ghost">
-                <NoteProxyLink event={event} />
-                <NoteDetailsButton event={event} onClick={detailsModal.onOpen} />
-                <BookmarkButton event={event} aria-label="Bookmark note" />
-                <NoteMenu event={event} aria-label="More Options" detailsClick={detailsModal.onOpen} />
-              </ButtonGroup>
-            </Flex>
-          </CardFooter>
-        </Card>
-      </ExpandProvider>
-      {replyForm.isOpen && (
-        <ReplyForm
-          item={{ event, replies: [], refs: getThreadReferences(event) }}
-          onCancel={replyForm.onClose}
-          onSubmitted={replyForm.onClose}
-        />
-      )}
-      {detailsModal.isOpen && <EventInteractionDetailsModal isOpen onClose={detailsModal.onClose} event={event} />}
-    </TrustProvider>
-  );
+	return (
+		<TrustProvider event={event}>
+			<ExpandProvider>
+				<Card
+					variant={variant}
+					ref={registerIntersectionEntity ? ref : undefined}
+					data-event-id={event.id}
+					{...props}
+				>
+					<LinkBox>
+						<CardHeader p="2">
+							<HoverLinkOverlay
+								as={RouterLink}
+								to={`/n/${getSharableEventAddress(event)}`}
+								onClick={() => singleEventService.handleEvent(event)}
+							/>
+
+							<Flex flex="1" gap="2" alignItems="center">
+								<UserAvatarLink pubkey={event.pubkey} size={["xs", "sm"]} />
+								<UserLink
+									pubkey={event.pubkey}
+									isTruncated
+									fontWeight="bold"
+									fontSize="lg"
+								/>
+								<UserDnsIdentityIcon pubkey={event.pubkey} onlyIcon />
+								<POWIcon event={event} boxSize={5} />
+								<Flex grow={1} />
+								{showSignatureVerification && (
+									<EventVerificationIcon event={event} />
+								)}
+								{!hideDrawerButton && (
+									<OpenInDrawerButton
+										to={`/n/${getSharableEventAddress(event)}`}
+										size="sm"
+										variant="ghost"
+										onClick={() => singleEventService.handleEvent(event)}
+									/>
+								)}
+								<Link
+									as={RouterLink}
+									whiteSpace="nowrap"
+									color="current"
+									to={`/n/${getSharableEventAddress(event)}`}
+								>
+									<Timestamp timestamp={event.created_at} />
+								</Link>
+							</Flex>
+							<NoteCommunityMetadata event={event} />
+							{showReplyLine && <ReplyLine event={event} />}
+						</CardHeader>
+					</LinkBox>
+					<CardBody p="0">
+						<NoteContentWithWarning event={event} />
+					</CardBody>
+					<LinkBox>
+						<CardFooter
+							padding="2"
+							display="flex"
+							gap="2"
+							flexDirection="column"
+							alignItems="flex-start"
+						>
+							<HoverLinkOverlay
+								as={RouterLink}
+								to={`/n/${getSharableEventAddress(event)}`}
+								onClick={() => singleEventService.handleEvent(event)}
+							/>
+							{showReactionsOnNewLine && reactionButtons}
+							<Flex gap="2" w="full" alignItems="center">
+								<ButtonGroup
+									size="sm"
+									variant="ghost"
+									isDisabled={account?.readonly ?? true}
+								>
+									{showReplyButton && (
+										<IconButton
+											icon={<ReplyIcon />}
+											aria-label="Reply"
+											title="Reply"
+											onClick={replyForm.onOpen}
+										/>
+									)}
+									<RepostButton event={event} />
+									<QuoteRepostButton event={event} />
+									<NoteZapButton event={event} />
+								</ButtonGroup>
+								{!showReactionsOnNewLine && reactionButtons}
+								<Box flexGrow={1} />
+								<ButtonGroup size="sm" variant="ghost">
+									<NoteProxyLink event={event} />
+									<NoteDetailsButton
+										event={event}
+										onClick={detailsModal.onOpen}
+									/>
+									<BookmarkButton event={event} aria-label="Bookmark note" />
+									<NoteMenu
+										event={event}
+										aria-label="More Options"
+										detailsClick={detailsModal.onOpen}
+									/>
+								</ButtonGroup>
+							</Flex>
+						</CardFooter>
+					</LinkBox>
+				</Card>
+			</ExpandProvider>
+			{replyForm.isOpen && (
+				<ReplyForm
+					item={{ event, replies: [], refs: getThreadReferences(event) }}
+					onCancel={replyForm.onClose}
+					onSubmitted={replyForm.onClose}
+				/>
+			)}
+			{detailsModal.isOpen && (
+				<EventInteractionDetailsModal
+					isOpen
+					onClose={detailsModal.onClose}
+					event={event}
+				/>
+			)}
+		</TrustProvider>
+	);
 }
 
 export default memo(TimelineNote);
