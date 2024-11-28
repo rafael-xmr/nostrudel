@@ -5,26 +5,43 @@ import { getPointerFromTag } from "applesauce-core/helpers";
 import { PTag, isATag, isDTag, isPTag, isRTag } from "../../types/nostr-event";
 import { getEventCoordinate, replaceOrAddSimpleTag } from "./event";
 import { getRelayVariations, safeRelayUrls } from "../relay";
+import { isAddressPointerInList, isEventPointerInList, isProfilePointerInList } from "applesauce-lists/helpers";
 
-export const MUTE_LIST_KIND = kinds.Mutelist;
-export const PIN_LIST_KIND = kinds.Pinlist;
-export const BOOKMARK_LIST_KIND = kinds.BookmarkList;
-export const COMMUNITIES_LIST_KIND = kinds.CommunitiesList;
-export const CHANNELS_LIST_KIND = kinds.PublicChatsList;
-
-export const PEOPLE_LIST_KIND = kinds.Followsets;
-export const NOTE_LIST_KIND = 30001;
-export const BOOKMARK_LIST_SET_KIND = kinds.Bookmarksets;
+export const LIST_KINDS = [
+  kinds.Mutelist,
+  kinds.Pinlist,
+  kinds.RelayList,
+  kinds.BookmarkList,
+  kinds.CommunitiesList,
+  kinds.PublicChatsList,
+  kinds.BlockedRelaysList,
+  kinds.SearchRelaysList,
+  kinds.InterestsList,
+  kinds.UserEmojiList,
+  kinds.DirectMessageRelaysList,
+];
+export const SET_KINDS = [
+  kinds.Followsets,
+  kinds.Bookmarksets,
+  kinds.Genericlists,
+  kinds.Relaysets,
+  kinds.Interestsets,
+  kinds.Emojisets,
+  kinds.Curationsets,
+];
 
 export function getListName(event: NostrEvent) {
   if (event.kind === kinds.Contacts) return "Following";
-  if (event.kind === MUTE_LIST_KIND) return "Mute";
-  if (event.kind === PIN_LIST_KIND) return "Pins";
-  if (event.kind === BOOKMARK_LIST_KIND) return "Bookmarks";
-  if (event.kind === COMMUNITIES_LIST_KIND) return "Communities";
+  if (event.kind === kinds.Mutelist) return "Mute";
+  if (event.kind === kinds.Pinlist) return "Pins";
+  if (event.kind === kinds.BookmarkList) return "Bookmarks";
+  if (event.kind === kinds.CommunitiesList) return "Communities";
+  if (event.kind === kinds.InterestsList) return "Interests";
+  if (event.kind === kinds.PublicChatsList) return "Public Chats";
+
   return (
-    event.tags.find((t) => t[0] === "name")?.[1] ||
     event.tags.find((t) => t[0] === "title")?.[1] ||
+    event.tags.find((t) => t[0] === "name")?.[1] ||
     event.tags.find(isDTag)?.[1]
   );
 }
@@ -41,18 +58,13 @@ export function setListDescription(draft: EventTemplate, description: string) {
 export function isJunkList(event: NostrEvent) {
   const name = event.tags.find(isDTag)?.[1];
   if (!name) return false;
-  if (event.kind !== PEOPLE_LIST_KIND) return false;
+  if (event.kind !== kinds.Followsets) return false;
   return /^(chats\/([0-9a-f]{64}|null)|notifications)\/lastOpened$/.test(name);
 }
+
+/** Check if is kind is list */
 export function isSpecialListKind(kind: number) {
-  return (
-    kind === kinds.Contacts ||
-    kind === MUTE_LIST_KIND ||
-    kind === PIN_LIST_KIND ||
-    kind === BOOKMARK_LIST_KIND ||
-    kind === COMMUNITIES_LIST_KIND ||
-    kind === CHANNELS_LIST_KIND
-  );
+  return kind === kinds.Contacts || LIST_KINDS.includes(kind);
 }
 
 export function cloneList(list: NostrEvent, keepCreatedAt = false): EventTemplate {
@@ -74,21 +86,7 @@ export function getRelaysFromList(event: NostrEvent | EventTemplate) {
   if (event.kind === kinds.RelayList) return safeRelayUrls(event.tags.filter(isRTag).map((t) => t[1]));
   else return safeRelayUrls(event.tags.filter((t) => t[0] === "relay" && t[1]).map((t) => t[1]) as string[]);
 }
-export function getCoordinatesFromList(event: NostrEvent | EventTemplate) {
-  return event.tags.filter(isATag).map((t) => ({ coordinate: t[1], relay: t[2] }));
-}
-export function getEventPointersFromList(event: NostrEvent | EventTemplate): nip19.EventPointer[] {
-  return event.tags
-    .map(getPointerFromTag)
-    .filter((r) => r?.type === "nevent")
-    .map((r) => r.data);
-}
-export function getAddressPointersFromList(event: NostrEvent | EventTemplate): nip19.AddressPointer[] {
-  return event.tags
-    .map(getPointerFromTag)
-    .filter((r) => r?.type === "naddr")
-    .map((r) => r.data);
-}
+
 export function getPointersFromList(event: NostrEvent | EventTemplate) {
   return event.tags.map(getPointerFromTag).filter((r) => r !== null);
 }
@@ -97,17 +95,20 @@ export function isRelayInList(list: NostrEvent, relay: string) {
   const relays = getRelaysFromList(list);
   return getRelayVariations(relay).some((r) => relays.includes(r));
 }
+
+/** @deprecated */
 export function isPubkeyInList(list?: NostrEvent, pubkey?: string) {
   if (!pubkey || !list) return false;
-  return list.tags.some((t) => t[0] === "p" && t[1] === pubkey);
+  return isProfilePointerInList(list, pubkey);
 }
+
 export function isEventInList(list?: NostrEvent, event?: NostrEvent) {
   if (!event || !list) return false;
 
   if (kinds.isParameterizedReplaceableKind(event.kind)) {
     const cord = getEventCoordinate(event);
-    return list.tags.some((t) => t[0] === "a" && t[1] === cord);
-  } else return list.tags.some((t) => t[0] === "e" && t[1] === event.id);
+    return isAddressPointerInList(list, cord);
+  } else return isEventPointerInList(list, event.id);
 }
 
 export function createEmptyContactList(): EventTemplate {
@@ -119,6 +120,7 @@ export function createEmptyContactList(): EventTemplate {
   };
 }
 
+/** @deprecated */
 export function listAddPerson(
   list: NostrEvent | EventTemplate,
   pubkey: string,
@@ -137,6 +139,7 @@ export function listAddPerson(
   };
 }
 
+/** @deprecated */
 export function listRemovePerson(list: NostrEvent | EventTemplate, pubkey: string): EventTemplate {
   return {
     created_at: dayjs().unix(),
@@ -146,6 +149,7 @@ export function listRemovePerson(list: NostrEvent | EventTemplate, pubkey: strin
   };
 }
 
+/** @deprecated */
 export function listAddEvent(list: NostrEvent | EventTemplate, event: NostrEvent, relay?: string): EventTemplate {
   const tag = kinds.isParameterizedReplaceableKind(event.kind) ? ["a", getEventCoordinate(event)] : ["e", event.id];
   if (relay) tag.push(relay);
@@ -160,6 +164,7 @@ export function listAddEvent(list: NostrEvent | EventTemplate, event: NostrEvent
   };
 }
 
+/** @deprecated */
 export function listRemoveEvent(list: NostrEvent | EventTemplate, event: NostrEvent): EventTemplate {
   const tag = kinds.isParameterizedReplaceableKind(event.kind) ? ["a", getEventCoordinate(event)] : ["e", event.id];
 
@@ -190,6 +195,7 @@ export function listRemoveRelay(list: NostrEvent | EventTemplate, relay: string)
   };
 }
 
+/** @deprecated */
 export function listAddCoordinate(list: NostrEvent | EventTemplate, coordinate: string, relay?: string): EventTemplate {
   if (list.tags.some((t) => t[0] === "a" && t[1] === coordinate)) throw new Error("Event already in list");
 
@@ -201,6 +207,7 @@ export function listAddCoordinate(list: NostrEvent | EventTemplate, coordinate: 
   };
 }
 
+/** @deprecated */
 export function listRemoveCoordinate(list: NostrEvent | EventTemplate, coordinate: string): EventTemplate {
   return {
     created_at: dayjs().unix(),

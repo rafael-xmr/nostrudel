@@ -116,6 +116,7 @@ import PostSettings from "./views/settings/post";
 import AccountSettings from "./views/settings/accounts";
 import ArticlesHomeView from "./views/articles";
 import ArticleView from "./views/articles/article";
+import WalletView from "./views/wallet";
 const TracksView = lazy(() => import("./views/tracks"));
 const UserTracksTab = lazy(() => import("./views/user/tracks"));
 const UserVideosTab = lazy(() => import("./views/user/videos"));
@@ -134,6 +135,7 @@ const DMTimelineView = lazy(() => import("./views/tools/dm-timeline"));
 const TransformNoteView = lazy(() => import("./views/tools/transform-note"));
 const SatelliteCDNView = lazy(() => import("./views/tools/satellite-cdn"));
 const CorrectionsFeedView = lazy(() => import("./views/tools/corrections"));
+const NoStrudelUsersView = lazy(() => import("./views/tools/nostrudel-users/index"));
 
 const UserStreamsTab = lazy(() => import("./views/user/streams"));
 const StreamsView = lazy(() => import("./views/streams"));

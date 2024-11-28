@@ -10,20 +10,26 @@ import {
 	Link,
 	Textarea,
 } from "@chakra-ui/react";
-import dayjs from "dayjs";
 import { useForm } from "react-hook-form";
+import { type ProfileContent, unixNow } from "applesauce-core/helpers";
 
 import { ExternalLinkIcon } from "../../components/icons";
 import { isXMR } from "../../helpers/monero";
-import type { Kind0ParsedContent } from "../../helpers/nostr/user-metadata";
 import { useReadRelays } from "../../hooks/use-client-relays";
 import useCurrentAccount from "../../hooks/use-current-account";
 import useUserProfile from "../../hooks/use-user-profile";
 import dnsIdentityService from "../../services/dns-identity";
 import type { DraftNostrEvent } from "../../types/nostr-event";
 import VerticalPageLayout from "../../components/vertical-page-layout";
-import { COMMON_CONTACT_RELAY } from "../../const";
+import { COMMON_CONTACT_RELAYS } from "../../const";
 import { usePublishEvent } from "../../providers/global/publish-provider";
+
+const isEmail =
+	/^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+
+function isLightningAddress(addr: string) {
+	return isEmail.test(addr);
+}
 
 type FormData = {
 	displayName?: string;
@@ -55,6 +61,10 @@ const MetadataForm = ({ defaultValues, onSubmit }: MetadataFormProps) => {
 		mode: "onBlur",
 		defaultValues,
 	});
+
+	useEffect(() => {
+		reset(defaultValues);
+	}, [defaultValues]);
 
 	return (
 		<VerticalPageLayout as="form" onSubmit={handleSubmit(onSubmit)}>
@@ -231,7 +241,7 @@ export const ProfileEditView = () => {
 	);
 
 	const handleSubmit = async (data: FormData) => {
-		const newMetadata: Kind0ParsedContent = {
+		const newMetadata: ProfileContent = {
 			name: data.username,
 			picture: data.picture,
 			banner: data.banner,
@@ -242,43 +252,22 @@ export const ProfileEditView = () => {
 		if (data.website !== undefined) newMetadata.website = data.website;
 		if (data.nip05 !== undefined) newMetadata.nip05 = data.nip05;
 
-		const handleSubmit = async (data: FormData) => {
-			const newMetadata: Kind0ParsedContent = {
-				name: data.username,
-				picture: data.picture,
+		if (data.moneroAddress) {
+			newMetadata.cryptocurrency_addresses = {
+				...(metadata?.cryptocurrency_addresses || {}),
+				monero: data.moneroAddress,
 			};
-			if (data.displayName)
-				newMetadata.displayName = newMetadata.display_name = data.displayName;
-			if (data.about) newMetadata.about = data.about;
-			if (data.website) newMetadata.website = data.website;
-			if (data.nip05) newMetadata.nip05 = data.nip05;
+		}
 
-			if (data.moneroAddress) {
-				newMetadata.cryptocurrency_addresses = {
-					...(metadata?.cryptocurrency_addresses || {}),
-					monero: data.moneroAddress,
-				};
-			}
-
-			if (metadata?.lud06) {
-				newMetadata.lud06 = metadata.lud06;
-			}
-			if (metadata?.lud16) {
-				newMetadata.lud16 = metadata.lud16;
-			}
-
-			const draft: DraftNostrEvent = {
-				created_at: dayjs().unix(),
-				kind: 0,
-				content: JSON.stringify({ ...metadata, ...newMetadata }),
-				tags: [],
-			};
-
-			await publish("Update Profile", draft, [COMMON_CONTACT_RELAY]);
+		const draft: DraftNostrEvent = {
+			created_at: unixNow(),
+			kind: 0,
+			content: JSON.stringify({ ...metadata, ...newMetadata }),
+			tags: [],
 		};
 
-		return (
-			<MetadataForm defaultValues={defaultValues} onSubmit={handleSubmit} />
-		);
+		await publish("Update Profile", draft, COMMON_CONTACT_RELAYS);
 	};
+
+	return <MetadataForm defaultValues={defaultValues} onSubmit={handleSubmit} />;
 };

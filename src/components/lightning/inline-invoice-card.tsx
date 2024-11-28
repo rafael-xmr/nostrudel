@@ -15,7 +15,7 @@ import {
 } from "@chakra-ui/react";
 import { parseBolt11 } from "applesauce-core/helpers";
 
-import { readablizeSats } from "../../helpers/bolt11";
+import { humanReadableSats } from "../../helpers/lightning";
 import { CopyIconButton } from "../copy-icon-button";
 import QrCode02 from "../icons/qr-code-02";
 import QrCodeSvg from "../qr-code/qr-code-svg";

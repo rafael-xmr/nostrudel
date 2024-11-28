@@ -1,6 +1,8 @@
 import { useCallback } from "react";
 import { Flex, SimpleGrid, Switch, useDisclosure } from "@chakra-ui/react";
 import { getEventUID } from "applesauce-core/helpers";
+import { getEmojis } from "applesauce-core/helpers/emoji";
+import { kinds } from "nostr-tools";
 
 import PeopleListProvider, { usePeopleListContext } from "../../providers/local/people-list-provider";
 import PeopleListSelection from "../../components/people-list-selection/people-list-selection";
@@ -10,7 +12,6 @@ import { NostrEvent } from "../../types/nostr-event";
 import IntersectionObserverProvider from "../../providers/local/intersection-observer";
 import { useTimelineCurserIntersectionCallback } from "../../hooks/use-timeline-cursor-intersection-callback";
 import EmojiPackCard from "./components/emoji-pack-card";
-import { EMOJI_PACK_KIND, getEmojisFromPack } from "../../helpers/nostr/emoji-packs";
 import VerticalPageLayout from "../../components/vertical-page-layout";
 
 function EmojiPacksBrowsePage() {
@@ -19,7 +20,7 @@ function EmojiPacksBrowsePage() {
 
   const eventFilter = useCallback(
     (event: NostrEvent) => {
-      if (!showEmpty.isOpen && getEmojisFromPack(event).length === 0) return false;
+      if (!showEmpty.isOpen && getEmojis(event).length === 0) return false;
       return true;
     },
     [showEmpty.isOpen],
@@ -28,7 +29,7 @@ function EmojiPacksBrowsePage() {
   const { loader, timeline: packs } = useTimelineLoader(
     `${listId}-browse-emoji-packs`,
     readRelays,
-    filter ? { ...filter, kinds: [EMOJI_PACK_KIND] } : undefined,
+    filter ? { ...filter, kinds: [kinds.Emojisets] } : undefined,
     { eventFilter },
   );
   const callback = useTimelineCurserIntersectionCallback(loader);

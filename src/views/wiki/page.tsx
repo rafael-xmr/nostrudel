@@ -26,7 +26,7 @@ import {
 	getPageTitle,
 	getPageTopic,
 } from "../../helpers/nostr/wiki";
-import MarkdownContent from "./components/markdown";
+import MarkdownContent from "../../components/markdown/markdown";
 import UserLink from "../../components/user/user-link";
 import WikiPageResult from "./components/wiki-page-result";
 import Timestamp from "../../components/timestamp";

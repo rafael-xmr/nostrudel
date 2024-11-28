@@ -1,18 +1,17 @@
 import { useNavigate } from "react-router-dom";
-import { kinds, nip19 } from "nostr-tools";
+import { kinds, nip19, NostrEvent } from "nostr-tools";
 import type { DecodeResult } from "nostr-tools/nip19";
 import { Box, Button, Flex, Heading, SimpleGrid, Spacer, Spinner, Text } from "@chakra-ui/react";
 import { encodeDecodeResult } from "applesauce-core/helpers";
+import { getAddressPointersFromList, getEventPointersFromList } from "applesauce-lists/helpers";
 
 import UserLink from "../../../components/user/user-link";
 import { ChevronLeftIcon } from "../../../components/icons";
 import useCurrentAccount from "../../../hooks/use-current-account";
 import { useDeleteEventContext } from "../../../providers/route/delete-event-provider";
 import {
-  getEventPointersFromList,
   getListDescription,
   getListName,
-  getAddressPointersFromList,
   getPubkeysFromList,
   getReferencesFromList,
   isSpecialListKind,
@@ -25,12 +24,10 @@ import ListMenu from "../components/list-menu";
 import ListFavoriteButton from "../components/list-favorite-button";
 import ListFeedButton from "../components/list-feed-button";
 import VerticalPageLayout from "../../../components/vertical-page-layout";
-import { COMMUNITY_DEFINITION_KIND } from "../../../helpers/nostr/communities";
 import { EmbedEvent, EmbedEventPointer } from "../../../components/embed-event";
 import useSingleEvent from "../../../hooks/use-single-event";
 import UserAvatarLink from "../../../components/user/user-avatar-link";
 import useParamsAddressPointer from "../../../hooks/use-params-address-pointer";
-import { NostrEvent } from "../../../types/nostr-event";
 
 function BookmarkedEvent({ id, relays }: { id: string; relays?: string[] }) {
   const event = useSingleEvent(id, relays);
@@ -48,7 +45,7 @@ function ListPage({ list }: { list: NostrEvent }) {
   const people = getPubkeysFromList(list);
   const notes = getEventPointersFromList(list);
   const coordinates = getAddressPointersFromList(list);
-  const communities = coordinates.filter((cord) => cord.kind === COMMUNITY_DEFINITION_KIND);
+  const communities = coordinates.filter((cord) => cord.kind === kinds.CommunityDefinition);
   const articles = coordinates.filter((cord) => cord.kind === kinds.LongFormArticle);
   const references = getReferencesFromList(list);
 

@@ -3,8 +3,8 @@ import { Link as RouterLink } from "react-router-dom";
 import { nip19 } from "nostr-tools";
 
 import useUserProfile from "../../../../hooks/use-user-profile";
-import { getDisplayName } from "../../../../helpers/nostr/user-metadata";
-import type { AddressPointer } from "nostr-tools/nip19";
+import { getDisplayName } from "../../../../helpers/nostr/profile";
+import { AddressPointer } from "nostr-tools/nip19";
 import useDVMMetadata from "../../../../hooks/use-dvm-metadata";
 
 export function DVMName({

@@ -19,8 +19,8 @@ import {
 } from "@chakra-ui/react";
 import { nip19 } from "nostr-tools";
 import { ChatIcon } from "@chakra-ui/icons";
+import { parseLNURLOrAddress } from "applesauce-core/helpers";
 
-import { getLudEndpoint } from "../../../helpers/lnurl";
 import { truncatedId } from "../../../helpers/nostr/event";
 import { parseAddress } from "../../../services/dns-identity";
 import { useAdditionalRelayContext } from "../../../providers/local/additional-relay-context";
@@ -49,8 +49,8 @@ import UserJoinedChanneled from "./user-joined-channels";
 import { getTextColor } from "../../../helpers/color";
 import UserName from "../../../components/user/user-name";
 import { useUserDNSIdentity } from "../../../hooks/use-user-dns-identity";
-import { renderGenericUrl } from "../../../components/content/links/common";
 import UserAboutContent from "../../../components/user/user-about";
+import UserRecentEvents from "./user-recent-events";
 
 function DNSIdentityWarning({ pubkey }: { pubkey: string }) {
   const metadata = useUserProfile(pubkey);
@@ -183,7 +183,7 @@ export default function UserAboutTab() {
         {metadata?.lud16 && (
           <Flex gap="2">
             <LightningIcon boxSize="1.2em" />
-            <Link href={getLudEndpoint(metadata.lud16)} isExternal>
+            <Link href={parseLNURLOrAddress(metadata.lud16)?.toString()} isExternal>
               {metadata.lud16}
             </Link>
           </Flex>
@@ -217,8 +217,12 @@ export default function UserAboutTab() {
         )}
       </Flex>
 
-			<UserProfileBadges pubkey={pubkey} px="2" />
-			<UserStatsAccordion pubkey={pubkey} />
+      <UserProfileBadges pubkey={pubkey} px="2" />
+      <Box px="2">
+        <Heading size="md">Recent activity:</Heading>
+        <UserRecentEvents pubkey={pubkey} />
+      </Box>
+      <UserStatsAccordion pubkey={pubkey} />
 
 			<Flex gap="2" wrap="wrap">
 				<Button

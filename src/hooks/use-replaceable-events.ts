@@ -1,5 +1,10 @@
-import * as React from "react";
-import { useStoreQuery } from "applesauce-react/hooks";
+import { useEffect, useMemo } from "react";
+import {
+	useObservable,
+	useQueryStore,
+	useStoreQuery,
+} from "applesauce-react/hooks";
+import { ReplaceableSetQuery } from "applesauce-core/queries";
 
 import { useReadRelays } from "./use-client-relays";
 import replaceableEventsService, {
@@ -9,38 +14,41 @@ import {
 	type CustomAddressPointer,
 	parseCoordinate,
 } from "../helpers/nostr/event";
-import { ReplaceableQuery } from "applesauce-core/queries";
 
-export default function useReplaceableEvent(
-	cord: string | CustomAddressPointer | undefined,
+export default function useReplaceableEvents(
+	coordinates: string[] | CustomAddressPointer[] | undefined,
 	additionalRelays?: Iterable<string>,
 	opts: RequestOptions = {},
 ) {
 	const readRelays = useReadRelays(additionalRelays);
-	const parsed = React.useMemo(
-		() => (typeof cord === "string" ? parseCoordinate(cord) : cord),
-		[cord],
-	);
+	const store = useQueryStore();
 
-	React.useEffect(() => {
-		if (!parsed) return;
+	const pointers = useMemo(() => {
+		if (!coordinates) return undefined;
+		const arr: CustomAddressPointer[] = [];
+		for (const cord of coordinates) {
+			const parsed = typeof cord === "string" ? parseCoordinate(cord) : cord;
+			if (!parsed) return;
 
-		replaceableEventsService.requestEvent(
-			parsed.relays ? [...readRelays, ...parsed.relays] : readRelays,
-			parsed.kind,
-			parsed.pubkey,
-			parsed.identifier,
-			opts,
-		);
-	}, [
-		parsed,
-		readRelays.urls.join("|"),
-		opts?.alwaysRequest,
-		opts?.ignoreCache,
-	]);
+			arr.push(parsed);
+		}
+		return arr;
+	}, [coordinates]);
 
-	return useStoreQuery(
-		ReplaceableQuery,
-		parsed ? [parsed.kind, parsed.pubkey, parsed.identifier] : undefined,
-	);
+	// load events
+	useEffect(() => {
+		if (!pointers) return;
+		for (const pointer of pointers) {
+			replaceableEventsService.requestEvent(
+				pointer.relays ? [...readRelays, ...pointer.relays] : readRelays,
+				pointer.kind,
+				pointer.pubkey,
+				pointer.identifier,
+				opts,
+			);
+		}
+	}, [pointers, readRelays.urls.join("|")]);
+
+	const map = useStoreQuery(ReplaceableSetQuery, pointers && [pointers]);
+	return Array.from(map?.values() ?? []);
 }

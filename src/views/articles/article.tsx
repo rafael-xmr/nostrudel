@@ -14,12 +14,13 @@ import {
 import UserLink from "../../components/user/user-link";
 import UserAvatarLink from "../../components/user/user-avatar-link";
 import UserDnsIdentityIcon from "../../components/user/user-dns-identity-icon";
-import MarkdownContent from "../wiki/components/markdown";
+import MarkdownContent from "../../components/markdown/markdown";
 import ArticleMenu from "./components/article-menu";
 import ArticleTags from "./components/article-tags";
 import NoteReactions from "../../components/note/timeline-note/components/note-reactions";
 import NoteZapButton from "../../components/note/note-zap-button";
 import BookmarkEventButton from "../../components/note/bookmark-event";
+import QuoteEventButton from "../../components/note/quote-event-button";
 
 function ArticlePage({ article }: { article: NostrEvent }) {
   const image = getArticleImage(article);
@@ -47,6 +48,7 @@ function ArticlePage({ article }: { article: NostrEvent }) {
       <Box mx="auto" maxW="4xl" w="full">
         <Flex gap="2">
           <NoteZapButton event={article} size="sm" variant="ghost" showEventPreview={false} />
+          <QuoteEventButton event={article} size="sm" variant="ghost" />
           <NoteReactions event={article} size="sm" variant="ghost" />
         </Flex>
         <Box fontSize="lg">
@@ -54,6 +56,7 @@ function ArticlePage({ article }: { article: NostrEvent }) {
         </Box>
         <Flex gap="2">
           <NoteZapButton event={article} size="sm" variant="ghost" showEventPreview={false} />
+          <QuoteEventButton event={article} size="sm" variant="ghost" />
           <NoteReactions event={article} size="sm" variant="ghost" />
         </Flex>
       </Box>

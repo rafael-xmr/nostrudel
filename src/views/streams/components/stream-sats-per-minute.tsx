@@ -19,6 +19,7 @@ import {
 	Text,
 } from "@chakra-ui/react";
 import { useInterval } from "react-use";
+import { parseBolt11 } from "applesauce-core/helpers";
 
 import { parsePaymentRequest } from "../../../helpers/bolt11";
 import { V4VStreamIcon, V4VStopIcon } from "../../../components/icons";

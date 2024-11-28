@@ -48,12 +48,14 @@ export function UserEmojiProvider({
 
 	const emojis = favoritePacks
 		.map((event) =>
-			event.tags.filter(isEmojiTag).map((t) => ({
-				name: t[1],
-				url: t[2],
-				keywords: [t[1]],
-				char: `:${t[1]}:`,
-			})),
+			event.tags
+				.filter(isEmojiTag)
+				.map((t) => ({
+					name: t[1],
+					url: t[2],
+					keywords: [t[1]],
+					char: `:${t[1]}:`,
+				})),
 		)
 		.flat();
 

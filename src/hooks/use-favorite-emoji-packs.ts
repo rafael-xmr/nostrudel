@@ -1,9 +1,8 @@
+import { kinds } from "nostr-tools";
+
 import useReplaceableEvent from "./use-replaceable-event";
 import useCurrentAccount from "./use-current-account";
-import { USER_EMOJI_LIST_KIND } from "../helpers/nostr/emoji-packs";
 import { RequestOptions } from "../services/replaceable-events";
-
-export const FAVORITE_LISTS_IDENTIFIER = "nostrudel-favorite-lists";
 
 export default function useFavoriteEmojiPacks(
   pubkey?: string,
@@ -13,7 +12,7 @@ export default function useFavoriteEmojiPacks(
   const account = useCurrentAccount();
   const key = pubkey || account?.pubkey;
   const favoritePacks = useReplaceableEvent(
-    key ? { kind: USER_EMOJI_LIST_KIND, pubkey: key } : undefined,
+    key ? { kind: kinds.UserEmojiList, pubkey: key } : undefined,
     additionalRelays,
     opts,
   );

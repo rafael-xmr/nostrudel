@@ -1,4 +1,6 @@
-import { CHANNELS_LIST_KIND, getEventPointersFromList } from "../helpers/nostr/lists";
+import { getEventPointersFromList } from "applesauce-lists/helpers";
+import { kinds } from "nostr-tools";
+
 import { RequestOptions } from "../services/replaceable-events";
 import useCurrentAccount from "./use-current-account";
 import useReplaceableEvent from "./use-replaceable-event";
@@ -7,7 +9,7 @@ export default function useUserChannelsList(pubkey?: string, relays: string[] = 
   const account = useCurrentAccount();
   const key = pubkey ?? account?.pubkey;
 
-  const list = useReplaceableEvent(key ? { kind: CHANNELS_LIST_KIND, pubkey: key } : undefined, relays, opts);
+  const list = useReplaceableEvent(key ? { kind: kinds.PublicChatsList, pubkey: key } : undefined, relays, opts);
 
   const pointers = list ? getEventPointersFromList(list) : [];
 
