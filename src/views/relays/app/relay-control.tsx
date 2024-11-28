@@ -1,9 +1,9 @@
 import { useMemo } from "react";
 import { Link as RouterLink } from "react-router-dom";
 import { CloseIcon } from "@chakra-ui/icons";
+import { useObservable } from "applesauce-react/hooks";
 
 import { Flex, IconButton, Link } from "@chakra-ui/react";
-import useSubject from "../../../hooks/use-subject";
 import relayPoolService from "../../../services/relay-pool";
 import clientRelaysService from "../../../services/client-relays";
 import { RelayMode } from "../../../classes/relay";
@@ -12,21 +12,9 @@ import UploadCloud01 from "../../../components/icons/upload-cloud-01";
 
 export default function RelayControl({ url }: { url: string }) {
   const relay = useMemo(() => relayPoolService.requestRelay(url, false), [url]);
-  const status = useSubject(relay.status);
-  const writeRelays = useSubject(clientRelaysService.writeRelays);
+  const writeRelays = useObservable(clientRelaysService.writeRelays);
 
-  let color = "gray";
-  switch (status) {
-    case WebSocket.OPEN:
-      color = "green";
-      break;
-    case WebSocket.CONNECTING:
-      color = "yellow";
-      break;
-    case WebSocket.CLOSED:
-      color = "red";
-      break;
-  }
+  const color = relay.connected ? "green" : "red";
 
   const onChange = () => {
     if (writeRelays.has(url)) clientRelaysService.removeRelay(url, RelayMode.WRITE);

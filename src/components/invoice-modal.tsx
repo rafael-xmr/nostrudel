@@ -47,19 +47,17 @@ export function InvoiceModalContent({ address, amount, onPaid }: CommonProps) {
 			<Flex gap="2">
 				<Input value={uri} readOnly />
 				<IconButton
-					icon={<QrCodeIcon />}
+					icon={<QrCodeIcon boxSize={6} />}
 					aria-label="Show QrCode"
 					onClick={showQr.onToggle}
 					variant="solid"
 					size="md"
-					isDisabled={false}
 				/>
 				<CopyIconButton
 					value={uri}
 					aria-label="Copy Invoice"
 					variant="solid"
 					size="md"
-					isDisabled={false}
 				/>
 			</Flex>
 			<Flex gap="2">
@@ -70,7 +68,6 @@ export function InvoiceModalContent({ address, amount, onPaid }: CommonProps) {
 					variant="solid"
 					size="md"
 					isLoading={payingApp}
-					isDisabled={false}
 				>
 					Open App
 				</Button>

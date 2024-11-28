@@ -1,0 +1,96 @@
+import { generateSecretKey } from "nostr-tools";
+import { bytesToHex, hexToBytes } from "@noble/hashes/utils";
+
+import { DEFAULT_SIGNAL_RELAYS } from "../const";
+import {
+	BooleanLocalStorageEntry,
+	NullableNumberLocalStorageEntry,
+	NumberLocalStorageEntry,
+} from "../classes/local-settings/types";
+import { LocalStorageEntry } from "../classes/local-settings/entry";
+
+// local relay
+const idbMaxEvents = new NumberLocalStorageEntry(
+	"nostr-idb-max-events",
+	10_000,
+);
+const wasmPersistForDays = new NullableNumberLocalStorageEntry(
+	"wasm-relay-oldest-event",
+	365,
+);
+
+// note behavior
+const enableNoteThreadDrawer = new LocalStorageEntry(
+	"enable-note-thread-drawer",
+	false,
+	(raw) => raw === "true",
+	(v) => String(v),
+);
+
+// webrtc relay
+const webRtcLocalIdentity = new LocalStorageEntry(
+	"nostr-webrtc-identity",
+	generateSecretKey(),
+	(raw) => hexToBytes(raw),
+	(key) => bytesToHex(key),
+	true,
+);
+const webRtcSignalingRelays = new LocalStorageEntry(
+	"nostr-webrtc-signaling-relays",
+	DEFAULT_SIGNAL_RELAYS,
+	(raw) => raw.split(",").filter((u) => !!u),
+	(value) => value.join(","),
+);
+const webRtcRecentConnections = new LocalStorageEntry(
+	"nostr-webrtc-recent-connections",
+	[],
+	(raw) => raw.split(",").filter((u) => !!u),
+	(value) => value.join(","),
+);
+
+// posting
+const addClientTag = new BooleanLocalStorageEntry("add-client-tag", false);
+
+// performance
+const verifyEventMethod = new LocalStorageEntry("verify-event-method", "wasm"); // wasm, internal, none
+const enableKeyboardShortcuts = new BooleanLocalStorageEntry(
+	"enable-keyboard-shortcuts",
+	true,
+);
+
+// privacy
+const defaultAuthenticationMode = new LocalStorageEntry(
+	"default-relay-auth-mode",
+	"ask",
+); // ask, always, never
+const proactivelyAuthenticate = new BooleanLocalStorageEntry(
+	"proactively-authenticate",
+	false,
+);
+const debugApi = new BooleanLocalStorageEntry("debug-api", false);
+
+// display settings
+const showBrandLogo = new BooleanLocalStorageEntry("show-brand-logo", true);
+
+const localSettings = {
+	idbMaxEvents,
+	wasmPersistForDays,
+	enableNoteThreadDrawer,
+	webRtcLocalIdentity,
+	webRtcSignalingRelays,
+	webRtcRecentConnections,
+	addClientTag,
+	verifyEventMethod,
+	enableKeyboardShortcuts,
+	showBrandLogo,
+	defaultAuthenticationMode,
+	proactivelyAuthenticate,
+	debugApi,
+};
+
+if (import.meta.env.DEV) {
+	// @ts-expect-error
+	window.localSettings = localSettings;
+}
+
+export default localSettings;

@@ -1,50 +1,69 @@
 import { useEffect, useMemo } from "react";
-import { useUnmount } from "react-use";
-import { NostrEvent } from "nostr-tools";
+import { usePrevious, useUnmount } from "react-use";
+import { Filter } from "nostr-tools";
 
-import { NostrRequestFilter } from "../types/nostr-relay";
 import timelineCacheService from "../services/timeline-cache";
 import { EventFilter } from "../classes/timeline-loader";
-import { createSimpleQueryMap } from "../helpers/nostr/filter";
+import { useStoreQuery } from "applesauce-react/hooks";
+import { Queries } from "applesauce-core";
 
 type Options = {
-  /** @deprecated */
-  enabled?: boolean;
   eventFilter?: EventFilter;
-  cursor?: number;
-  customSort?: (a: NostrEvent, b: NostrEvent) => number;
+  useCache?: boolean;
 };
 
 export default function useTimelineLoader(
   key: string,
   relays: Iterable<string>,
-  query: NostrRequestFilter | undefined,
+  filters: Filter | Filter[] | undefined,
   opts?: Options,
 ) {
-  const timeline = useMemo(() => timelineCacheService.createTimeline(key), [key]);
+  const loader = useMemo(() => timelineCacheService.createTimeline(key), [key]);
 
-  useEffect(() => {
-    if (query) {
-      timeline.setQueryMap(createSimpleQueryMap(relays, query));
-      timeline.open();
-    } else timeline.close();
-  }, [timeline, JSON.stringify(query), Array.from(relays).join("|")]);
+  // set use cache
+  if (opts?.useCache !== undefined) loader.useCache = opts?.useCache;
 
+  // update relays
   useEffect(() => {
-    timeline.setEventFilter(opts?.eventFilter);
-  }, [timeline, opts?.eventFilter]);
+    loader.setRelays(relays);
+    loader.triggerChunkLoad();
+  }, [Array.from(relays).join("|")]);
+
+  // update filters
   useEffect(() => {
-    if (opts?.cursor !== undefined) {
-      timeline.setCursor(opts.cursor);
+    if (filters) {
+      loader.setFilters(Array.isArray(filters) ? filters : [filters]);
+      loader.open();
+      loader.triggerChunkLoad();
+    } else loader.close();
+  }, [loader, JSON.stringify(filters)]);
+
+  // update event filter
+  useEffect(() => {
+    loader.setEventFilter(opts?.eventFilter);
+  }, [loader, opts?.eventFilter]);
+
+  // close the old timeline when the key changes
+  const oldTimeline = usePrevious(loader);
+  useEffect(() => {
+    if (oldTimeline && oldTimeline !== loader) {
+      oldTimeline.close();
     }
-  }, [timeline, opts?.cursor]);
-  useEffect(() => {
-    timeline.events.customSort = opts?.customSort;
-  }, [timeline, opts?.customSort]);
+  }, [loader, oldTimeline]);
 
+  // stop the loader when unmount
   useUnmount(() => {
-    timeline.close();
+    loader.close();
   });
 
-  return timeline;
+  let timeline = useStoreQuery(Queries.TimelineQuery, filters && [filters]) ?? [];
+  if (opts?.eventFilter)
+    timeline = timeline.filter((e) => {
+      try {
+        return opts.eventFilter && opts.eventFilter(e);
+      } catch (error) {}
+      return false;
+    });
+
+  return { loader, timeline };
 }

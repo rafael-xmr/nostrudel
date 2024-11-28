@@ -31,40 +31,8 @@ export default function StreamSatsPerMinute({
 	const [paying, setPaying] = useState(false);
 	const [amountStr, setAmountStr] = useState("4");
 
-	const isAvailable = !!window.webln;
+	const isAvailable = true;
 	const isEnabled = isAvailable && enabled;
-
-	const sendSats = useCallback(async () => {
-		if (isEnabled && window.webln) {
-			try {
-				setPaying(true);
-				if (!window.webln.enabled) await window.webln.enable();
-
-				const amountMsats = Number.parseInt(amountStr) * 1000;
-				if (!Number.isFinite(amountMsats)) throw new Error("invalid amount");
-
-				const callbackUrl = new URL("");
-				callbackUrl.searchParams.append("amount", String(amountMsats));
-
-				const { pr: payRequest } = await fetch(callbackUrl).then((res) =>
-					res.json(),
-				);
-
-				if (payRequest as string) {
-					const parsed = parsePaymentRequest(payRequest);
-					if (parsed.amount !== amountMsats)
-						throw new Error("incorrect amount");
-				} else throw new Error("Failed to get invoice");
-
-				await window.webln.sendPayment(payRequest);
-			} catch (e) {
-				setEnabled(false);
-			}
-			setPaying(false);
-		}
-	}, [setPaying, enabled, isEnabled]);
-
-	useInterval(sendSats, 1000 * 60);
 
 	return (
 		<Flex gap="2">

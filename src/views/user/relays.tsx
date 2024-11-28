@@ -3,7 +3,6 @@ import { Button, Flex, Heading, Spacer, StackDivider, Tag, VStack } from "@chakr
 
 import useTimelineLoader from "../../hooks/use-timeline-loader";
 import { useReadRelays } from "../../hooks/use-client-relays";
-import useSubject from "../../hooks/use-subject";
 import { NostrEvent } from "../../types/nostr-event";
 import RelayReviewNote from "../relays/components/relay-review-note";
 import { RelayFavicon } from "../../components/relay-favicon";
@@ -14,6 +13,7 @@ import { useRelayInfo } from "../../hooks/use-relay-info";
 import { ErrorBoundary } from "../../components/error-boundary";
 import { RelayShareButton } from "../relays/components/relay-share-button";
 import useUserMailboxes from "../../hooks/use-user-mailboxes";
+import { truncateId } from "../../helpers/string";
 
 function Relay({ url, reviews }: { url: string; reviews: NostrEvent[] }) {
   const { info } = useRelayInfo(url);
@@ -58,20 +58,18 @@ const UserRelaysTab = () => {
   const { pubkey } = useOutletContext() as { pubkey: string };
   const mailboxes = useUserMailboxes(pubkey);
 
-  const readRelays = useReadRelays(mailboxes?.outbox);
-  const timeline = useTimelineLoader(`${pubkey}-relay-reviews`, readRelays, {
+  const readRelays = useReadRelays(mailboxes?.outboxes);
+  const { loader, timeline: reviews } = useTimelineLoader(`${truncateId(pubkey)}-relay-reviews`, readRelays, {
     authors: [pubkey],
     kinds: [1985],
     "#l": ["review/relay"],
   });
 
-  const reviews = useSubject(timeline.timeline);
-
-  const callback = useTimelineCurserIntersectionCallback(timeline);
+  const callback = useTimelineCurserIntersectionCallback(loader);
 
   const otherReviews = reviews.filter((e) => {
     const url = e.tags.find((t) => t[0] === "r")?.[1];
-    return url && !mailboxes?.relays.has(url);
+    return url && !mailboxes?.inboxes.includes(url) && !mailboxes?.outboxes.includes(url);
   });
 
   return (
@@ -80,9 +78,9 @@ const UserRelaysTab = () => {
         Inboxes
       </Heading>
       <VStack divider={<StackDivider />} py="2" align="stretch">
-        {mailboxes?.inbox.urls.map((url) => (
-          <ErrorBoundary>
-            <Relay key={url} url={url} reviews={getRelayReviews(url, reviews)} />
+        {Array.from(mailboxes?.inboxes ?? []).map((url) => (
+          <ErrorBoundary key={url}>
+            <Relay url={url} reviews={getRelayReviews(url, reviews)} />
           </ErrorBoundary>
         ))}
       </VStack>
@@ -90,9 +88,9 @@ const UserRelaysTab = () => {
         Outboxes
       </Heading>
       <VStack divider={<StackDivider />} py="2" align="stretch">
-        {mailboxes?.outbox.urls.map((url) => (
-          <ErrorBoundary>
-            <Relay key={url} url={url} reviews={getRelayReviews(url, reviews)} />
+        {Array.from(mailboxes?.outboxes ?? []).map((url) => (
+          <ErrorBoundary key={url}>
+            <Relay url={url} reviews={getRelayReviews(url, reviews)} />
           </ErrorBoundary>
         ))}
       </VStack>

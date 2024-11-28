@@ -1,162 +1,136 @@
-import { Filter, NostrEvent } from "nostr-tools";
+import type { NostrEvent } from "nostr-tools";
+import type { AbstractRelay } from "nostr-tools/abstract-relay";
 import _throttle from "lodash.throttle";
+import type { EventStore } from "applesauce-core";
+import { isFromCache } from "applesauce-core/helpers";
 
 import SuperMap from "../classes/super-map";
+import BatchKindPubkeyLoader, {
+	createCoordinate,
+} from "../classes/batch-kind-pubkey-loader";
+import Process from "../classes/process";
 import { logger } from "../helpers/debug";
-import { nameOrPubkey } from "./user-metadata";
-import { getEventCoordinate } from "../helpers/nostr/event";
-import createDefer, { Deferred } from "../classes/deferred";
 import { localRelay } from "./local-relay";
-import { relayRequest } from "../helpers/relay";
-import EventStore from "../classes/event-store";
-import Subject from "../classes/subject";
-import BatchKindLoader, { createCoordinate } from "../classes/batch-kind-loader";
+import relayPoolService from "./relay-pool";
+import { alwaysVerify } from "./verify-event";
+import { truncateId } from "../helpers/string";
+import processManager from "./process-manager";
+import UserSquare from "../components/icons/user-square";
+import { eventStore } from "./event-store";
 
 export type RequestOptions = {
-  /** Always request the event from the relays */
-  alwaysRequest?: boolean;
-  /** ignore the cache on initial load */
-  ignoreCache?: boolean;
-  // TODO: figure out a clean way for useReplaceableEvent hook to "unset" or "unsubscribe"
-  // keepAlive?: boolean;
+	/** Always request the event from the relays */
+	alwaysRequest?: boolean;
+	/** ignore the cache on initial load */
+	ignoreCache?: boolean;
 };
 
-export function getHumanReadableCoordinate(kind: number, pubkey: string, d?: string) {
-  return `${kind}:${nameOrPubkey(pubkey)}${d ? ":" + d : ""}`;
+export function getHumanReadableCoordinate(
+	kind: number,
+	pubkey: string,
+	d?: string,
+) {
+	return `${kind}:${truncateId(pubkey)}${d ? ":" + d : ""}`;
 }
-
-const READ_CACHE_BATCH_TIME = 250;
-const WRITE_CACHE_BATCH_TIME = 250;
 
 class ReplaceableEventsService {
-  private subjects = new SuperMap<string, Subject<NostrEvent>>(() => new Subject<NostrEvent>());
-  private loaders = new SuperMap<string, BatchKindLoader>((relay) => {
-    const loader = new BatchKindLoader(relay, this.log.extend(relay));
-    loader.events.onEvent.subscribe((e) => this.handleEvent(e));
-    return loader;
-  });
+	store: EventStore;
+	process: Process;
 
-  events = new EventStore();
+	cacheLoader: BatchKindPubkeyLoader | null = null;
+	loaders = new SuperMap<AbstractRelay, BatchKindPubkeyLoader>((relay) => {
+		const loader = new BatchKindPubkeyLoader(
+			this.store,
+			relay,
+			this.log.extend(relay.url),
+		);
+		this.process.addChild(loader.process);
+		return loader;
+	});
 
-  log = logger.extend("ReplaceableEventLoader");
-  dbLog = this.log.extend("database");
+	log = logger.extend("ReplaceableEventLoader");
 
-  handleEvent(event: NostrEvent, saveToCache = true) {
-    const cord = getEventCoordinate(event);
+	constructor(store: EventStore) {
+		this.store = store;
+		this.process = new Process("ReplaceableEventsService", this);
+		this.process.icon = UserSquare;
+		this.process.active = true;
+		processManager.registerProcess(this.process);
 
-    const subject = this.subjects.get(cord);
-    const current = subject.value;
-    if (!current || event.created_at > current.created_at) {
-      subject.next(event);
-      this.events.addEvent(event);
-      if (saveToCache) this.saveToCache(cord, event);
-    }
-  }
+		if (localRelay) {
+			this.cacheLoader = new BatchKindPubkeyLoader(
+				this.store,
+				localRelay as AbstractRelay,
+				this.log.extend("cache-relay"),
+			);
+			this.process.addChild(this.cacheLoader.process);
+		}
+	}
 
-  getEvent(kind: number, pubkey: string, d?: string) {
-    return this.subjects.get(createCoordinate(kind, pubkey, d));
-  }
+	handleEvent(event: NostrEvent, fromCache = false) {
+		// TODO: move this to the cache relay class
+		if (!fromCache && !alwaysVerify(event)) return;
 
-  private readFromCachePromises = new Map<string, Deferred<boolean>>();
-  private readFromCacheThrottle = _throttle(this.readFromCache, READ_CACHE_BATCH_TIME);
-  private async readFromCache() {
-    if (this.readFromCachePromises.size === 0) return;
+		event = this.store.add(event);
+		if (!isFromCache(event)) localRelay?.publish(event);
+	}
 
-    const loading = new Map<string, Deferred<boolean>>();
+	/** @deprecated use eventStore.getReplaceable instead */
+	getEvent(kind: number, pubkey: string, d?: string) {
+		return eventStore.getReplaceable(kind, pubkey, d);
+	}
 
-    const kindFilters: Record<number, Filter> = {};
-    for (const [cord, p] of this.readFromCachePromises) {
-      const [kindStr, pubkey, d] = cord.split(":") as [string, string] | [string, string, string];
-      const kind = parseInt(kindStr);
-      kindFilters[kind] = kindFilters[kind] || { kinds: [kind] };
+	private requestEventFromRelays(
+		urls: Iterable<string | URL | AbstractRelay>,
+		kind: number,
+		pubkey: string,
+		d?: string,
+	) {
+		const cord = createCoordinate(kind, pubkey, d);
+		const relays = relayPoolService.getRelays(urls);
 
-      const arr = (kindFilters[kind].authors = kindFilters[kind].authors || []);
-      arr.push(pubkey);
+		for (const relay of relays)
+			this.loaders.get(relay).requestEvent(kind, pubkey, d);
+	}
 
-      if (d) {
-        const arr = (kindFilters[kind]["#d"] = kindFilters[kind]["#d"] || []);
-        arr.push(d);
-      }
+	requestEvent(
+		urls: Iterable<string | URL | AbstractRelay>,
+		kind: number,
+		pubkey: string,
+		d?: string,
+		opts: RequestOptions = {},
+	) {
+		const relays = relayPoolService.getRelays(urls);
 
-      loading.set(cord, p);
-    }
-    const filters = Object.values(kindFilters);
+		const existing = eventStore.getReplaceable(kind, pubkey, d);
 
-    for (const [cord] of loading) this.readFromCachePromises.delete(cord);
+		if (!existing && this.cacheLoader) {
+			this.cacheLoader.requestEvent(kind, pubkey, d).then((loaded) => {
+				if (!loaded && !eventStore.hasReplaceable(kind, pubkey, d)) {
+					this.requestEventFromRelays(relays, kind, pubkey, d);
+				}
+			});
+		}
 
-    const events = await relayRequest(localRelay, filters);
-    for (const event of events) {
-      this.handleEvent(event, false);
-      const cord = getEventCoordinate(event);
-      const promise = loading.get(cord);
-      if (promise) promise.resolve(true);
-      loading.delete(cord);
-    }
+		if (
+			opts?.alwaysRequest ||
+			!this.cacheLoader ||
+			(!existing && opts.ignoreCache)
+		) {
+			this.requestEventFromRelays(relays, kind, pubkey, d);
+		}
+	}
 
-    // resolve remaining promises
-    for (const [_, promise] of loading) promise.resolve();
-
-    if (events.length > 0) this.dbLog(`Read ${events.length} events from database`);
-  }
-  loadFromCache(cord: string) {
-    const dedupe = this.readFromCachePromises.get(cord);
-    if (dedupe) return dedupe;
-
-    // add to read queue
-    const promise = createDefer<boolean>();
-    this.readFromCachePromises.set(cord, promise);
-
-    this.readFromCacheThrottle();
-
-    return promise;
-  }
-
-  private writeCacheQueue = new Map<string, NostrEvent>();
-  private writeToCacheThrottle = _throttle(this.writeToCache, WRITE_CACHE_BATCH_TIME);
-  private async writeToCache() {
-    if (this.writeCacheQueue.size === 0) return;
-
-    this.dbLog(`Writing ${this.writeCacheQueue.size} events to database`);
-    for (const [_, event] of this.writeCacheQueue) localRelay.publish(event);
-    this.writeCacheQueue.clear();
-  }
-  private async saveToCache(cord: string, event: NostrEvent) {
-    this.writeCacheQueue.set(cord, event);
-    this.writeToCacheThrottle();
-  }
-
-  private requestEventFromRelays(relays: Iterable<string>, kind: number, pubkey: string, d?: string) {
-    const cord = createCoordinate(kind, pubkey, d);
-    const sub = this.subjects.get(cord);
-
-    for (const relay of relays) this.loaders.get(relay).requestEvent(kind, pubkey, d);
-
-    return sub;
-  }
-
-  requestEvent(relays: Iterable<string>, kind: number, pubkey: string, d?: string, opts: RequestOptions = {}) {
-    const key = createCoordinate(kind, pubkey, d);
-    const sub = this.subjects.get(key);
-
-    if (!sub.value) {
-      this.loadFromCache(key).then((loaded) => {
-        if (!loaded && !sub.value) this.requestEventFromRelays(relays, kind, pubkey, d);
-      });
-    }
-
-    if (opts?.alwaysRequest || (!sub.value && opts.ignoreCache)) {
-      this.requestEventFromRelays(relays, kind, pubkey, d);
-    }
-
-    return sub;
-  }
+	destroy() {
+		processManager.unregisterProcess(this.process);
+	}
 }
 
-const replaceableEventsService = new ReplaceableEventsService();
+const replaceableEventsService = new ReplaceableEventsService(eventStore);
 
 if (import.meta.env.DEV) {
-  //@ts-ignore
-  window.replaceableEventsService = replaceableEventsService;
+	//@ts-ignore
+	window.replaceableEventsService = replaceableEventsService;
 }
 
 export default replaceableEventsService;

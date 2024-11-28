@@ -1,20 +1,15 @@
+import { AbstractRelay } from "nostr-tools/abstract-relay";
 import RelayPool from "../classes/relay-pool";
+import { localRelay } from "./local-relay";
 import { offlineMode } from "./offline-mode";
 
 const relayPoolService = new RelayPool();
 
 setInterval(() => {
   if (document.visibilityState === "visible") {
-    relayPoolService.reconnectRelays();
-    relayPoolService.pruneRelays();
+    relayPoolService.disconnectFromUnused();
   }
-}, 1000 * 15);
-
-document.addEventListener("visibilitychange", () => {
-  if (document.visibilityState === "visible") {
-    relayPoolService.reconnectRelays();
-  }
-});
+}, 60_000);
 
 offlineMode.subscribe((offline) => {
   if (offline) {
@@ -23,6 +18,12 @@ offlineMode.subscribe((offline) => {
     }
   }
 });
+
+// add local relay
+if (localRelay instanceof AbstractRelay) {
+  relayPoolService.relays.set(localRelay.url, localRelay);
+  localRelay.onnotice = (notice) => relayPoolService.handleRelayNotice(localRelay as AbstractRelay, notice);
+}
 
 if (import.meta.env.DEV) {
   // @ts-ignore

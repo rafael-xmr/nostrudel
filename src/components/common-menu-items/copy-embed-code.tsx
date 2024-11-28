@@ -1,8 +1,8 @@
 import { MenuItem } from "@chakra-ui/react";
 
 import { NostrEvent } from "../../types/nostr-event";
-import { getSharableEventAddress } from "../../helpers/nip19";
 import { CopyToClipboardIcon } from "../icons";
+import { getSharableEventAddress } from "../../services/event-relay-hint";
 
 export default function CopyEmbedCodeMenuItem({ event }: { event: NostrEvent }) {
   const address = getSharableEventAddress(event);

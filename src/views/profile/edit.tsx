@@ -18,7 +18,7 @@ import { isXMR } from "../../helpers/monero";
 import type { Kind0ParsedContent } from "../../helpers/nostr/user-metadata";
 import { useReadRelays } from "../../hooks/use-client-relays";
 import useCurrentAccount from "../../hooks/use-current-account";
-import useUserMetadata from "../../hooks/use-user-metadata";
+import useUserProfile from "../../hooks/use-user-profile";
 import dnsIdentityService from "../../services/dns-identity";
 import type { DraftNostrEvent } from "../../types/nostr-event";
 import VerticalPageLayout from "../../components/vertical-page-layout";
@@ -29,6 +29,7 @@ type FormData = {
 	displayName?: string;
 	username?: string;
 	picture?: string;
+	banner?: string;
 	about?: string;
 	website?: string;
 	nip05?: string;
@@ -55,10 +56,6 @@ const MetadataForm = ({ defaultValues, onSubmit }: MetadataFormProps) => {
 		defaultValues,
 	});
 
-	useEffect(() => {
-		reset(defaultValues);
-	}, [defaultValues]);
-
 	return (
 		<VerticalPageLayout as="form" onSubmit={handleSubmit(onSubmit)}>
 			<Flex gap="2">
@@ -68,8 +65,14 @@ const MetadataForm = ({ defaultValues, onSubmit }: MetadataFormProps) => {
 						autoComplete="off"
 						isDisabled={isSubmitting}
 						{...register("displayName", {
-							minLength: 2,
-							maxLength: 64,
+							minLength: {
+								value: 2,
+								message: "Must be at least 2 characters long",
+							},
+							maxLength: {
+								value: 64,
+								message: "Cannot exceed 64 characters",
+							},
 						})}
 					/>
 					<FormErrorMessage>{errors.displayName?.message}</FormErrorMessage>
@@ -80,10 +83,20 @@ const MetadataForm = ({ defaultValues, onSubmit }: MetadataFormProps) => {
 						autoComplete="off"
 						isDisabled={isSubmitting}
 						{...register("username", {
-							minLength: 2,
-							maxLength: 64,
-							required: true,
-							pattern: /^[a-zA-Z0-9_-]{4,64}$/,
+							minLength: {
+								value: 2,
+								message: "Must be at least 2 characters long",
+							},
+							maxLength: {
+								value: 64,
+								message: "Cannot exceed 64 characters",
+							},
+							required: "Username is required",
+							pattern: {
+								value: /^[a-zA-Z0-9_-]{2,64}$/,
+								message:
+									"Only letters, numbers, underscores, and hyphens, and must be 2-64 characters",
+							},
 						})}
 					/>
 					<FormErrorMessage>{errors.username?.message}</FormErrorMessage>
@@ -101,6 +114,18 @@ const MetadataForm = ({ defaultValues, onSubmit }: MetadataFormProps) => {
 				</FormControl>
 				<Avatar src={watch("picture")} size="lg" ignoreFallback />
 			</Flex>
+			<Flex gap="2" alignItems="center">
+				<FormControl isInvalid={!!errors.banner}>
+					<FormLabel>Banner</FormLabel>
+					<Input
+						autoComplete="off"
+						isDisabled={isSubmitting}
+						placeholder="https://domain.com/path/banner.png"
+						{...register("banner", { maxLength: 150 })}
+					/>
+				</FormControl>
+				<Avatar src={watch("banner")} size="lg" ignoreFallback />
+			</Flex>
 			<FormControl isInvalid={!!errors.nip05}>
 				<FormLabel>NIP-05 ID</FormLabel>
 				<Input
@@ -116,7 +141,7 @@ const MetadataForm = ({ defaultValues, onSubmit }: MetadataFormProps) => {
 								const id = await dnsIdentityService.fetchIdentity(address);
 								if (!id) return "Cant find NIP-05 ID";
 								if (id.pubkey !== account.pubkey)
-									return "Pubkey dose not match";
+									return "Pubkey does not match";
 							} catch (e) {
 								return "Failed to fetch ID";
 							}
@@ -182,12 +207,12 @@ const MetadataForm = ({ defaultValues, onSubmit }: MetadataFormProps) => {
 };
 
 export const ProfileEditView = () => {
+	const publish = usePublishEvent();
+	const readRelays = useReadRelays();
 	const account = useCurrentAccount();
 	if (!account) return null;
 
-	const publish = usePublishEvent();
-	const readRelays = useReadRelays();
-	const metadata = useUserMetadata(account.pubkey, readRelays, {
+	const metadata = useUserProfile(account.pubkey, readRelays, {
 		alwaysRequest: true,
 	});
 
@@ -196,10 +221,11 @@ export const ProfileEditView = () => {
 			displayName: metadata?.displayName || metadata?.display_name,
 			username: metadata?.name,
 			picture: metadata?.picture,
+			banner: metadata?.banner,
 			about: metadata?.about,
 			website: metadata?.website,
 			nip05: metadata?.nip05,
-			moneroAddress: metadata?.cryptocurrency_addresses?.monero,
+			lightningAddress: metadata?.lud16 || metadata?.lud06,
 		}),
 		[metadata],
 	);
@@ -208,36 +234,51 @@ export const ProfileEditView = () => {
 		const newMetadata: Kind0ParsedContent = {
 			name: data.username,
 			picture: data.picture,
+			banner: data.banner,
 		};
-		if (data.displayName)
+		if (data.displayName !== undefined)
 			newMetadata.displayName = newMetadata.display_name = data.displayName;
-		if (data.about) newMetadata.about = data.about;
-		if (data.website) newMetadata.website = data.website;
-		if (data.nip05) newMetadata.nip05 = data.nip05;
+		if (data.about !== undefined) newMetadata.about = data.about;
+		if (data.website !== undefined) newMetadata.website = data.website;
+		if (data.nip05 !== undefined) newMetadata.nip05 = data.nip05;
 
-		if (data.moneroAddress) {
-			newMetadata.cryptocurrency_addresses = {
-				...(metadata?.cryptocurrency_addresses || {}),
-				monero: data.moneroAddress,
+		const handleSubmit = async (data: FormData) => {
+			const newMetadata: Kind0ParsedContent = {
+				name: data.username,
+				picture: data.picture,
 			};
-		}
+			if (data.displayName)
+				newMetadata.displayName = newMetadata.display_name = data.displayName;
+			if (data.about) newMetadata.about = data.about;
+			if (data.website) newMetadata.website = data.website;
+			if (data.nip05) newMetadata.nip05 = data.nip05;
 
-		if (metadata?.lud06) {
-			newMetadata.lud06 = metadata.lud06;
-		}
-		if (metadata?.lud16) {
-			newMetadata.lud16 = metadata.lud16;
-		}
+			if (data.moneroAddress) {
+				newMetadata.cryptocurrency_addresses = {
+					...(metadata?.cryptocurrency_addresses || {}),
+					monero: data.moneroAddress,
+				};
+			}
 
-		const draft: DraftNostrEvent = {
-			created_at: dayjs().unix(),
-			kind: 0,
-			content: JSON.stringify({ ...metadata, ...newMetadata }),
-			tags: [],
+			if (metadata?.lud06) {
+				newMetadata.lud06 = metadata.lud06;
+			}
+			if (metadata?.lud16) {
+				newMetadata.lud16 = metadata.lud16;
+			}
+
+			const draft: DraftNostrEvent = {
+				created_at: dayjs().unix(),
+				kind: 0,
+				content: JSON.stringify({ ...metadata, ...newMetadata }),
+				tags: [],
+			};
+
+			await publish("Update Profile", draft, [COMMON_CONTACT_RELAY]);
 		};
 
-		await publish("Update Profile", draft, [COMMON_CONTACT_RELAY]);
+		return (
+			<MetadataForm defaultValues={defaultValues} onSubmit={handleSubmit} />
+		);
 	};
-
-	return <MetadataForm defaultValues={defaultValues} onSubmit={handleSubmit} />;
 };

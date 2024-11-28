@@ -9,7 +9,6 @@ import {
   DrawerOverlay,
   DrawerProps,
   Flex,
-  Heading,
   IconButton,
   Link,
   Select,
@@ -17,11 +16,11 @@ import {
 } from "@chakra-ui/react";
 import { CloseIcon } from "@chakra-ui/icons";
 import { Link as RouterLink } from "react-router-dom";
+import { useObservable } from "applesauce-react/hooks";
 import { NostrEvent } from "nostr-tools";
 
 import { useReadRelays, useWriteRelays } from "../../hooks/use-client-relays";
 import relayPoolService from "../../services/relay-pool";
-import useSubject from "../../hooks/use-subject";
 import clientRelaysService from "../../services/client-relays";
 import { RelayMode } from "../../classes/relay";
 import RelaySet from "../../classes/relay-set";
@@ -36,21 +35,9 @@ import { SaveRelaySetForm } from "./save-relay-set-form";
 
 function RelayControl({ url }: { url: string }) {
   const relay = useMemo(() => relayPoolService.requestRelay(url, false), [url]);
-  const status = useSubject(relay.status);
-  const writeRelays = useSubject(clientRelaysService.writeRelays);
+  const writeRelays = useObservable(clientRelaysService.writeRelays);
 
-  let color = "gray";
-  switch (status) {
-    case WebSocket.OPEN:
-      color = "green";
-      break;
-    case WebSocket.CONNECTING:
-      color = "yellow";
-      break;
-    case WebSocket.CLOSED:
-      color = "red";
-      break;
-  }
+  const color = relay.connected ? "green" : "red";
 
   const onChange = () => {
     if (writeRelays.has(url)) clientRelaysService.removeRelay(url, RelayMode.WRITE);
@@ -117,13 +104,13 @@ export default function RelayManagementDrawer({ isOpen, onClose, ...props }: Omi
 
   const sorted = useMemo(() => RelaySet.from(readRelays, writeRelays).urls.sort(), [readRelays, writeRelays]);
   const others = Array.from(relayPoolService.relays.values())
-    .filter((r) => !r.closed && !sorted.includes(r.url))
+    .filter((r) => !r.connected && !sorted.includes(r.url))
     .map((r) => r.url)
     .sort();
 
   const save = useDisclosure();
   const [selected, setSelected] = useState<string>();
-  const relaySets = useUserRelaySets(account?.pubkey);
+  const relaySets = useUserRelaySets(account?.pubkey) ?? [];
 
   const changeSet = (cord: string) => {
     setSelected(cord);

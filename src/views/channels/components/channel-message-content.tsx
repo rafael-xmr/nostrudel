@@ -1,17 +1,10 @@
-import { memo, useMemo } from "react";
+import { memo } from "react";
 import { Box, BoxProps } from "@chakra-ui/react";
+import { useRenderedContent } from "applesauce-react/hooks";
 
 import { NostrEvent } from "../../../types/nostr-event";
-import { TrustProvider } from "../../../providers/local/trust";
-import { EmbedableContent, embedUrls } from "../../../helpers/embeds";
+import { TrustProvider } from "../../../providers/local/trust-provider";
 import {
-  embedEmoji,
-  embedImageGallery,
-  embedLightningInvoice,
-  embedNipDefinitions,
-  embedNostrHashtags,
-  embedNostrLinks,
-  embedNostrMentions,
   renderAppleMusicUrl,
   renderGenericUrl,
   renderImageUrl,
@@ -21,53 +14,40 @@ import {
   renderSoundCloudUrl,
   renderSpotifyUrl,
   renderStemstrUrl,
+  renderStreamUrl,
   renderTidalUrl,
   renderTwitterUrl,
   renderVideoUrl,
   renderWavlakeUrl,
-  renderYoutubeUrl,
-} from "../../../components/embed-types";
+  renderYoutubeURL,
+} from "../../../components/content/links";
 import { LightboxProvider } from "../../../components/lightbox-provider";
-import { renderAudioUrl } from "../../../components/embed-types/audio";
+import { renderAudioUrl } from "../../../components/content/links/audio";
+import { components } from "../../../components/content";
+
+const linkRenderers = [
+  renderSimpleXLink,
+  renderYoutubeURL,
+  renderTwitterUrl,
+  renderRedditUrl,
+  renderWavlakeUrl,
+  renderAppleMusicUrl,
+  renderSpotifyUrl,
+  renderTidalUrl,
+  renderSongDotLinkUrl,
+  renderStemstrUrl,
+  renderSoundCloudUrl,
+  renderImageUrl,
+  renderVideoUrl,
+  renderStreamUrl,
+  renderAudioUrl,
+  renderGenericUrl,
+];
+
+const ChannelMessageContentSymbol = Symbol.for("channel-message-content");
 
 const ChannelMessageContent = memo(({ message, children, ...props }: BoxProps & { message: NostrEvent }) => {
-  const content = useMemo(() => {
-    let c: EmbedableContent = [message.content];
-
-    // image gallery
-    c = embedImageGallery(c, message);
-
-    // common
-    c = embedUrls(c, [
-      renderSimpleXLink,
-      renderYoutubeUrl,
-      renderTwitterUrl,
-      renderRedditUrl,
-      renderWavlakeUrl,
-      renderAppleMusicUrl,
-      renderSpotifyUrl,
-      renderTidalUrl,
-      renderSongDotLinkUrl,
-      renderStemstrUrl,
-      renderSoundCloudUrl,
-      renderImageUrl,
-      renderVideoUrl,
-      renderAudioUrl,
-      renderGenericUrl,
-    ]);
-
-    // bitcoin
-    c = embedLightningInvoice(c);
-
-    // nostr
-    c = embedNostrLinks(c);
-    c = embedNostrMentions(c, message);
-    c = embedNostrHashtags(c, message);
-    c = embedNipDefinitions(c);
-    c = embedEmoji(c, message);
-
-    return c;
-  }, [message.content]);
+  const content = useRenderedContent(message, components, { linkRenderers, cacheKey: ChannelMessageContentSymbol });
 
   return (
     <TrustProvider event={message}>
@@ -82,35 +62,3 @@ const ChannelMessageContent = memo(({ message, children, ...props }: BoxProps & 
 });
 
 export default ChannelMessageContent;
-
-// function ChannelChatMessage({ message, channel }: { message: NostrEvent; channel: NostrEvent }) {
-//   const ref = useRef<HTMLDivElement | null>(null);
-//   useRegisterIntersectionEntity(ref, message.id);
-
-//   return (
-//     <TrustProvider event={message}>
-//       <Box>
-//         <Box overflow="hidden" maxH="lg" ref={ref}>
-//           <UserAvatar pubkey={message.pubkey} size="xs" display="inline-block" mr="2" />
-//           <Text as="span" fontWeight="bold" color={message.pubkey === channel.pubkey ? "purple.200" : "blue.200"}>
-//             <UserLink pubkey={message.pubkey} />
-//             {": "}
-//           </Text>
-//           <Timestamp timestamp={message.created_at} float="right" />
-//           <NoteZapButton
-//             display="inline-block"
-//             event={message}
-//             size="xs"
-//             variant="ghost"
-//             float="right"
-//             mx="2"
-//             allowComment={false}
-//           />
-//           <ChannelMessageContent message={message} />
-//         </Box>
-//       </Box>
-//     </TrustProvider>
-//   );
-// }
-
-// export default memo(ChannelChatMessage);

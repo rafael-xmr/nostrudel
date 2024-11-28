@@ -1,20 +1,20 @@
 import { useOutletContext } from "react-router-dom";
 
 import { COMMUNITY_APPROVAL_KIND, buildApprovalMap, getCommunityMods } from "../../../helpers/nostr/communities";
-import useSubject from "../../../hooks/use-subject";
 import { useTimelineCurserIntersectionCallback } from "../../../hooks/use-timeline-cursor-intersection-callback";
 import IntersectionObserverProvider from "../../../providers/local/intersection-observer";
-import TimelineActionAndStatus from "../../../components/timeline-page/timeline-action-and-status";
+import TimelineActionAndStatus from "../../../components/timeline/timeline-action-and-status";
 import useUserMuteFilter from "../../../hooks/use-user-mute-filter";
 import ApprovedEvent from "../components/community-approved-post";
 import { RouterContext } from "../community-home";
+import { useObservable } from "applesauce-react/hooks";
 
 export default function CommunityNewestView() {
   const { community, timeline } = useOutletContext<RouterContext>();
   const muteFilter = useUserMuteFilter();
   const mods = getCommunityMods(community);
 
-  const events = useSubject(timeline.timeline);
+  const events = useObservable(timeline.timeline) ?? [];
   const approvalMap = buildApprovalMap(events, mods);
 
   const approved = events

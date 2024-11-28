@@ -32,7 +32,7 @@ function PayRequestCard({
 	amount,
 	onPaid,
 }: { pubkey?: string; address?: string; amount: number; onPaid: () => void }) {
-	const showMore = useDisclosure({ defaultIsOpen: !window.webln });
+	const showMore = useDisclosure({ defaultIsOpen: true });
 
 	return (
 		<Flex direction="column" gap="2">

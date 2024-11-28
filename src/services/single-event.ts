@@ -1,74 +1,85 @@
 import _throttle from "lodash.throttle";
+import { EventStore } from "applesauce-core";
+import { AbstractRelay } from "nostr-tools/abstract-relay";
 
-import NostrRequest from "../classes/nostr-request";
 import SuperMap from "../classes/super-map";
 import { NostrEvent } from "../types/nostr-event";
 import { localRelay } from "./local-relay";
-import { relayRequest, safeRelayUrls } from "../helpers/relay";
 import { logger } from "../helpers/debug";
-import Subject from "../classes/subject";
-
-const RELAY_REQUEST_BATCH_TIME = 500;
+import relayPoolService from "./relay-pool";
+import Process from "../classes/process";
+import processManager from "./process-manager";
+import Code02 from "../components/icons/code-02";
+import BatchEventLoader from "../classes/batch-event-loader";
+import { eventStore } from "./event-store";
 
 class SingleEventService {
-  private subjects = new SuperMap<string, Subject<NostrEvent>>(() => new Subject<NostrEvent>());
-  pending = new Map<string, string[]>();
-  log = logger.extend("SingleEvent");
+  process: Process;
+  store: EventStore;
+  log = logger.extend("SingleEventService");
 
-  requestEvent(id: string, relays: Iterable<string>) {
-    const subject = this.subjects.get(id);
-    if (subject.value) return subject;
+  loaders = new SuperMap<AbstractRelay, BatchEventLoader>((relay) => {
+    const loader = new BatchEventLoader(this.store, relay, this.log.extend(relay.url));
+    this.process.addChild(loader.process);
+    return loader;
+  });
 
-    const safeURLs = safeRelayUrls(Array.from(relays));
+  pendingRelays = new SuperMap<string, Set<AbstractRelay>>(() => new Set());
 
-    this.pending.set(id, this.pending.get(id)?.concat(safeURLs) ?? safeURLs);
-    this.batchRequestsThrottle();
-
-    return subject;
+  idsFromRelays = new SuperMap<AbstractRelay, Set<string>>(() => new Set());
+  constructor(store: EventStore) {
+    this.store = store;
+    this.process = new Process("SingleEventService", this);
+    this.process.icon = Code02;
+    this.process.active = true;
+    processManager.registerProcess(this.process);
   }
 
-  handleEvent(event: NostrEvent, cache = true) {
-    this.subjects.get(event.id).next(event);
-    if (cache) localRelay.publish(event);
-  }
+  private loadEventFromRelays(id: string) {
+    const relays = this.pendingRelays.get(id);
 
-  private batchRequestsThrottle = _throttle(this.batchRequests, RELAY_REQUEST_BATCH_TIME);
-  async batchRequests() {
-    if (this.pending.size === 0) return;
-
-    const ids = Array.from(this.pending.keys());
-    const loaded: string[] = [];
-
-    // load from cache relay
-    const fromCache = await relayRequest(localRelay, [{ ids }]);
-
-    for (const e of fromCache) {
-      this.handleEvent(e, false);
-      loaded.push(e.id);
+    for (const relay of relays) {
+      this.loaders.get(relay).requestEvent(id);
     }
+  }
 
-    if (loaded.length > 0) this.log(`Loaded ${loaded.length} from cache instead of relays`);
+  loadingFromCache = new Set<string>();
+  requestEvent(id: string, urls: Iterable<string | URL | AbstractRelay>) {
+    if (this.store.hasEvent(id)) return;
 
-    const idsFromRelays: Record<string, string[]> = {};
-    for (const [id, relays] of this.pending) {
-      if (loaded.includes(id)) continue;
+    const relays = relayPoolService.getRelays(urls);
+    for (const relay of relays) this.pendingRelays.get(id).add(relay);
 
-      for (const relay of relays) {
-        idsFromRelays[relay] = idsFromRelays[relay] ?? [];
-        idsFromRelays[relay].push(id);
+    // load from the local relay first
+    if (localRelay) {
+      if (!this.loadingFromCache.has(id)) {
+        this.loadingFromCache.add(id);
+
+        this.loaders
+          .get(localRelay as AbstractRelay)
+          .requestEvent(id)
+          .then((cached) => {
+            this.loadingFromCache.delete(id);
+            if (cached) this.handleEvent(cached, true);
+            else this.loadEventFromRelays(id);
+          });
       }
-    }
+    } else this.loadEventFromRelays(id);
 
-    for (const [relay, ids] of Object.entries(idsFromRelays)) {
-      const request = new NostrRequest([relay]);
-      request.onEvent.subscribe((event) => this.handleEvent(event));
-      request.start({ ids });
-    }
-    this.pending.clear();
+    // return subject;
+  }
+
+  handleEvent(event: NostrEvent, fromCache = false) {
+    // this.events.addEvent(event);
+    this.pendingRelays.delete(event.id);
+
+    event = this.store.add(event);
+
+    if (!fromCache && localRelay) localRelay.publish(event);
   }
 }
 
-const singleEventService = new SingleEventService();
+const singleEventService = new SingleEventService(eventStore);
 
 if (import.meta.env.DEV) {
   //@ts-expect-error

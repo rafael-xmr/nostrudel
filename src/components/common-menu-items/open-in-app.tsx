@@ -1,10 +1,10 @@
+import { useCallback, useContext, useMemo } from "react";
 import { MenuItem } from "@chakra-ui/react";
 
 import { NostrEvent } from "../../types/nostr-event";
 import { ExternalLinkIcon } from "../icons";
-import { getSharableEventAddress } from "../../helpers/nip19";
-import { useCallback, useContext, useMemo } from "react";
 import { AppHandlerContext } from "../../providers/route/app-handler-provider";
+import { getSharableEventAddress } from "../../services/event-relay-hint";
 
 export default function OpenInAppMenuItem({ event }: { event: NostrEvent }) {
   const address = useMemo(() => getSharableEventAddress(event), [event]);

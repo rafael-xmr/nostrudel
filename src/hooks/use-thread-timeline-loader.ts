@@ -1,7 +1,6 @@
 import { useEffect, useMemo } from "react";
-import { kinds } from "nostr-tools";
+import { kinds as eventKinds } from "nostr-tools";
 
-import useSubject from "./use-subject";
 import useSingleEvent from "./use-single-event";
 import singleEventService from "../services/single-event";
 import useTimelineLoader from "./use-timeline-loader";
@@ -12,26 +11,31 @@ import { unique } from "../helpers/array";
 export default function useThreadTimelineLoader(
   focusedEvent: NostrEvent | undefined,
   relays: Iterable<string>,
-  kind: number = kinds.ShortTextNote,
+  kinds?: number[],
 ) {
   const refs = focusedEvent && getThreadReferences(focusedEvent);
   const rootPointer = refs?.root?.e || (focusedEvent && { id: focusedEvent?.id });
 
-  const readRelays = unique([...relays, ...(rootPointer?.relays ?? [])]);
+  const readRelays = useMemo(() => unique([...relays, ...(rootPointer?.relays ?? [])]), [relays, rootPointer?.relays]);
 
-  const timelineId = `${rootPointer?.id}-replies`;
-  const timeline = useTimelineLoader(
+  const kindArr = kinds ? (kinds.length > 0 ? kinds : undefined) : [eventKinds.ShortTextNote];
+  const timelineId = `${rootPointer?.id}-thread`;
+  const { loader, timeline: events } = useTimelineLoader(
     timelineId,
     readRelays,
     rootPointer
-      ? {
-          "#e": [rootPointer.id],
-          kinds: [kind],
-        }
+      ? [
+          {
+            "#e": [rootPointer.id],
+            kinds: kindArr,
+          },
+          {
+            "#q": [rootPointer.id],
+            kinds: kindArr,
+          },
+        ]
       : undefined,
   );
-
-  const events = useSubject(timeline.timeline);
 
   // mirror all events to single event cache
   useEffect(() => {
@@ -46,5 +50,5 @@ export default function useThreadTimelineLoader(
     return arr;
   }, [events, rootEvent, focusedEvent]);
 
-  return { events: allEvents, rootEvent, rootPointer, timeline };
+  return { events: allEvents, rootEvent, rootPointer, timeline: loader };
 }

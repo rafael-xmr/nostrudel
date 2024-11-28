@@ -1,36 +1,46 @@
-import { useMemo } from "react";
+import * as React from "react";
+import { useStoreQuery } from "applesauce-react/hooks";
 
 import { useReadRelays } from "./use-client-relays";
-import replaceableEventsService, { RequestOptions } from "../services/replaceable-events";
-import { CustomAddressPointer, parseCoordinate } from "../helpers/nostr/event";
-import Subject from "../classes/subject";
-import { NostrEvent } from "../types/nostr-event";
-import useSubjects from "./use-subjects";
+import replaceableEventsService, {
+	type RequestOptions,
+} from "../services/replaceable-events";
+import {
+	type CustomAddressPointer,
+	parseCoordinate,
+} from "../helpers/nostr/event";
+import { ReplaceableQuery } from "applesauce-core/queries";
 
-export default function useReplaceableEvents(
-  coordinates: string[] | CustomAddressPointer[] | undefined,
-  additionalRelays?: Iterable<string>,
-  opts: RequestOptions = {},
+export default function useReplaceableEvent(
+	cord: string | CustomAddressPointer | undefined,
+	additionalRelays?: Iterable<string>,
+	opts: RequestOptions = {},
 ) {
-  const readRelays = useReadRelays(additionalRelays);
-  const subs = useMemo(() => {
-    if (!coordinates) return undefined;
-    const subs: Subject<NostrEvent>[] = [];
-    for (const cord of coordinates) {
-      const parsed = typeof cord === "string" ? parseCoordinate(cord) : cord;
-      if (!parsed) return;
-      subs.push(
-        replaceableEventsService.requestEvent(
-          parsed.relays ? [...readRelays, ...parsed.relays] : readRelays,
-          parsed.kind,
-          parsed.pubkey,
-          parsed.identifier,
-          opts,
-        ),
-      );
-    }
-    return subs;
-  }, [coordinates, readRelays.urls.join("|")]);
+	const readRelays = useReadRelays(additionalRelays);
+	const parsed = React.useMemo(
+		() => (typeof cord === "string" ? parseCoordinate(cord) : cord),
+		[cord],
+	);
 
-  return useSubjects(subs);
+	React.useEffect(() => {
+		if (!parsed) return;
+
+		replaceableEventsService.requestEvent(
+			parsed.relays ? [...readRelays, ...parsed.relays] : readRelays,
+			parsed.kind,
+			parsed.pubkey,
+			parsed.identifier,
+			opts,
+		);
+	}, [
+		parsed,
+		readRelays.urls.join("|"),
+		opts?.alwaysRequest,
+		opts?.ignoreCache,
+	]);
+
+	return useStoreQuery(
+		ReplaceableQuery,
+		parsed ? [parsed.kind, parsed.pubkey, parsed.identifier] : undefined,
+	);
 }
