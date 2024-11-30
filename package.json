@@ -5,7 +5,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/rafael-xmr/mostard"
+    "url": "https://github.com/rafael-xmr/nostrudel/tree/mostard"
   },
   "scripts": {
     "start": "vite serve",
@@ -16,7 +16,7 @@
     "build-icons": "node ./scripts/build-icons.mjs"
   },
   "dependencies": {
-    "@chakra-ui/anatomy": "^2.2.2",
+    "@chakra-ui/anatomy": "^2.3.4",
     "@chakra-ui/breakpoint-utils": "^2.0.8",
     "@chakra-ui/icons": "^2.2.4",
     "@chakra-ui/media-query": "^3.3.0",
@@ -42,7 +42,7 @@
     "applesauce-channel": "next",
     "applesauce-content": "next",
     "applesauce-core": "next",
-    "applesauce-lists": "0.0.0-next-20241115160057",
+    "applesauce-lists": "next",
     "applesauce-net": "next",
     "applesauce-react": "next",
     "applesauce-signer": "next",

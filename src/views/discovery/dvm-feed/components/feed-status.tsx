@@ -30,7 +30,6 @@ import { DVMAvatarLink } from "./dvm-avatar";
 import DVMLink from "./dvm-name";
 import useUserMailboxes from "../../../../hooks/use-user-mailboxes";
 import { usePublishEvent } from "../../../../providers/global/publish-provider";
-import InlineInvoiceCard from "../../../../components/lightning/inline-invoice-card";
 import UserAvatar from "../../../../components/user/user-avatar";
 import UserLink from "../../../../components/user/user-link";
 import UserDnsIdentity from "../../../../components/user/user-dns-identity";

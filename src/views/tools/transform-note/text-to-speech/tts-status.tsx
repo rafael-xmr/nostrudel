@@ -25,21 +25,21 @@ export default function TextToSpeechStatus({ status }: { status: NostrEvent }) {
 				<Text>Offered</Text>
 				<Spacer />
 
-        {invoice && amountMsat && (
-          <Button
-            colorScheme="yellow"
-            size="sm"
-            variant="solid"
-            leftIcon={<LightningIcon />}
-            onClick={payInvoice}
-            isLoading={paying || paid}
-            isDisabled={!window.webln}
-          >
-            Pay {humanReadableSats(amountMsat / 1000)} sats
-          </Button>
-        )}
-      </Flex>
-      <Text>{status.content}</Text>
-    </>
-  );
+				{invoice && amountMsat && (
+					<Button
+						colorScheme="yellow"
+						size="sm"
+						variant="solid"
+						leftIcon={<LightningIcon />}
+						onClick={() => {}}
+						isLoading={paying || paid}
+						isDisabled={true}
+					>
+						Pay {humanReadableSats(amountMsat / 1000)} sats
+					</Button>
+				)}
+			</Flex>
+			<Text>{status.content}</Text>
+		</>
+	);
 }
