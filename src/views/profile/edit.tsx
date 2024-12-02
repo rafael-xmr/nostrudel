@@ -27,10 +27,6 @@ import { usePublishEvent } from "../../providers/global/publish-provider";
 const isEmail =
 	/^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
 
-function isLightningAddress(addr: string) {
-	return isEmail.test(addr);
-}
-
 type FormData = {
 	displayName?: string;
 	username?: string;
@@ -64,7 +60,7 @@ const MetadataForm = ({ defaultValues, onSubmit }: MetadataFormProps) => {
 
 	useEffect(() => {
 		reset(defaultValues);
-	}, [defaultValues]);
+	}, [defaultValues, reset]);
 
 	return (
 		<VerticalPageLayout as="form" onSubmit={handleSubmit(onSubmit)}>
@@ -189,7 +185,7 @@ const MetadataForm = ({ defaultValues, onSubmit }: MetadataFormProps) => {
 					{...register("moneroAddress", {
 						validate: async (v) => {
 							if (!v) return true;
-							if (!isXMR(v)) {
+							if (isXMR(v) === false) {
 								return "Must be a Monero (XMR) address.";
 							}
 							return true;
@@ -236,6 +232,7 @@ export const ProfileEditView = () => {
 			website: metadata?.website,
 			nip05: metadata?.nip05,
 			lightningAddress: metadata?.lud16 || metadata?.lud06,
+			cryptocurrency_addresses: metadata?.cryptocurrency_addresses,
 		}),
 		[metadata],
 	);
