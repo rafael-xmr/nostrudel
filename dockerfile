@@ -3,12 +3,14 @@ FROM node:20-alpine AS base
 
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
+ENV NODE_OPTIONS="--max_old_space_size=8192"
 RUN corepack enable
 
 WORKDIR /app
 
 COPY ./package*.json .
 COPY ./pnpm-lock.yaml .
+ADD ./applesauce /applesauce
 
 FROM base AS prod-deps
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --prod --frozen-lockfile
