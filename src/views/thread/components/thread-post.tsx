@@ -25,12 +25,12 @@ import Expand01 from "../../../components/icons/expand-01";
 import Minus from "../../../components/icons/minus";
 import { useBreakpointValue } from "../../../providers/global/breakpoint-provider";
 import UserDnsIdentity from "../../../components/user/user-dns-identity";
-import useAppSettings from "../../../hooks/use-app-settings";
+import useAppSettings from "../../../hooks/use-user-app-settings";
 import useThreadColorLevelProps from "../../../hooks/use-thread-color-level-props";
 import POWIcon from "../../../components/pow/pow-icon";
-import RepostButton from "../../../components/note/timeline-note/components/repost-button";
-import QuoteEventButton from "../../../components/note/quote-event-button";
-import NoteZapButton from "../../../components/note/note-zap-button";
+import EventShareButton from "../../../components/note/timeline-note/components/event-share-button";
+import EventQuoteButton from "../../../components/note/event-quote-button";
+import EventZapButton from "../../../components/zap/event-zap-button";
 import NoteProxyLink from "../../../components/note/timeline-note/components/note-proxy-link";
 import BookmarkEventButton from "../../../components/note/bookmark-event";
 import NoteMenu from "../../../components/note/note-menu";
@@ -39,7 +39,7 @@ import { TextNoteContents } from "../../../components/note/timeline-note/text-no
 import NoteReactions from "../../../components/note/timeline-note/components/note-reactions";
 import DetailsTabs from "./details-tabs";
 import useEventIntersectionRef from "../../../hooks/use-event-intersection-ref";
-import { getSharableEventAddress } from "../../../services/event-relay-hint";
+import { getSharableEventAddress } from "../../../services/relay-hints";
 import NotePublishedUsing from "../../../components/note/note-published-using";
 
 export type ThreadItemProps = {
@@ -134,37 +134,27 @@ function ThreadPost({
 		);
 	};
 
-	const showReactionsOnNewLine = useBreakpointValue({ base: true, lg: false });
-	const reactionButtons = showReactions && (
-		<NoteReactions
-			event={post.event}
-			flexWrap="wrap"
-			variant="ghost"
-			size="sm"
-		/>
-	);
-	const footer = (
-		<Flex gap="2" alignItems="center">
-			<ButtonGroup variant="ghost" size="sm">
-				<IconButton
-					aria-label="Reply"
-					title="Reply"
-					onClick={replyForm.onToggle}
-					icon={<ReplyIcon />}
-				/>
-				<RepostButton event={post.event} />
-				<QuoteEventButton event={post.event} />
-				<NoteZapButton event={post.event} />
-			</ButtonGroup>
-			{!showReactionsOnNewLine && reactionButtons}
-			<Spacer />
-			<ButtonGroup size="sm" variant="ghost">
-				<NoteProxyLink event={post.event} />
-				<BookmarkEventButton event={post.event} aria-label="Bookmark" />
-				<NoteMenu event={post.event} aria-label="More Options" />
-			</ButtonGroup>
-		</Flex>
-	);
+  const showReactionsOnNewLine = useBreakpointValue({ base: true, lg: false });
+  const reactionButtons = showReactions && (
+    <NoteReactions event={post.event} flexWrap="wrap" variant="ghost" size="sm" />
+  );
+  const footer = (
+    <Flex gap="2" alignItems="center">
+      <ButtonGroup variant="ghost" size="sm">
+        <IconButton aria-label="Reply" title="Reply" onClick={replyForm.onToggle} icon={<ReplyIcon />} />
+        <EventShareButton event={post.event} />
+        <EventQuoteButton event={post.event} />
+        <EventZapButton event={post.event} />
+      </ButtonGroup>
+      {!showReactionsOnNewLine && reactionButtons}
+      <Spacer />
+      <ButtonGroup size="sm" variant="ghost">
+        <NoteProxyLink event={post.event} />
+        <BookmarkEventButton event={post.event} aria-label="Bookmark" />
+        <NoteMenu event={post.event} aria-label="More Options" />
+      </ButtonGroup>
+    </Flex>
+  );
 
 	const ref = useEventIntersectionRef(post.event);
 

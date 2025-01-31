@@ -1,19 +1,19 @@
 import { Button, Flex, Heading, Link, Spinner, Text } from "@chakra-ui/react";
-import BackButton from "../../../components/router/back-button";
-import useCurrentAccount from "../../../hooks/use-current-account";
+import { useActiveAccount } from "applesauce-react/hooks";
 import { Link as RouterLink } from "react-router-dom";
+import { EventTemplate } from "nostr-tools";
+import dayjs from "dayjs";
 
-import { RelayFavicon } from "../../../components/relay-favicon";
+import RelayFavicon from "../../../components/relay-favicon";
 import useUserContactRelays from "../../../hooks/use-user-contact-relays";
 import { CheckIcon } from "../../../components/icons";
 import { useCallback, useState } from "react";
 import useUserContactList from "../../../hooks/use-user-contact-list";
-import { EventTemplate } from "nostr-tools";
-import dayjs from "dayjs";
 import { usePublishEvent } from "../../../providers/global/publish-provider";
+import SimpleView from "../../../components/layout/presets/simple-view";
 
 export default function ContactListRelaysView() {
-  const account = useCurrentAccount();
+  const account = useActiveAccount();
   const contacts = useUserContactList(account?.pubkey);
   const relays = useUserContactRelays(account?.pubkey);
   const publish = usePublishEvent();
@@ -38,24 +38,16 @@ export default function ContactListRelaysView() {
   if (relays === undefined) return <Spinner />;
 
   return (
-    <Flex gap="2" direction="column" overflow="auto hidden" flex={1} px={{ base: "2", lg: 0 }}>
-      <Flex gap="2" alignItems="center">
-        <BackButton hideFrom="lg" size="sm" />
-        <Heading size="lg">Contact List Relays</Heading>
-        {relays && (
-          <Button
-            colorScheme="red"
-            onClick={clearRelays}
-            isLoading={loading}
-            ml="auto"
-            size="sm"
-            isDisabled={account?.readonly}
-          >
+    <SimpleView
+      title="Contact list relays"
+      actions={
+        relays && (
+          <Button colorScheme="red" onClick={clearRelays} isLoading={loading} ml="auto" size="sm">
             Clear Relays
           </Button>
-        )}
-      </Flex>
-
+        )
+      }
+    >
       <Text fontStyle="italic" mt="-2">
         Some apps store relays in your contacts list (kind-3)
         <br />
@@ -74,7 +66,7 @@ export default function ContactListRelaysView() {
           <Heading size="md" mt="2">
             Read Relays
           </Heading>
-          {relays.inbox.urls.map((relay) => (
+          {relays.inbox.map((relay) => (
             <Flex key={relay} gap="2" alignItems="center" overflow="hidden">
               <RelayFavicon relay={relay} size="xs" />
               <Link as={RouterLink} to={`/r/${encodeURIComponent(relay)}`} isTruncated>
@@ -86,7 +78,7 @@ export default function ContactListRelaysView() {
           <Heading size="md" mt="2">
             Write Relays
           </Heading>
-          {relays.outbox.urls.map((relay) => (
+          {relays.outbox.map((relay) => (
             <Flex key={relay} gap="2" alignItems="center" overflow="hidden">
               <RelayFavicon relay={relay} size="xs" />
               <Link as={RouterLink} to={`/r/${encodeURIComponent(relay)}`} isTruncated>
@@ -96,6 +88,6 @@ export default function ContactListRelaysView() {
           ))}
         </>
       )}
-    </Flex>
+    </SimpleView>
   );
 }

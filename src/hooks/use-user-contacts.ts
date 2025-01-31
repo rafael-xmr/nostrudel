@@ -1,20 +1,11 @@
 import { kinds } from "nostr-tools";
 import { useStoreQuery } from "applesauce-react/hooks";
-import { UserContactsQuery } from "applesauce-lists/queries";
+import { UserContactsQuery } from "applesauce-core/queries";
 
 import useReplaceableEvent from "./use-replaceable-event";
-import type { RequestOptions } from "../services/replaceable-events";
 
-export default function useUserContactList(
-	pubkey?: string,
-	additionalRelays?: Iterable<string>,
-	opts: RequestOptions = {},
-) {
-	useReplaceableEvent(
-		pubkey && { kind: kinds.Contacts, pubkey },
-		additionalRelays,
-		opts,
-	);
+export default function useUserContactList(pubkey?: string, additionalRelays?: Iterable<string>, force?: boolean) {
+  useReplaceableEvent(pubkey && { kind: kinds.Contacts, pubkey }, additionalRelays, force);
 
 	return useStoreQuery(UserContactsQuery);
 }

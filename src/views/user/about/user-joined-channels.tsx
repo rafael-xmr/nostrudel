@@ -6,9 +6,9 @@ import { useBreakpointValue } from "../../../providers/global/breakpoint-provide
 import useUserChannelsList from "../../../hooks/use-user-channels-list";
 import { PointerChannelCard } from "../../channels/components/channel-card";
 
-export default function UserJoinedChanneled({ pubkey }: { pubkey: string }) {
+export default function UserJoinedChannels({ pubkey }: { pubkey: string }) {
   const contextRelays = useAdditionalRelayContext();
-  const { pointers: channels } = useUserChannelsList(pubkey, contextRelays, { alwaysRequest: true });
+  const { pointers: channels } = useUserChannelsList(pubkey, contextRelays, true);
   const columns = useBreakpointValue({ base: 1, lg: 2, xl: 3 }) ?? 1;
   const showAll = useDisclosure();
 

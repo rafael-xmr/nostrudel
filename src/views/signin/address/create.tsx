@@ -17,9 +17,12 @@ import {
 } from "@chakra-ui/react";
 import { useNavigate } from "react-router-dom";
 import { NostrEvent } from "nostr-tools";
-import { NostrConnectSigner } from "applesauce-signer/signers/nostr-connect-signer";
-import { ProfileContent } from "applesauce-core/helpers";
+import { NostrConnectSigner } from "applesauce-signers/signers/nostr-connect-signer";
+import { ProfileContent, safeParse } from "applesauce-core/helpers";
+import { useAccountManager } from "applesauce-react/hooks";
+import { NostrConnectAccount } from "applesauce-accounts/accounts";
 
+import { NOSTR_CONNECT_PERMISSIONS } from "../../../const";
 import useNip05Providers from "../../../hooks/use-nip05-providers";
 import HoverLinkOverlay from "../../../components/hover-link-overlay";
 import { getEventCoordinate } from "../../../helpers/nostr/event";
@@ -27,12 +30,8 @@ import { MetadataAvatar } from "../../../components/user/user-avatar";
 import { ErrorBoundary } from "../../../components/error-boundary";
 import dnsIdentityService from "../../../services/dns-identity";
 import useUserProfile from "../../../hooks/use-user-profile";
-import accountService from "../../../services/account";
 import { safeRelayUrls } from "../../../helpers/relay";
-import { safeJson } from "../../../helpers/parse";
-import { NOSTR_CONNECT_PERMISSIONS } from "../../../const";
-import NostrConnectAccount from "../../../classes/accounts/nostr-connect-account";
-import relayPoolService from "../../../services/relay-pool";
+import { createNostrConnectConnection } from "../../../classes/nostr-connect-connection";
 
 function ProviderCard({ onClick, provider }: { onClick: () => void; provider: NostrEvent }) {
   const metadata = JSON.parse(provider.content) as ProfileContent;
@@ -68,13 +67,14 @@ export default function LoginNostrAddressCreate() {
   const navigate = useNavigate();
   const toast = useToast();
 
+  const manager = useAccountManager();
   const [loading, setLoading] = useState<string>();
   const [name, setName] = useState("");
   const providers = useNip05Providers();
   const [selected, setSelected] = useState<NostrEvent>();
   const userMetadata = useUserProfile(selected?.pubkey);
   const providerMetadata = useMemo<ProfileContent | undefined>(
-    () => selected && safeJson(selected.content, undefined),
+    () => selected && safeParse(selected.content),
     [selected],
   );
 
@@ -93,16 +93,21 @@ export default function LoginNostrAddressCreate() {
       const relays = safeRelayUrls(nip05.nip46Relays || nip05.relays || []);
       if (relays.length === 0) throw new Error("Cant find providers relays");
 
-      const signer = new NostrConnectSigner({ pool: relayPoolService, relays, remote: nip05.pubkey });
+      const signer = new NostrConnectSigner({
+        relays,
+        remote: nip05.pubkey,
+        ...createNostrConnectConnection(),
+      });
 
       const createPromise = signer.createAccount(name, nip05.domain, undefined, NOSTR_CONNECT_PERMISSIONS);
       await createPromise;
       await signer.connect(undefined, NOSTR_CONNECT_PERMISSIONS);
 
-      const account = new NostrConnectAccount(signer.pubkey!, signer);
+      const pubkey = await signer.getPublicKey();
+      const account = new NostrConnectAccount(pubkey, signer);
 
-      accountService.addAccount(account);
-      accountService.switchAccount(account.pubkey);
+      manager.addAccount(account);
+      manager.setActive(account);
     } catch (e) {
       if (e instanceof Error) toast({ description: e.message, status: "error" });
     }

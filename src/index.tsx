@@ -1,14 +1,11 @@
 import "./polyfill";
-import { createRoot } from "react-dom/client";
-import { App } from "./app";
-import { GlobalProviders } from "./providers/global";
+import "./classes/nostr-connect-connection";
 
-import funding from "virtual:funding";
-console.log("Funding", funding);
+import { GlobalProviders } from "./providers/global";
 
 import "./services/user-event-sync";
 import "./services/username-search";
-import "./services/page-api";
+import "./services/debug-api";
 
 // When the app closes, remove the bitcoin-connect config if its set to extension
 // This prevents it from prompting the user to authorize or unlock their extension when the app is opened
@@ -22,8 +19,11 @@ window.addEventListener("unload", () => {
 // setup dayjs
 import dayjs from "dayjs";
 import relativeTimePlugin from "dayjs/plugin/relativeTime";
-dayjs.extend(relativeTimePlugin);
 import localizedFormat from "dayjs/plugin/localizedFormat";
+import { CAP_IS_WEB } from "./env";
+import { App } from "./app";
+import { logger } from "./helpers/debug";
+dayjs.extend(relativeTimePlugin);
 dayjs.extend(localizedFormat);
 
 // register nostr: protocol handler
@@ -36,11 +36,21 @@ if (import.meta.env.PROD) {
   }
 }
 
-const element = document.getElementById("root");
-if (!element) throw new Error("missing mount point");
-const root = createRoot(element);
-root.render(
+// mount react app
+import { createRoot } from "react-dom/client";
+
+logger("Rendering app");
+const root = document.getElementById("root")!;
+createRoot(root).render(
   <GlobalProviders>
     <App />
   </GlobalProviders>,
 );
+
+// if web, register service worker
+import { registerServiceWorker } from "./services/worker";
+if (CAP_IS_WEB) {
+  logger("Loading service worker");
+  // const { registerServiceWorker } = await import("./services/worker");
+  registerServiceWorker();
+}

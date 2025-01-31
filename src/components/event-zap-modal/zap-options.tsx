@@ -1,6 +1,6 @@
 import { Button, Flex } from "@chakra-ui/react";
 
-import useAppSettings from "../../hooks/use-app-settings";
+import useAppSettings from "../../hooks/use-user-app-settings";
 import Monero from "../icons/monero";
 
 export default function CustomZapAmountOptions({
@@ -20,7 +20,7 @@ export default function CustomZapAmountOptions({
 						leftIcon={<Monero />}
 						variant="solid"
 						size="sm"
-            isDisabled={false}
+						isDisabled={false}
 					>
 						{amount}
 					</Button>

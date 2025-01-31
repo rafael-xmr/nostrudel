@@ -1,107 +1,76 @@
+import { getEventPointerFromETag, getTagValue, safeRelayUrl } from "applesauce-core/helpers";
+
+import { NostrEvent, isPTag } from "../../types/nostr-event";
 import dayjs from "dayjs";
-import { DraftNostrEvent, NostrEvent, isPTag } from "../../types/nostr-event";
-import { unique } from "../array";
-import { ensureNotifyContentMentions } from "./post";
-import { getEventCoordinate } from "./event";
-import { kinds } from "nostr-tools";
 
-/** @deprecated use kinds.LiveEvent instead */
-export const STREAM_KIND = kinds.LiveEvent;
-/** @deprecated use kinds.LiveChatMessage instead */
-export const STREAM_CHAT_MESSAGE_KIND = kinds.LiveChatMessage;
+export type StreamStatus = "live" | "ended" | "planned";
 
-export type ParsedStream = {
-  event: NostrEvent;
-  author: string;
-  host: string;
-  title?: string;
-  summary?: string;
-  image?: string;
-  updated: number;
-  status: "live" | "ended" | string;
-  goal?: string;
-  starts?: number;
-  ends?: number;
-  identifier: string;
-  tags: string[];
-  streaming?: string;
-  recording?: string;
-  relays?: string[];
-};
+export function getStreamTitle(stream: NostrEvent) {
+  return getTagValue(stream, "title");
+}
+export function getStreamSummary(stream: NostrEvent) {
+  return getTagValue(stream, "summary");
+}
+export function getStreamImage(stream: NostrEvent) {
+  return getTagValue(stream, "image");
+}
+
+export function getStreamStatus(stream: NostrEvent): StreamStatus {
+  if (dayjs.unix(stream.created_at).isBefore(dayjs().subtract(2, "weeks"))) return "ended";
+  else return (getTagValue(stream, "status") as StreamStatus) || "ended";
+}
 
 export function getStreamHost(stream: NostrEvent) {
   return stream.tags.filter(isPTag)[0]?.[1] ?? stream.pubkey;
 }
 
-export function parseStreamEvent(stream: NostrEvent): ParsedStream {
-  const title = stream.tags.find((t) => t[0] === "title")?.[1];
-  const summary = stream.tags.find((t) => t[0] === "summary")?.[1];
-  const image = stream.tags.find((t) => t[0] === "image")?.[1];
-  const starts = stream.tags.find((t) => t[0] === "starts")?.[1];
-  const ends = stream.tags.find((t) => t[0] === "ends")?.[1];
-  const streaming = stream.tags.find((t) => t[0] === "streaming")?.[1];
-  const recording = stream.tags.find((t) => t[0] === "recording")?.[1];
-  const goal = stream.tags.find((t) => t[0] === "goal")?.[1];
-  const identifier = stream.tags.find((t) => t[0] === "d")?.[1];
+/** Gets all the streaming urls for a stream */
+export function getStreamStreamingURLs(stream: NostrEvent) {
+  return stream.tags.filter((t) => t[0] === "streaming").map((t) => t[1]);
+}
 
-  if (!identifier) throw new Error("Missing Identifier");
+export function getStreamRecording(stream: NostrEvent) {
+  return getTagValue(stream, "recording");
+}
 
-  let relays = stream.tags.find((t) => t[0] === "relays");
-  // remove the first "relays" element
-  if (relays) {
-    relays = Array.from(relays);
-    relays.shift();
+export function getStreamRelays(stream: NostrEvent) {
+  let found = false;
+  const relays: string[] = [];
+
+  for (const tag of stream.tags) {
+    if (tag[0] === "relays") {
+      found = true;
+      for (let i = 1; i < tag.length; i++) {
+        const relay = safeRelayUrl(tag[i]);
+        if (relay && !relays.includes(relay)) relays.push(relay);
+      }
+    }
   }
 
-  const startTime = starts ? parseInt(starts) : undefined;
-  let endTime = ends ? parseInt(ends) : undefined;
+  return found ? relays : undefined;
+}
 
-  let status = stream.tags.find((t) => t[0] === "status")?.[1] || "ended";
-  if (status === "ended" && endTime === undefined) endTime = stream.created_at;
-  if (endTime && endTime > dayjs().unix()) {
-    status = "ended";
-  }
+/** Gets the stream start time if it has one */
+export function getStreamStartTime(stream: NostrEvent) {
+  const str = getTagValue(stream, "starts");
+  return str ? parseInt(str) : undefined;
+}
 
-  // if the stream has not been updated in a day consider it ended
-  if (stream.created_at < dayjs().subtract(1, "week").unix()) {
-    status = "ended";
-  }
+/** Gets the stream end time if it has one */
+export function getStreamEndTime(stream: NostrEvent) {
+  const str = getTagValue(stream, "ends");
+  return str ? parseInt(str) : getStreamStatus(stream) === "ended" ? stream.created_at : undefined;
+}
 
-  const tags = unique(stream.tags.filter((t) => t[0] === "t" && t[1]).map((t) => t[1] as string));
-
+export function getStreamParticipants(stream: NostrEvent) {
+  const current = getTagValue(stream, "current_participants");
+  const total = getTagValue(stream, "total_participants");
   return {
-    author: stream.pubkey,
-    host: getStreamHost(stream),
-    event: stream,
-    updated: stream.created_at,
-    streaming,
-    recording,
-    tags,
-    title,
-    summary,
-    image,
-    status,
-    starts: startTime,
-    ends: endTime,
-    goal,
-    identifier,
-    relays,
+    current: current ? parseInt(current) : undefined,
+    total: total ? parseInt(total) : undefined,
   };
 }
 
-export function getATag(stream: ParsedStream) {
-  return getEventCoordinate(stream.event);
-}
-
-export function buildChatMessage(stream: ParsedStream, content: string) {
-  let draft: DraftNostrEvent = {
-    tags: [["a", getATag(stream), "", "root"]],
-    content,
-    created_at: dayjs().unix(),
-    kind: STREAM_CHAT_MESSAGE_KIND,
-  };
-
-  draft = ensureNotifyContentMentions(draft);
-
-  return draft;
+export function getStreamHashtags(stream: NostrEvent) {
+  return stream.tags.filter((t) => t[0] === "t").map((t) => t[1]);
 }

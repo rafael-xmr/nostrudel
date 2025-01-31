@@ -21,6 +21,8 @@ import EmbeddedSetOrList from "./event-types/embedded-list";
 import EmbeddedReaction from "./event-types/embedded-reaction";
 import EmbeddedDM from "./event-types/embedded-dm";
 import EmbeddedUnknown from "./event-types/embedded-unknown";
+import { DVM_CONTENT_DISCOVERY_JOB_KIND } from "../../helpers/nostr/dvm";
+import DVMCard from "../../views/discovery/dvm-feed/components/dvm-card";
 
 const EmbeddedGoal = lazy(() => import("./event-types/embedded-goal"));
 const EmbeddedArticle = lazy(() => import("./event-types/embedded-article"));
@@ -36,6 +38,7 @@ const EmbeddedWikiPage = lazy(() => import("./event-types/embedded-wiki-page"));
 const EmbeddedStream = lazy(() => import("./event-types/embedded-stream"));
 const EmbeddedStreamMessage = lazy(() => import("./event-types/embedded-stream-message"));
 const EmbeddedStemstrTrack = lazy(() => import("./event-types/embedded-stemstr-track"));
+const EmbeddedFile = lazy(() => import("./event-types/embedded-file"));
 
 export type EmbedProps = {
   goalProps?: EmbeddedGoalOptions;
@@ -55,7 +58,7 @@ export function EmbedEvent({
       case kinds.EncryptedDirectMessage:
         return <EmbeddedDM dm={event} {...cardProps} />;
       case kinds.LiveEvent:
-        return <EmbeddedStream event={event} {...cardProps} />;
+        return <EmbeddedStream stream={event} {...cardProps} />;
       case kinds.ZapGoal:
         return <EmbeddedGoal goal={event} {...cardProps} {...goalProps} />;
       case kinds.Emojisets:
@@ -85,6 +88,12 @@ export function EmbedEvent({
         return <EmbeddedWikiPage page={event} {...cardProps} />;
       case kinds.Zap:
         return <EmbeddedZapRecept zap={event} {...cardProps} />;
+      case kinds.FileMetadata:
+        return <EmbeddedFile file={event} {...cardProps} />;
+      case kinds.Handlerinformation:
+        // if its a content DVM
+        if (event.tags.some((t) => t[0] === "k" && t[1] === String(DVM_CONTENT_DISCOVERY_JOB_KIND)))
+          return <DVMCard dvm={event} />;
     }
 
     if (SET_KINDS.includes(event.kind) || LIST_KINDS.includes(event.kind))
@@ -96,7 +105,10 @@ export function EmbedEvent({
   return <Suspense fallback={<Spinner />}>{renderContent()}</Suspense>;
 }
 
-export function EmbedEventPointer({ pointer, ...props }: { pointer: DecodeResult } & EmbedProps) {
+export function EmbedEventPointer({
+  pointer,
+  ...props
+}: { pointer: DecodeResult } & EmbedProps & Omit<CardProps, "children">) {
   switch (pointer.type) {
     case "note": {
       const event = useSingleEvent(pointer.data);

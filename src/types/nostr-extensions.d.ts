@@ -1,5 +1,4 @@
-import { EventTemplate, NostrEvent, UnsignedEvent, VerifiedEvent } from "nostr-tools";
-import { Nip07Interface } from "applesauce-signer";
+import { Nip07Interface } from "applesauce-signers";
 
 declare global {
   interface Window {

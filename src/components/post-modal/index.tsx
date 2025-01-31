@@ -1,133 +1,97 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import {
-	Modal,
-	ModalOverlay,
-	ModalContent,
-	ModalBody,
-	Flex,
-	Button,
-	Box,
-	Heading,
-	useDisclosure,
-	Input,
-	Switch,
-	ModalProps,
-	VisuallyHiddenInput,
-	IconButton,
-	FormLabel,
-	FormControl,
-	FormHelperText,
-	Link,
-	Slider,
-	SliderTrack,
-	SliderFilledTrack,
-	SliderThumb,
-	ModalCloseButton,
-	Alert,
-	AlertIcon,
-	ButtonGroup,
-	Text,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalBody,
+  Flex,
+  Button,
+  Box,
+  Heading,
+  useDisclosure,
+  Input,
+  Switch,
+  ModalProps,
+  FormLabel,
+  FormControl,
+  FormHelperText,
+  Link,
+  Slider,
+  SliderTrack,
+  SliderFilledTrack,
+  SliderThumb,
+  ModalCloseButton,
+  Alert,
+  AlertIcon,
+  ButtonGroup,
+  Text,
 } from "@chakra-ui/react";
-import dayjs from "dayjs";
 import { useForm } from "react-hook-form";
-import { kinds, UnsignedEvent } from "nostr-tools";
-import { useThrottle } from "react-use";
-import { useObservable } from "applesauce-react/hooks";
+import { UnsignedEvent } from "nostr-tools";
+import { useAsync, useThrottle } from "react-use";
+import { useActiveAccount, useEventFactory, useObservable } from "applesauce-react/hooks";
+import { Emoji, ZapSplit } from "applesauce-core/helpers";
 
-import { ChevronDownIcon, ChevronUpIcon, UploadImageIcon } from "../icons";
-import PublishAction from "../../classes/nostr-publish-action";
-import { PublishDetails } from "../../views/task-manager/publish-log/publish-details";
+import { ChevronDownIcon, ChevronUpIcon } from "../icons";
+import { PublishLogEntryDetails } from "../../views/task-manager/publish-log/entry-details";
 import { TrustProvider } from "../../providers/local/trust-provider";
-import {
-	correctContentMentions,
-	createEmojiTags,
-	ensureNotifyPubkeys,
-	finalizeNote,
-	getPubkeysMentionedInContent,
-	setZapSplit,
-} from "../../helpers/nostr/post";
-import { UserAvatarStack } from "../compact-user-stack";
 import MagicTextArea, { RefType } from "../magic-textarea";
 import { useContextEmojis } from "../../providers/global/emoji-provider";
-import CommunitySelect from "./community-select";
-import ZapSplitCreator, { fillRemainingPercent } from "./zap-split-creator";
-import { EventSplit } from "../../helpers/nostr/zaps";
-import useCurrentAccount from "../../hooks/use-current-account";
+import ZapSplitCreator from "../../views/new/note/zap-split-creator";
 import useCacheForm from "../../hooks/use-cache-form";
 import useTextAreaUploadFile, { useTextAreaInsertTextWithForm } from "../../hooks/use-textarea-upload-file";
 import MinePOW from "../pow/mine-pow";
-import useAppSettings from "../../hooks/use-app-settings";
+import useAppSettings from "../../hooks/use-user-app-settings";
 import { ErrorBoundary } from "../error-boundary";
-import {
-	useFinalizeDraft,
-	usePublishEvent,
-} from "../../providers/global/publish-provider";
+import { PublishLogEntry, useFinalizeDraft, usePublishEvent } from "../../providers/global/publish-provider";
 import { TextNoteContents } from "../note/timeline-note/text-note-contents";
 import localSettings from "../../services/local-settings";
 import useLocalStorageDisclosure from "../../hooks/use-localstorage-disclosure";
 import InsertGifButton from "../gif/insert-gif-button";
-import InsertImageButton from "./insert-image-button";
+import InsertImageButton from "../../views/new/note/insert-image-button";
 
 type FormValues = {
-	subject: string;
-	content: string;
-	nsfw: boolean;
-	nsfwReason: string;
-	community: string;
-	split: EventSplit;
-	difficulty: number;
+  content: string;
+  nsfw: boolean;
+  nsfwReason: string;
+  split: Omit<ZapSplit, "percent" | "relay">[];
+  difficulty: number;
 };
 
 export type PostModalProps = {
-	cacheFormKey?: string | null;
-	initContent?: string;
-	initCommunity?: string;
-	requireSubject?: boolean;
+  cacheFormKey?: string | null;
+  initContent?: string;
 };
 
 export default function PostModal({
-	isOpen,
-	onClose,
-	cacheFormKey = "new-note",
-	initContent = "",
-	initCommunity = "",
-	requireSubject,
+  isOpen,
+  onClose,
+  cacheFormKey = "new-note",
+  initContent = "",
 }: Omit<ModalProps, "children"> & PostModalProps) {
-	const publish = usePublishEvent();
-	const finalizeDraft = useFinalizeDraft();
-	const account = useCurrentAccount()!;
-	const { noteDifficulty } = useAppSettings();
-	const addClientTag = useObservable(localSettings.addClientTag);
-	const promptAddClientTag = useLocalStorageDisclosure(
-		"prompt-add-client-tag",
-		true,
-	);
-	const [miningTarget, setMiningTarget] = useState(0);
-	const [publishAction, setPublishAction] = useState<PublishAction>();
-	const emojis = useContextEmojis();
-	const moreOptions = useDisclosure();
+  const publish = usePublishEvent();
+  const finalizeDraft = useFinalizeDraft();
+  const account = useActiveAccount()!;
+  const { noteDifficulty } = useAppSettings();
+  const addClientTag = useObservable(localSettings.addClientTag);
+  const promptAddClientTag = useLocalStorageDisclosure("prompt-add-client-tag", true);
+  const [miningTarget, setMiningTarget] = useState(0);
+  const [publishEntry, setPublishEntry] = useState<PublishLogEntry>();
+  const emojis = useContextEmojis();
+  const moreOptions = useDisclosure();
 
-	const [draft, setDraft] = useState<UnsignedEvent>();
-	const {
-		getValues,
-		setValue,
-		watch,
-		register,
-		handleSubmit,
-		formState,
-		reset,
-	} = useForm<FormValues>({
-		defaultValues: {
-			subject: "",
-			content: initContent,
-			nsfw: false,
-			nsfwReason: "",
-			community: initCommunity,
-			split: [] as EventSplit,
-			difficulty: noteDifficulty || 0,
-		},
-		mode: "all",
-	});
+  const factory = useEventFactory();
+  const [draft, setDraft] = useState<UnsignedEvent>();
+  const { getValues, setValue, watch, register, handleSubmit, formState, reset } = useForm<FormValues>({
+    defaultValues: {
+      content: initContent,
+      nsfw: false,
+      nsfwReason: "",
+      split: [] as Omit<ZapSplit, "percent" | "relay">[],
+      difficulty: noteDifficulty || 0,
+    },
+    mode: "all",
+  });
 
 	// watch form state
 	formState.isDirty;
@@ -140,86 +104,56 @@ export default function PostModal({
 	// cache form to localStorage
 	useCacheForm<FormValues>(cacheFormKey, getValues, reset, formState);
 
-	const updateDraft = useCallback(
-		async (values = getValues()) => {
-			const { content, nsfw, nsfwReason, community, split, subject } = values;
+  const getDraft = async (values = getValues()) => {
+    // build draft using factory
+    let draft = await factory.note(values.content, {
+      emojis: emojis.filter((e) => !!e.url) as Emoji[],
+      contentWarning: values.nsfw ? values.nsfwReason || values.nsfw : false,
+      splits: values.split,
+    });
 
-			let draft = finalizeNote({
-				content: correctContentMentions(content),
-				kind: kinds.ShortTextNote,
-				tags: [],
-				created_at: dayjs().unix(),
-			});
+    const unsigned = await finalizeDraft(draft);
 
-			if (nsfw)
-				draft.tags.push(
-					nsfwReason ? ["content-warning", nsfwReason] : ["content-warning"],
-				);
-			if (community) draft.tags.push(["a", community]);
-			if (subject) draft.tags.push(["subject", subject]);
+    setDraft(unsigned);
+    return unsigned;
+  };
 
-			const contentMentions = getPubkeysMentionedInContent(draft.content);
-			draft = createEmojiTags(draft, emojis);
-			draft = ensureNotifyPubkeys(draft, contentMentions);
-			if (split.length > 0) {
-				draft = setZapSplit(draft, fillRemainingPercent(split, account.pubkey));
-			}
-
-			const unsigned = await finalizeDraft(draft);
-			setDraft(unsigned);
-			return unsigned;
-		},
-		[getValues, emojis, finalizeDraft, setDraft],
-	);
-
-	// throttle update the draft every 500ms
-	const throttleValues = useThrottle(JSON.stringify(getValues()), 500);
-	useEffect(() => {
-		updateDraft(getValues());
-	}, [throttleValues]);
-
-	const imageUploadRef = useRef<HTMLInputElement | null>(null);
+  // throttle update the draft every 500ms
+  const throttleValues = useThrottle(getValues(), 500);
+  const { value: preview } = useAsync(() => getDraft(), [throttleValues]);
 
   const textAreaRef = useRef<RefType | null>(null);
   const insertText = useTextAreaInsertTextWithForm(textAreaRef, getValues, setValue);
   const { onPaste } = useTextAreaUploadFile(insertText);
 
-	const publishPost = async (unsigned?: UnsignedEvent) => {
-		unsigned = unsigned || draft || (await updateDraft());
+  const publishPost = async (unsigned?: UnsignedEvent) => {
+    unsigned = unsigned || draft || (await getDraft());
 
-		const pub = await publish("Post", unsigned);
-		if (pub) setPublishAction(pub);
-	};
-	const submit = handleSubmit(async (values) => {
-		if (values.difficulty > 0) {
-			setMiningTarget(values.difficulty);
-		} else {
-			const unsigned = await updateDraft(values);
-			publishPost(unsigned);
-		}
-	});
+    const pub = await publish("Post", unsigned);
+    if (pub) setPublishEntry(pub);
+  };
+  const submit = handleSubmit(async (values) => {
+    if (values.difficulty > 0) {
+      setMiningTarget(values.difficulty);
+    } else {
+      const unsigned = await getDraft(values);
+      publishPost(unsigned);
+    }
+  });
 
-	const canSubmit = getValues().content.length > 0;
-	const mentions = getPubkeysMentionedInContent(
-		correctContentMentions(getValues().content),
-	);
+  const canSubmit = getValues().content.length > 0;
 
-	const renderBody = () => {
-		if (publishAction) {
-			return (
-				<ModalBody
-					display="flex"
-					flexDirection="column"
-					padding={["2", "2", "4"]}
-					gap="2"
-				>
-					<PublishDetails pub={publishAction} />
-					<Button onClick={onClose} mt="2" ml="auto">
-						Close
-					</Button>
-				</ModalBody>
-			);
-		}
+  const renderBody = () => {
+    if (publishEntry) {
+      return (
+        <ModalBody display="flex" flexDirection="column" padding={["2", "2", "4"]} gap="2">
+          <PublishLogEntryDetails entry={publishEntry} />
+          <Button onClick={onClose} mt="2" ml="auto">
+            Close
+          </Button>
+        </ModalBody>
+      );
+    }
 
 		if (miningTarget && draft) {
 			return (
@@ -244,7 +178,6 @@ export default function PostModal({
     return (
       <>
         <ModalBody display="flex" flexDirection="column" padding={["2", "2", "4"]} gap="2">
-          {requireSubject && <Input {...register("subject", { required: true })} isRequired placeholder="Subject" />}
           <MagicTextArea
             autoFocus
             mb="2"
@@ -258,13 +191,13 @@ export default function PostModal({
               if ((e.ctrlKey || e.metaKey) && e.key === "Enter") submit();
             }}
           />
-          {draft && draft.content.length > 0 && (
+          {preview && preview.content.length > 0 && (
             <Box>
               <Heading size="sm">Preview:</Heading>
               <Box borderWidth={1} borderRadius="md" p="2">
                 <ErrorBoundary>
                   <TrustProvider trust>
-                    <TextNoteContents event={draft} />
+                    <TextNoteContents event={preview} />
                   </TrustProvider>
                 </ErrorBoundary>
               </Box>
@@ -282,7 +215,6 @@ export default function PostModal({
                 More Options
               </Button>
             </Flex>
-            {mentions.length > 0 && <UserAvatarStack label="Mentions" pubkeys={mentions} />}
             <Button onClick={onClose} variant="ghost">
               Cancel
             </Button>
@@ -299,10 +231,6 @@ export default function PostModal({
           {moreOptions.isOpen && (
             <Flex direction={{ base: "column", lg: "row" }} gap="4">
               <Flex direction="column" gap="2" flex={1}>
-                <FormControl>
-                  <FormLabel>Post to community</FormLabel>
-                  <CommunitySelect {...register("community")} />
-                </FormControl>
                 <Flex gap="2" direction="column">
                   <Switch {...register("nsfw")}>NSFW</Switch>
                   {getValues().nsfw && (
@@ -334,8 +262,8 @@ export default function PostModal({
               </Flex>
               <Flex direction="column" gap="2" flex={1}>
                 <ZapSplitCreator
-                  split={getValues().split}
-                  onChange={(s) => setValue("split", s, { shouldDirty: true })}
+                  splits={getValues().split}
+                  onChange={(splits) => setValue("split", splits, { shouldDirty: true })}
                   authorPubkey={account?.pubkey}
                 />
               </Flex>
@@ -376,13 +304,13 @@ export default function PostModal({
 		);
 	};
 
-	return (
-		<Modal isOpen={isOpen} onClose={onClose} size="4xl">
-			<ModalOverlay />
-			<ModalContent>
-				{publishAction && <ModalCloseButton />}
-				{renderBody()}
-			</ModalContent>
-		</Modal>
-	);
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} size="4xl">
+      <ModalOverlay />
+      <ModalContent>
+        {publishEntry && <ModalCloseButton />}
+        {renderBody()}
+      </ModalContent>
+    </Modal>
+  );
 }

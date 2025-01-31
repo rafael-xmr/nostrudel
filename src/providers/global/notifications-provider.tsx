@@ -1,10 +1,10 @@
 import { PropsWithChildren, createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { kinds } from "nostr-tools";
+import { useActiveAccount } from "applesauce-react/hooks";
 
 import { useReadRelays } from "../../hooks/use-client-relays";
-import useCurrentAccount from "../../hooks/use-current-account";
-import type TimelineLoader from "../../classes/timeline-loader";
-import type { NostrEvent } from "../../types/nostr-event";
+import TimelineLoader from "../../classes/timeline-loader";
+import { NostrEvent } from "../../types/nostr-event";
 import useClientSideMuteFilter from "../../hooks/use-client-side-mute-filter";
 import useTimelineLoader from "../../hooks/use-timeline-loader";
 import { TORRENT_COMMENT_KIND } from "../../helpers/nostr/torrents";
@@ -25,7 +25,7 @@ export function useNotifications() {
 }
 
 export default function NotificationsProvider({ children }: PropsWithChildren) {
-  const account = useCurrentAccount();
+  const account = useActiveAccount();
   const inbox = useUserInbox(account?.pubkey);
   const readRelays = useReadRelays(inbox);
 
@@ -65,7 +65,7 @@ export default function NotificationsProvider({ children }: PropsWithChildren) {
     const n = new AccountNotifications(account.pubkey);
     setNotifications(n);
     if (import.meta.env.DEV) {
-      // @ts-expect-error
+      // @ts-expect-error debug
       window.accountNotifications = n;
     }
 

@@ -4,13 +4,11 @@ import { AbstractRelay } from "nostr-tools/abstract-relay";
 import { SimpleRelay } from "nostr-idb";
 import _throttle from "lodash.throttle";
 import { nanoid } from "nanoid";
-import { Subject } from "rxjs";
+import { Subject, Subscription } from "rxjs";
 
 import { logger } from "../helpers/debug";
 import EventStore from "./event-store";
-import deleteEventService from "../services/delete-events";
 import { mergeFilter } from "../helpers/nostr/filter";
-import { isATag, isETag } from "../types/nostr-event";
 import relayPoolService from "../services/relay-pool";
 import Process from "./process";
 import processManager from "../services/process-manager";
@@ -21,6 +19,7 @@ const DEFAULT_CHUNK_SIZE = 100;
 
 export type EventFilter = (event: NostrEvent) => boolean;
 
+/** @deprecated this should be replaced with a rx-nostr based timeline loader */
 export default class ChunkedRequest {
   id: string;
   process: Process;
@@ -28,7 +27,7 @@ export default class ChunkedRequest {
   filters: Filter[];
   chunkSize = DEFAULT_CHUNK_SIZE;
   private log: Debugger;
-  private subs: ZenObservable.Subscription[] = [];
+  private subs: Subscription[] = [];
 
   loading = false;
   events: EventStore;
@@ -47,9 +46,6 @@ export default class ChunkedRequest {
 
     this.log = log || logger.extend(relay.url);
     this.events = new EventStore(relay.url);
-
-    // TODO: find a better place for this
-    this.subs.push(deleteEventService.stream.subscribe((e) => this.handleDeleteEvent(e)));
 
     processManager.registerProcess(this.process);
   }
@@ -73,7 +69,7 @@ export default class ChunkedRequest {
     }
 
     let filters: Filter[] = mergeFilter(this.filters, { limit: this.chunkSize });
-    let oldestEvent = this.getLastEvent();
+    const oldestEvent = this.getLastEvent();
     if (oldestEvent) {
       filters = mergeFilter(filters, { until: oldestEvent.created_at - 1 });
     }
@@ -115,14 +111,6 @@ export default class ChunkedRequest {
     event = eventStore.add(event, this.relay.url);
 
     return this.events.addEvent(event);
-  }
-
-  private handleDeleteEvent(deleteEvent: NostrEvent) {
-    const cord = deleteEvent.tags.find(isATag)?.[1];
-    const eventId = deleteEvent.tags.find(isETag)?.[1];
-
-    if (cord) this.events.deleteEvent(cord);
-    if (eventId) this.events.deleteEvent(eventId);
   }
 
   getFirstEvent(nth = 0, eventFilter?: EventFilter) {

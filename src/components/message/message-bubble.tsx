@@ -9,7 +9,7 @@ import useEventReactions from "../../hooks/use-event-reactions";
 import EventReactionButtons from "../event-reactions/event-reactions";
 import { IconThreadButton } from "./thread-button";
 import AddReactionButton from "../note/timeline-note/components/add-reaction-button";
-import NoteZapButton from "../note/note-zap-button";
+import EventZapButton from "../zap/event-zap-button";
 import useEventIntersectionRef from "../../hooks/use-event-intersection-ref";
 
 export type MessageBubbleProps = {
@@ -36,8 +36,8 @@ export default function MessageBubble({
 
   const actions = (
     <>
-      <NoteZapButton event={message} />
-      <AddReactionButton event={message} portal />
+      <EventZapButton event={message} />
+      <AddReactionButton event={message} />
       {showThreadButton && <IconThreadButton event={message} aria-label="Open Thread" />}
     </>
   );
@@ -69,7 +69,7 @@ export default function MessageBubble({
       {hasReactions && (
         <CardFooter alignItems="center" display="flex" gap="2" px="2" pt="0" pb="2">
           <ButtonGroup size="xs" variant="ghost">
-            {actionPosition === "footer" ? actions : <AddReactionButton event={message} portal />}
+            {actionPosition === "footer" ? actions : <AddReactionButton event={message} />}
             <EventReactionButtons event={message} />
           </ButtonGroup>
           <Timestamp ml="auto" timestamp={message.created_at} />

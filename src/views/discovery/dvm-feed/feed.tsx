@@ -37,8 +37,8 @@ import type { DraftNostrEvent } from "../../../types/nostr-event";
 import VerticalPageLayout from "../../../components/vertical-page-layout";
 import useTimelineLoader from "../../../hooks/use-timeline-loader";
 import { useReadRelays } from "../../../hooks/use-client-relays";
-import useCurrentAccount from "../../../hooks/use-current-account";
-import RequireCurrentAccount from "../../../providers/route/require-current-account";
+import { useActiveAccount } from "applesauce-react/hooks";
+import RequireActiveAccount from "../../../components/router/require-active-account";
 import { CodeIcon } from "../../../components/icons";
 import DebugChains from "./components/debug-chains";
 import Feed from "./components/feed";
@@ -47,16 +47,15 @@ import useParamsAddressPointer from "../../../hooks/use-params-address-pointer";
 import DVMParams from "./components/dvm-params";
 import { useUserOutbox } from "../../../hooks/use-user-mailboxes";
 import { usePublishEvent } from "../../../providers/global/publish-provider";
-import { getHumanReadableCoordinate } from "../../../services/replaceable-events";
+import { getHumanReadableCoordinate } from "../../../services/replaceable-loader";
 import Timestamp from "../../../components/timestamp";
 
 function DVMFeedPage({ pointer }: { pointer: AddressPointer }) {
-	const [since] = useState(() => dayjs().subtract(1, "day").unix());
-	const publish = usePublishEvent();
-	const navigate = useNavigate();
-	const account = useCurrentAccount();
-	if (!account) return null;
-	const debugModal = useDisclosure();
+  const [since] = useState(() => dayjs().subtract(1, "day").unix());
+  const publish = usePublishEvent();
+  const navigate = useNavigate();
+  const account = useActiveAccount()!;
+  const debugModal = useDisclosure();
 
 	const dvmRelays = useUserOutbox(pointer.pubkey);
 	const readRelays = useReadRelays(dvmRelays);
@@ -205,9 +204,9 @@ function DVMFeedPage({ pointer }: { pointer: AddressPointer }) {
 export default function DVMFeedView() {
 	const pointer = useParamsAddressPointer("addr");
 
-	return (
-		<RequireCurrentAccount>
-			<DVMFeedPage pointer={pointer} />
-		</RequireCurrentAccount>
-	);
+  return (
+    <RequireActiveAccount>
+      <DVMFeedPage pointer={pointer} />
+    </RequireActiveAccount>
+  );
 }

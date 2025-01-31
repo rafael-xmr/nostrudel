@@ -1,11 +1,11 @@
 import { PropsWithChildren, createContext, useContext, useEffect, useMemo } from "react";
 import { NostrEvent, kinds } from "nostr-tools";
+import { useActiveAccount } from "applesauce-react/hooks";
 import _throttle from "lodash.throttle";
 
 import { getPubkeysFromList } from "../../helpers/nostr/lists";
-import useCurrentAccount from "../../hooks/use-current-account";
 import { PubkeyGraph } from "../../classes/pubkey-graph";
-import replaceableEventsService from "../../services/replaceable-events";
+import replaceableEventLoader from "../../services/replaceable-loader";
 import { COMMON_CONTACT_RELAYS } from "../../const";
 import { eventStore } from "../../services/event-store";
 
@@ -40,11 +40,11 @@ export function loadSocialGraph(
   if (contacts) {
     handleEvent(contacts);
   } else {
-    replaceableEventsService.requestEvent(
-      relay ? [relay, ...COMMON_CONTACT_RELAYS] : COMMON_CONTACT_RELAYS,
+    replaceableEventLoader.next({
+      relays: relay ? [relay, ...COMMON_CONTACT_RELAYS] : COMMON_CONTACT_RELAYS,
       kind,
       pubkey,
-    );
+    });
 
     // wait for event to load
     const sub = eventStore.replaceable(kind, pubkey).subscribe((e) => {
@@ -63,7 +63,7 @@ export function useWebOfTrust() {
 }
 
 export default function WebOfTrustProvider({ pubkey, children }: PropsWithChildren<{ pubkey?: string }>) {
-  const account = useCurrentAccount();
+  const account = useActiveAccount();
   if (account && !pubkey) pubkey = account.pubkey;
 
   const graph = useMemo(() => {
@@ -75,7 +75,7 @@ export default function WebOfTrustProvider({ pubkey, children }: PropsWithChildr
     if (!graph) return;
 
     if (import.meta.env.DEV) {
-      //@ts-expect-error
+      //@ts-expect-error debug
       window.webOfTrust = graph;
     }
 

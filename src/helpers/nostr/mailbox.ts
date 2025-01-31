@@ -6,7 +6,7 @@ import { cloneEvent } from "./event";
 
 /** fixes or removes any bad r tags */
 export function cleanRTags(tags: Tag[]) {
-  let newTags: Tag[] = [];
+  const newTags: Tag[] = [];
   for (const tag of tags) {
     if (tag[0] === "r") {
       if (!tag[1]) continue;
@@ -19,7 +19,7 @@ export function cleanRTags(tags: Tag[]) {
 
 export function parseRTag(tag: RTag): { url: string; mode: RelayMode } {
   const url = tag[1];
-  const mode = tag[2] === "write" ? RelayMode.WRITE : tag[2] === "read" ? RelayMode.READ : RelayMode.ALL;
+  const mode = tag[2] === "write" ? RelayMode.WRITE : tag[2] === "read" ? RelayMode.READ : RelayMode.BOTH;
   return { url, mode };
 }
 export function createRelayTag(url: string, mode: RelayMode) {
@@ -29,7 +29,7 @@ export function createRelayTag(url: string, mode: RelayMode) {
     case RelayMode.READ:
       return ["r", url, "read"];
     default:
-    case RelayMode.ALL:
+    case RelayMode.BOTH:
       return ["r", url];
   }
 }
@@ -39,7 +39,7 @@ export function getRelaysFromMailbox(list: NostrEvent | DraftNostrEvent): { url:
 }
 
 export function addRelayModeToMailbox(list: NostrEvent | undefined, relay: string, mode: RelayMode): DraftNostrEvent {
-  let draft = cloneEvent(kinds.RelayList, list);
+  const draft = cloneEvent(kinds.RelayList, list);
   draft.tags = cleanRTags(draft.tags);
 
   const existing = draft.tags.find((t) => t[0] === "r" && t[1] === relay) as RTag;
@@ -54,7 +54,7 @@ export function removeRelayModeFromMailbox(
   relay: string,
   mode: RelayMode,
 ): DraftNostrEvent {
-  let draft = cloneEvent(kinds.RelayList, list);
+  const draft = cloneEvent(kinds.RelayList, list);
   draft.tags = cleanRTags(draft.tags);
 
   const existing = draft.tags.find((t) => t[0] === "r" && t[1] === relay) as RTag;

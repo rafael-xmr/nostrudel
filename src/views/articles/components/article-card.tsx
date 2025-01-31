@@ -1,12 +1,5 @@
-import {
-	Box,
-	Card,
-	Flex,
-	Heading,
-	LinkBox,
-	Spacer,
-	Text,
-} from "@chakra-ui/react";
+import { memo } from "react";
+import { Box, Card, Flex, Heading, LinkBox, Spacer, Text } from "@chakra-ui/react";
 import { NostrEvent } from "nostr-tools";
 import { Link as RouterLink } from "react-router-dom";
 
@@ -24,11 +17,11 @@ import useShareableEventAddress from "../../../hooks/use-shareable-event-address
 import ArticleTags from "./article-tags";
 import ArticleMenu from "./article-menu";
 
-export default function ArticleCard({ article }: { article: NostrEvent }) {
-	const image = getArticleImage(article);
-	const title = getArticleTitle(article);
-	const published = getArticlePublishDate(article);
-	const summary = getArticleSummary(article);
+const ArticleCard = memo(({ article }: { article: NostrEvent }) => {
+  const image = getArticleImage(article);
+  const title = getArticleTitle(article);
+  const published = getArticlePublishDate(article);
+  const summary = getArticleSummary(article);
 
 	const naddr = useShareableEventAddress(article);
 
@@ -54,28 +47,33 @@ export default function ArticleCard({ article }: { article: NostrEvent }) {
 				/>
 			</Flex>
 
-			{image && (
-				<Box
-					aspectRatio={16 / 9}
-					backgroundImage={image}
-					backgroundPosition="center"
-					backgroundRepeat="no-repeat"
-					backgroundSize="cover"
-					float={{ base: undefined, lg: "right" }}
-					mx={{ base: "auto", lg: 2 }}
-					mb={{ base: "2", lg: undefined }}
-					minH="10rem"
-					maxH="15rem"
-				/>
-			)}
-			<Heading size="md">
-				<HoverLinkOverlay as={RouterLink} to={`/articles/${naddr}`}>
-					{title}
-				</HoverLinkOverlay>
-			</Heading>
-			<Text>{summary}</Text>
+      {image && (
+        <Box
+          aspectRatio={16 / 9}
+          backgroundImage={image}
+          backgroundPosition="center"
+          backgroundRepeat="no-repeat"
+          backgroundSize="cover"
+          float={{ base: undefined, lg: "right" }}
+          mx={{ base: "auto", lg: 2 }}
+          mb={{ base: "2", lg: undefined }}
+          minH="10rem"
+          maxH="15rem"
+        />
+      )}
+      <Heading size="md">
+        <HoverLinkOverlay as={RouterLink} to={`/articles/${naddr}`}>
+          {title}
+        </HoverLinkOverlay>
+      </Heading>
+      <Text noOfLines={5}>{summary}</Text>
 
-			<ArticleTags article={article} />
-		</Card>
-	);
-}
+      <ArticleTags article={article} />
+
+    </Card>
+  );
+});
+
+ArticleCard.displayName = "ArticleCard";
+
+export default ArticleCard;

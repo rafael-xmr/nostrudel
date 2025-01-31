@@ -1,14 +1,16 @@
 import { NostrEvent } from "nostr-tools";
+import { Subject, Subscription } from "rxjs";
 import { nanoid } from "nanoid";
 
 import { getEventUID, sortByDate } from "../helpers/nostr/event";
-import ControlledObservable from "./controlled-observable";
 import SuperMap from "./super-map";
-import deleteEventService from "../services/delete-events";
 
 export type EventFilter = (event: NostrEvent) => boolean;
 
-/** a class used to store and sort events */
+/**
+ * a class used to store and sort events
+ * @deprecated there shouldn't be a need for one-off event stores now that EventStore from applesauce is used
+ */
 export default class EventStore {
   id = nanoid(8);
   name?: string;
@@ -16,26 +18,18 @@ export default class EventStore {
 
   customSort?: typeof sortByDate;
 
-  private deleteSub: ZenObservable.Subscription;
-
   constructor(name?: string, customSort?: typeof sortByDate) {
     this.name = name;
     this.customSort = customSort;
-
-    this.deleteSub = deleteEventService.stream.subscribe((event) => {
-      const uid = getEventUID(event);
-      this.deleteEvent(uid);
-      if (uid !== event.id) this.deleteEvent(event.id);
-    });
   }
 
   getSortedEvents() {
     return Array.from(this.events.values()).sort(this.customSort || sortByDate);
   }
 
-  onEvent = new ControlledObservable<NostrEvent>();
-  onDelete = new ControlledObservable<string>();
-  onClear = new ControlledObservable();
+  onEvent = new Subject<NostrEvent>();
+  onDelete = new Subject<string>();
+  onClear = new Subject();
 
   private handleEvent(event: NostrEvent) {
     const uid = getEventUID(event);
@@ -64,7 +58,7 @@ export default class EventStore {
     this.onClear.next(undefined);
   }
 
-  private storeSubs = new SuperMap<EventStore, ZenObservable.Subscription[]>(() => []);
+  private storeSubs = new SuperMap<EventStore, Subscription[]>(() => []);
   connect(other: EventStore, fullSync = true) {
     const subs = this.storeSubs.get(other);
     subs.push(
@@ -86,7 +80,6 @@ export default class EventStore {
       for (const sub of subs) sub.unsubscribe();
     }
     this.storeSubs.clear();
-    this.deleteSub.unsubscribe();
   }
 
   getFirstEvent(nth = 0, filter?: EventFilter) {

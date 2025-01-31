@@ -2,7 +2,6 @@ import dayjs from "dayjs";
 import { Debugger } from "debug";
 import _throttle from "lodash.throttle";
 import { Filter, kinds } from "nostr-tools";
-import { getChannelPointer } from "applesauce-channel";
 
 import SuperMap from "../classes/super-map";
 import { NostrEvent } from "../types/nostr-event";
@@ -10,9 +9,9 @@ import { logger } from "../helpers/debug";
 import { eventStore } from "./event-store";
 import relayPoolService from "./relay-pool";
 import PersistentSubscription from "../classes/persistent-subscription";
-import { localRelay } from "./local-relay";
-import { isFromCache, markFromCache } from "applesauce-core/helpers";
+import { getChannelPointer, markFromCache } from "applesauce-core/helpers";
 import { AbstractRelay } from "nostr-tools/abstract-relay";
+import { cacheRelay$, getCacheRelay } from "./cache-relay";
 
 export type RequestOptions = {
   /** Always request the event from the relays */
@@ -110,10 +109,12 @@ class ChannelMetadataService {
   log = logger.extend("ChannelMetadata");
 
   constructor() {
-    if (localRelay) {
-      const loader = this.loaders.get(localRelay as AbstractRelay);
+    cacheRelay$.subscribe((cacheRelay) => {
+      if (!cacheRelay) return;
+
+      const loader = this.loaders.get(cacheRelay as AbstractRelay);
       loader.isCache = true;
-    }
+    });
   }
 
   handleEvent(event: NostrEvent) {
@@ -121,8 +122,6 @@ class ChannelMetadataService {
 
     const channelId = getChannelPointer(event)?.id;
     if (!channelId) return;
-
-    if (!isFromCache(event)) localRelay?.publish(event);
   }
 
   private requestChannelMetadataFromRelays(relays: Iterable<string>, channelId: string) {
@@ -137,8 +136,9 @@ class ChannelMetadataService {
   requestMetadata(relays: Iterable<string>, channelId: string, opts: RequestOptions = {}) {
     const loaded = this.loaded.get(channelId);
 
-    if (!loaded && localRelay) {
-      this.loaders.get(localRelay as AbstractRelay).requestMetadata(channelId);
+    const cacheRelay = getCacheRelay();
+    if (!loaded && cacheRelay) {
+      this.loaders.get(cacheRelay as AbstractRelay).requestMetadata(channelId);
     }
 
     if (opts?.alwaysRequest || (!loaded && opts.ignoreCache)) {
@@ -150,7 +150,7 @@ class ChannelMetadataService {
 const channelMetadataService = new ChannelMetadataService();
 
 if (import.meta.env.DEV) {
-  //@ts-ignore
+  //@ts-expect-error debug
   window.channelMetadataService = channelMetadataService;
 }
 

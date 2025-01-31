@@ -1,47 +1,48 @@
 import { useCallback, useMemo } from "react";
-import { Filter, kinds } from "nostr-tools";
+import { Filter, kinds, NostrEvent } from "nostr-tools";
+import { getEventUID } from "applesauce-core/helpers";
 
-import { getEventUID } from "../../../../helpers/nostr/event";
-import { ParsedStream, STREAM_CHAT_MESSAGE_KIND, getATag } from "../../../../helpers/nostr/stream";
+import { getEventCoordinate } from "../../../../helpers/nostr/event";
 import useTimelineLoader from "../../../../hooks/use-timeline-loader";
-import { NostrEvent } from "../../../../types/nostr-event";
-import useStreamGoal from "../../../../hooks/use-stream-goal";
 import useUserMuteFilter from "../../../../hooks/use-user-mute-filter";
 import useClientSideMuteFilter from "../../../../hooks/use-client-side-mute-filter";
 import { useReadRelays } from "../../../../hooks/use-client-relays";
 import { useAdditionalRelayContext } from "../../../../providers/local/additional-relay-context";
+import {
+	getStreamEndTime,
+	getStreamHost,
+	getStreamStartTime,
+} from "../../../../helpers/nostr/stream";
 
-export default function useStreamChatTimeline(stream: ParsedStream) {
-  const streamRelays = useReadRelays(useAdditionalRelayContext());
+export default function useStreamChatTimeline(stream: NostrEvent) {
+	const streamRelays = useReadRelays(useAdditionalRelayContext());
 
-  const hostMuteFilter = useUserMuteFilter(stream.host, [], { alwaysRequest: true });
-  const muteFilter = useClientSideMuteFilter();
+	const host = getStreamHost(stream);
+	const starts = getStreamStartTime(stream);
+	const ends = getStreamEndTime(stream);
 
-  const eventFilter = useCallback(
-    (event: NostrEvent) => {
-      if (stream.starts && event.created_at < stream.starts) return false;
-      if (stream.ends && event.created_at > stream.ends) return false;
-      return !(hostMuteFilter(event) || muteFilter(event));
-    },
-    [stream, hostMuteFilter, muteFilter],
-  );
+	const hostMuteFilter = useUserMuteFilter(host, [], true);
+	const muteFilter = useClientSideMuteFilter();
 
-  const goal = useStreamGoal(stream);
-  const query = useMemo(() => {
-    const streamQuery: Filter = {
-      "#a": [getATag(stream)],
-      kinds: [STREAM_CHAT_MESSAGE_KIND, kinds.Zap],
-    };
+	const eventFilter = useCallback(
+		(event: NostrEvent) => {
+			if (starts && event.created_at < starts) return false;
+			if (ends && event.created_at > ends) return false;
+			return !(hostMuteFilter(event) || muteFilter(event));
+		},
+		[stream, hostMuteFilter, muteFilter],
+	);
 
-    if (goal) {
-      return [
-        streamQuery,
-        // also get zaps to goal
-        { "#e": [goal.id], kinds: [kinds.Zap] },
-      ];
-    }
-    return streamQuery;
-  }, [stream, goal]);
+	const query = useMemo(() => {
+		const streamQuery: Filter = {
+			"#a": [getEventCoordinate(stream)],
+			kinds: [kinds.LiveChatMessage, kinds.Zap],
+		};
 
-  return useTimelineLoader(`${getEventUID(stream.event)}-chat`, streamRelays, query, { eventFilter });
+		return streamQuery;
+	}, [stream]);
+
+	return useTimelineLoader(`${getEventUID(stream)}-chat`, streamRelays, query, {
+		eventFilter,
+	});
 }

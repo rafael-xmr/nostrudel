@@ -1,20 +1,26 @@
-import { type ReactNode, memo, lazy } from "react";
+import { ReactNode, Suspense, lazy, memo } from "react";
 import { kinds } from "nostr-tools";
-import { Box, Text } from "@chakra-ui/react";
+import { Box, Spinner } from "@chakra-ui/react";
 
 import { ErrorBoundary } from "../../error-boundary";
 import ReplyNote from "./reply-note";
-import RepostEvent from "./repost-event";
-import StreamNote from "./stream-note";
+import ShareEvent from "./share-event";
 import RelayRecommendation from "./relay-recommendation";
-import BadgeAwardCard from "../../../views/badges/components/badge-award-card";
 import { isReply } from "../../../helpers/nostr/event";
-import { STREAM_KIND } from "../../../helpers/nostr/stream";
-import type { NostrEvent } from "../../../types/nostr-event";
+import { NostrEvent } from "../../../types/nostr-event";
 import { FLARE_VIDEO_KIND } from "../../../helpers/nostr/video";
 import { TimelineNote } from "../../note/timeline-note";
 import useEventIntersectionRef from "../../../hooks/use-event-intersection-ref";
+import ArticleCard from "../../../views/articles/components/article-card";
+import EmbeddedUnknown from "../../embed-event/event-types/embedded-unknown";
+import { MEDIA_POST_KIND } from "../../../helpers/nostr/media";
+import MediaPost from "../../media-post/media-post-card";
 
+// other stuff
+const StreamNote = lazy(() => import("./stream-note"));
+const BadgeAwardCard = lazy(
+	() => import("../../../views/badges/components/badge-award-card"),
+);
 const EmbeddedFlareVideo = lazy(
 	() => import("../../embed-event/event-types/embedded-flare-video"),
 );
@@ -37,10 +43,10 @@ function TimelineItem({
 			break;
 		case kinds.Repost:
 		case kinds.GenericRepost:
-			content = <RepostEvent event={event} />;
+			content = <ShareEvent event={event} />;
 			break;
-		case STREAM_KIND:
-			content = <StreamNote event={event} />;
+		case kinds.LiveEvent:
+			content = <StreamNote stream={event} />;
 			break;
 		case kinds.RecommendRelay:
 			content = <RelayRecommendation event={event} />;
@@ -51,15 +57,21 @@ function TimelineItem({
 		case FLARE_VIDEO_KIND:
 			content = <EmbeddedFlareVideo video={event} />;
 			break;
+		case kinds.LongFormArticle:
+			content = <ArticleCard article={event} />;
+			break;
+		case MEDIA_POST_KIND:
+			content = <MediaPost post={event} />;
+			break;
 		default:
-			content = <Text>Unknown event kind: {event.kind}</Text>;
+			content = <EmbeddedUnknown event={event} />;
 			break;
 	}
 
 	return (
 		<ErrorBoundary event={event}>
 			<Box minHeight={minHeight + "px"} ref={ref}>
-				{visible && content}
+				{visible && <Suspense fallback={<Spinner />}>{content}</Suspense>}
 			</Box>
 		</ErrorBoundary>
 	);

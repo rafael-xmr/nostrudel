@@ -1,4 +1,5 @@
 import { safeRelayUrls } from "applesauce-core/helpers";
+import { EventFactoryClient } from "applesauce-factory";
 import { kinds } from "nostr-tools";
 
 export const DEFAULT_SEARCH_RELAYS = safeRelayUrls([
@@ -32,6 +33,20 @@ export const DEFAULT_ICE_SERVERS: RTCIceServer[] = [
   },
 ];
 
+export const RECOMMENDED_READ_RELAYS = safeRelayUrls([
+  "wss://relay.damus.io/",
+  "wss://nostr.wine/",
+  "wss://relay.snort.social/",
+  "wss://nos.lol/",
+  "wss://purplerelay.com/",
+  "wss://nostr.land/",
+]);
+export const RECOMMENDED_WRITE_RELAYS = safeRelayUrls([
+  "wss://relay.damus.io/",
+  "wss://nos.lol/",
+  "wss://purplerelay.com/",
+]);
+
 export const NOSTR_CONNECT_PERMISSIONS = [
   "get_public_key",
   "nip04_encrypt",
@@ -47,8 +62,15 @@ export const NOSTR_CONNECT_PERMISSIONS = [
 ];
 
 export const NEVER_ATTACH_CLIENT_TAG = [kinds.EncryptedDirectMessage];
-export const NIP_89_CLIENT_TAG = [
-  "client",
-  "moStard",
-  "31990:877308276be50ce9bafa7e5e374e4fcbf5e9859a21918f34baefd000746b7d35:1732044917",
-];
+
+export const NIP_89_CLIENT_APP: EventFactoryClient = {
+  name: "noStrudel",
+  address: {
+    pubkey: "266815e0c9210dfa324c6cba3573b14bee49da4209a9456f9484e5106cd408a5",
+    identifier: "1686066542546",
+  },
+};
+
+export const SUPPORT_PUBKEY = "713978c3094081b34fcf2f5491733b0c22728cd3b7a6946519d40f5f08598af8";
+
+export const TENOR_API_KEY = import.meta.env.VITE_TENOR_API_KEY as string | undefined;

@@ -3,16 +3,13 @@ import { Debugger } from "debug";
 import { Filter, NostrEvent } from "nostr-tools";
 import { AbstractRelay } from "nostr-tools/abstract-relay";
 import _throttle from "lodash.throttle";
-import { BehaviorSubject, Observable, map } from "rxjs";
+import { BehaviorSubject, Observable, Subscription, map } from "rxjs";
 import { isFilterEqual } from "applesauce-core/helpers";
 import { shareLatestValue } from "applesauce-core/observable";
 import { MultiSubscription } from "applesauce-net/subscription";
 
 import { logger } from "../helpers/debug";
-import { isReplaceable } from "../helpers/nostr/event";
-import replaceableEventsService from "../services/replaceable-events";
 import { mergeFilter } from "../helpers/nostr/filter";
-import { localRelay } from "../services/local-relay";
 import SuperMap from "./super-map";
 import ChunkedRequest from "./chunked-request";
 import relayPoolService from "../services/relay-pool";
@@ -20,6 +17,7 @@ import Process from "./process";
 import AlignHorizontalCentre02 from "../components/icons/align-horizontal-centre-02";
 import processManager from "../services/process-manager";
 import { eventStore, queryStore } from "../services/event-store";
+import { getCacheRelay } from "../services/cache-relay";
 
 const BLOCK_SIZE = 100;
 
@@ -84,13 +82,7 @@ export default class TimelineLoader {
 
   private seenInCache = new Set<string>();
   private handleEvent(event: NostrEvent, fromCache = false) {
-    // if this is a replaceable event, mirror it over to the replaceable event service
-    if (isReplaceable(event.kind)) replaceableEventsService.handleEvent(event);
-
     event = eventStore.add(event);
-
-    // publish to local relay
-    if (!fromCache && this.useCache && localRelay && !this.seenInCache.has(event.id)) localRelay.publish(event);
 
     if (fromCache) this.seenInCache.add(event.id);
   }
@@ -99,7 +91,7 @@ export default class TimelineLoader {
     this.updateComplete();
   }
 
-  private chunkLoaderSubs = new SuperMap<ChunkedRequest, ZenObservable.Subscription[]>(() => []);
+  private chunkLoaderSubs = new SuperMap<ChunkedRequest, Subscription[]>(() => []);
   private connectToChunkLoader(loader: ChunkedRequest) {
     this.process.addChild(loader.process);
 
@@ -141,8 +133,9 @@ export default class TimelineLoader {
 
     // recreate cache chunk loader
     if (this.cacheLoader) this.disconnectFromChunkLoader(this.cacheLoader);
-    if (localRelay && this.useCache) {
-      this.cacheLoader = new ChunkedRequest(localRelay, this.filters, this.log.extend("cache-relay"));
+    const cacheRelay = getCacheRelay();
+    if (cacheRelay && this.useCache) {
+      this.cacheLoader = new ChunkedRequest(cacheRelay, this.filters, this.log.extend("cache-relay"));
       this.connectToChunkLoader(this.cacheLoader);
     }
 

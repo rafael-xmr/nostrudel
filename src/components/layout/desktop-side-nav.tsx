@@ -13,14 +13,11 @@ import { Link as RouterLink } from "react-router-dom";
 import { css } from "@emotion/react";
 import { useObservable } from "applesauce-react/hooks";
 
-import useCurrentAccount from "../../hooks/use-current-account";
-import AccountSwitcher from "./account-switcher";
-import NavItems from "./nav-items";
+import { useActiveAccount } from "applesauce-react/hooks";
+import AccountSwitcher from "./components/account-switcher";
+import NavItems from "./desktop/side-nav";
 import { PostModalContext } from "../../providers/route/post-modal-provider";
 import { WritingIcon } from "../icons";
-import { offlineMode } from "../../services/offline-mode";
-import WifiOff from "../icons/wifi-off";
-import TaskManagerButtons from "./task-manager-buttons";
 import localSettings from "../../services/local-settings";
 
 const hideScrollbar = css`
@@ -32,9 +29,8 @@ const hideScrollbar = css`
 `;
 
 export default function DesktopSideNav(props: Omit<FlexProps, "children">) {
-	const account = useCurrentAccount();
+	const account = useActiveAccount();
 	const { openModal } = useContext(PostModalContext);
-	const offline = useObservable(offlineMode);
 	const showBrandLogo = useObservable(localSettings.showBrandLogo);
 
 	return (
@@ -60,14 +56,6 @@ export default function DesktopSideNav(props: Omit<FlexProps, "children">) {
 								moStard
 							</LinkOverlay>
 						</Heading>
-						{offline && (
-							<IconButton
-								aria-label="Disable offline mode"
-								title="Disable offline mode"
-								icon={<WifiOff boxSize={5} color="orange" />}
-								onClick={() => offlineMode.next(false)}
-							/>
-						)}
 					</Flex>
 				)}
 				{account && (
@@ -101,7 +89,6 @@ export default function DesktopSideNav(props: Omit<FlexProps, "children">) {
 					</Button>
 				)}
 			</Flex>
-			<TaskManagerButtons mt="auto" flexShrink={0} />
 		</Flex>
 	);
 }

@@ -2,12 +2,12 @@ import { SubCloser } from "nostr-tools/abstract-pool";
 import EventEmitter from "eventemitter3";
 import { generateSecretKey, nip19, NostrEvent } from "nostr-tools";
 import { bytesToHex, hexToBytes } from "@noble/hashes/utils";
-import { SimpleSigner } from "applesauce-signer";
+import { SimpleSigner } from "applesauce-signers";
 import dayjs from "dayjs";
 
 import NostrWebRTCPeer, { Pool, RTCDescriptionEventKind, Signer } from "./nostr-webrtc-peer";
-import { isHex } from "../../helpers/nip19";
 import { logger } from "../../helpers/debug";
+import { isHex } from "applesauce-core/helpers";
 
 type EventMap = {
   call: [NostrEvent];

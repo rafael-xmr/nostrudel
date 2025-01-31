@@ -22,7 +22,7 @@ import {
 	NotesIcon,
 	ChannelsIcon,
 } from "../icons";
-import useCurrentAccount from "../../hooks/use-current-account";
+import { useActiveAccount } from "applesauce-react/hooks";
 import accountService from "../../services/account";
 import PuzzlePiece01 from "../icons/puzzle-piece-01";
 import Package from "../icons/package";
@@ -31,7 +31,7 @@ import KeyboardShortcut from "../keyboard-shortcut";
 
 export default function NavItems() {
 	const location = useLocation();
-	const account = useCurrentAccount();
+	const account = useActiveAccount();
 
 	const showShortcuts = useBreakpointValue({ base: false, md: true });
 

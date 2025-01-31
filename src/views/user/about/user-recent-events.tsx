@@ -6,21 +6,23 @@ import {
   ArticleIcon,
   BookmarkIcon,
   ChannelsIcon,
-  CommunityIcon,
   DirectMessagesIcon,
+  EmojiPacksIcon,
   ListsIcon,
   NotesIcon,
   RelayIcon,
   RepostIcon,
 } from "../../../components/icons";
 import AnnotationQuestion from "../../../components/icons/annotation-question";
-import { getSharableEventAddress } from "../../../services/event-relay-hint";
+import { getSharableEventAddress } from "../../../services/relay-hints";
 import { npubEncode } from "nostr-tools/nip19";
 import useTimelineLoader from "../../../hooks/use-timeline-loader";
 import { useUserOutbox } from "../../../hooks/use-user-mailboxes";
 import { useReadRelays } from "../../../hooks/use-client-relays";
 import AlertTriangle from "../../../components/icons/alert-triangle";
 import MessageSquare02 from "../../../components/icons/message-square-02";
+import Camera01 from "../../../components/icons/camera-01";
+import { MEDIA_POST_KIND } from "../../../helpers/nostr/media";
 
 type KnownKind = {
   kind: number;
@@ -75,6 +77,13 @@ const KnownKinds: KnownKind[] = [
   },
 
   {
+    kind: MEDIA_POST_KIND,
+    name: "Media",
+    icon: Camera01,
+    link: (_, p) => `/u/${npubEncode(p)}/media`,
+  },
+
+  {
     kind: kinds.EncryptedDirectMessage,
     name: "Legacy DMs",
     icon: DirectMessagesIcon,
@@ -95,10 +104,10 @@ const KnownKinds: KnownKind[] = [
 
   { kind: kinds.Report, name: "Report", icon: AlertTriangle, link: (_e, p) => `/u/${npubEncode(p)}/reports` },
 
+  { kind: kinds.Emojisets, name: "Emojis", icon: EmojiPacksIcon, link: (_e, p) => `/u/${npubEncode(p)}/emojis` },
+
   { kind: kinds.Handlerinformation, name: "Application" },
   { kind: kinds.Handlerrecommendation, name: "App recommendation" },
-
-  { kind: kinds.CommunityDefinition, icon: CommunityIcon, name: "Communities" },
 
   { kind: kinds.BadgeAward, name: "Badge Award" },
 
@@ -172,9 +181,9 @@ export default function UserRecentEvents({ pubkey }: { pubkey: string }) {
     authors: [pubkey],
     limit: 100,
   });
+  const all = useDisclosure();
 
   // const recent = useStoreQuery(TimelineQuery, [{ authors: [pubkey], limit: 100 }]);
-  const all = useDisclosure();
 
   const byKind = recent?.reduce(
     (dir, event) => {
@@ -194,11 +203,16 @@ export default function UserRecentEvents({ pubkey }: { pubkey: string }) {
     <Flex gap="2" wrap="wrap">
       {byKind &&
         Object.entries(byKind)
-          .filter(([_, { known }]) => (known ? known.hidden !== true : true))
+          .filter(([_, { known }]) => (!!known || all.isOpen) && (known ? known.hidden !== true : true))
           .sort((a, b) => parseInt(a[0]) - parseInt(b[0]))
           .map(([kind, { events, known }]) => (
             <EventKindButton key={kind} kind={parseInt(kind)} events={events} pubkey={pubkey} known={known} />
           ))}
+      {!all.isOpen && (
+        <Button variant="link" p="4" onClick={all.onOpen}>
+          Show more ({Object.entries(byKind).filter(([_, { known }]) => !!known).length})
+        </Button>
+      )}
     </Flex>
   );
 }

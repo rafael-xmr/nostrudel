@@ -11,10 +11,10 @@ import {
 import type { EventTemplate, NostrEvent } from "nostr-tools";
 import { MultiSubscription } from "applesauce-net/subscription";
 import { useStoreQuery } from "applesauce-react/hooks";
-import { unixNow } from "applesauce-core/helpers";
+import { getEventUID, unixNow } from "applesauce-core/helpers";
 
 import { useUserInbox } from "../../../../../hooks/use-user-mailboxes";
-import useCurrentAccount from "../../../../../hooks/use-current-account";
+import { useActiveAccount } from "applesauce-react/hooks";
 import { usePublishEvent } from "../../../../../providers/global/publish-provider";
 import relayPoolService from "../../../../../services/relay-pool";
 import { eventStore } from "../../../../../services/event-store";
@@ -48,9 +48,9 @@ export default function EventSummarizePage({ event }: { event: NostrEvent }) {
 	const [submitted, setSubmitted] = useState(false);
 	const [request, setRequest] = useState<NostrEvent>();
 
-	const publish = usePublishEvent();
-	const account = useCurrentAccount();
-	const inbox = useUserInbox(account?.pubkey);
+  const publish = usePublishEvent();
+  const account = useActiveAccount();
+  const inbox = useUserInbox(account?.pubkey);
 
 	const newRequest = async (prompt: string) => {
 		try {
@@ -97,21 +97,21 @@ export default function EventSummarizePage({ event }: { event: NostrEvent }) {
 		request ? [request] : undefined,
 	);
 
-	return (
-		<Flex direction="column" gap="2" px="2">
-			{responses ? (
-				<>
-					{Object.entries(responses).map(([pubkey, event]) => (
-						<DVMStatusCard status={event} />
-					))}
-				</>
-			) : submitted ? (
-				<Text>
-					<Spinner /> Waiting for responses...
-				</Text>
-			) : (
-				<PromptForm onSubmit={newRequest} />
-			)}
-		</Flex>
-	);
+  return (
+    <Flex direction="column" gap="2" px="2">
+      {responses ? (
+        <>
+          {Object.entries(responses).map(([pubkey, event]) => (
+            <DVMStatusCard key={getEventUID(event)} status={event} />
+          ))}
+        </>
+      ) : submitted ? (
+        <Text>
+          <Spinner /> Waiting for responses...
+        </Text>
+      ) : (
+        <PromptForm onSubmit={newRequest} />
+      )}
+    </Flex>
+  );
 }

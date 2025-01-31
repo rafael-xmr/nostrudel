@@ -31,7 +31,7 @@ import {
 	useReadRelays,
 	useWriteRelays,
 } from "../../../hooks/use-client-relays";
-import useCurrentAccount from "../../../hooks/use-current-account";
+import { useActiveAccount } from "applesauce-react/hooks";
 import RelayControl from "./relay-control";
 import { getRelaysFromExt } from "../../../helpers/nip07";
 import { useUserDNSIdentity } from "../../../hooks/use-user-dns-identity";
@@ -81,7 +81,7 @@ function RelaySetCard({
 }
 
 export default function AppRelays() {
-	const account = useCurrentAccount();
+	const account = useActiveAccount();
 	const readRelays = useReadRelays();
 	const writeRelays = useWriteRelays();
 	const offline = useObservable(offlineMode);

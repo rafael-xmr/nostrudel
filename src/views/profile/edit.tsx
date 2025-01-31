@@ -1,4 +1,4 @@
-import * as React from "react";
+import { useEffect, useMemo } from "react";
 import {
 	Avatar,
 	Button,
@@ -11,18 +11,26 @@ import {
 	Textarea,
 } from "@chakra-ui/react";
 import { useForm } from "react-hook-form";
-import { type ProfileContent, unixNow } from "applesauce-core/helpers";
+import { ProfileContent, unixNow } from "applesauce-core/helpers";
 
 import { ExternalLinkIcon } from "../../components/icons";
-import { isXMR } from "../../helpers/monero";
+import { isLNURL } from "../../helpers/lnurl";
 import { useReadRelays } from "../../hooks/use-client-relays";
-import useCurrentAccount from "../../hooks/use-current-account";
+import { useActiveAccount } from "applesauce-react/hooks";
 import useUserProfile from "../../hooks/use-user-profile";
 import dnsIdentityService from "../../services/dns-identity";
-import type { DraftNostrEvent } from "../../types/nostr-event";
+import { DraftNostrEvent } from "../../types/nostr-event";
+import lnurlMetadataService from "../../services/lnurl-metadata";
 import VerticalPageLayout from "../../components/vertical-page-layout";
 import { COMMON_CONTACT_RELAYS } from "../../const";
 import { usePublishEvent } from "../../providers/global/publish-provider";
+
+const isEmail =
+	/^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+
+function isLightningAddress(addr: string) {
+	return isEmail.test(addr);
+}
 
 type FormData = {
 	displayName?: string;
@@ -32,7 +40,7 @@ type FormData = {
 	about?: string;
 	website?: string;
 	nip05?: string;
-	moneroAddress?: string;
+	lightningAddress?: string;
 };
 
 type MetadataFormProps = {
@@ -41,9 +49,7 @@ type MetadataFormProps = {
 };
 
 const MetadataForm = ({ defaultValues, onSubmit }: MetadataFormProps) => {
-	const account = useCurrentAccount();
-	if (!account) return null;
-
+	const account = useActiveAccount()!;
 	const {
 		register,
 		reset,
@@ -55,9 +61,9 @@ const MetadataForm = ({ defaultValues, onSubmit }: MetadataFormProps) => {
 		defaultValues,
 	});
 
-	React.useEffect(() => {
+	useEffect(() => {
 		reset(defaultValues);
-	}, [defaultValues, reset]);
+	}, [defaultValues]);
 
 	return (
 		<VerticalPageLayout as="form" onSubmit={handleSubmit(onSubmit)}>
@@ -174,23 +180,26 @@ const MetadataForm = ({ defaultValues, onSubmit }: MetadataFormProps) => {
 					{...register("about")}
 				/>
 			</FormControl>
-			<FormControl isInvalid={!!errors.moneroAddress}>
-				<FormLabel>Monero Address (XMR)</FormLabel>
+			<FormControl isInvalid={!!errors.lightningAddress}>
+				<FormLabel>Lightning Address (or LNURL)</FormLabel>
 				<Input
 					autoComplete="off"
 					isDisabled={isSubmitting}
-					{...register("moneroAddress", {
+					{...register("lightningAddress", {
 						validate: async (v) => {
 							if (!v) return true;
-              // copied from helpers/monero.ts
-              // doesn't work when importing lol
-							const XMR_REGEX = /(^|\s)((4|8)[0-9a-zA-Z]{94})($|\s)/g;
-							const isXMR = XMR_REGEX.test(v);
-							return isXMR || "Must be a Monero (XMR) address.";
+							if (!isLNURL(v) && !isLightningAddress(v)) {
+								return "Must be lightning address or LNURL";
+							}
+							const metadata = await lnurlMetadataService.requestMetadata(v);
+							if (!metadata) {
+								return "Incorrect or broken LNURL address";
+							}
+							return true;
 						},
 					})}
 				/>
-				<FormErrorMessage>{errors.moneroAddress?.message}</FormErrorMessage>
+				<FormErrorMessage>{errors.lightningAddress?.message}</FormErrorMessage>
 			</FormControl>
 			<Flex alignSelf="flex-end" gap="2">
 				<Button
@@ -213,14 +222,10 @@ const MetadataForm = ({ defaultValues, onSubmit }: MetadataFormProps) => {
 export const ProfileEditView = () => {
 	const publish = usePublishEvent();
 	const readRelays = useReadRelays();
-	const account = useCurrentAccount();
-	if (!account) return null;
+	const account = useActiveAccount()!;
+	const metadata = useUserProfile(account.pubkey, readRelays, true);
 
-	const metadata = useUserProfile(account.pubkey, readRelays, {
-		alwaysRequest: true,
-	});
-
-	const defaultValues = React.useMemo<FormData>(
+	const defaultValues = useMemo<FormData>(
 		() => ({
 			displayName: metadata?.displayName || metadata?.display_name,
 			username: metadata?.name,
@@ -230,7 +235,6 @@ export const ProfileEditView = () => {
 			website: metadata?.website,
 			nip05: metadata?.nip05,
 			lightningAddress: metadata?.lud16 || metadata?.lud06,
-			moneroAddress: metadata?.cryptocurrency_addresses?.monero,
 		}),
 		[metadata],
 	);
@@ -247,11 +251,12 @@ export const ProfileEditView = () => {
 		if (data.website !== undefined) newMetadata.website = data.website;
 		if (data.nip05 !== undefined) newMetadata.nip05 = data.nip05;
 
-		if (data.moneroAddress) {
-			newMetadata.cryptocurrency_addresses = {
-				...(metadata?.cryptocurrency_addresses || {}),
-				monero: data.moneroAddress,
-			};
+		if (data.lightningAddress) {
+			if (isLNURL(data.lightningAddress)) {
+				newMetadata.lud06 = data.lightningAddress;
+			} else if (isLightningAddress(data.lightningAddress)) {
+				newMetadata.lud16 = data.lightningAddress;
+			}
 		}
 
 		const draft: DraftNostrEvent = {

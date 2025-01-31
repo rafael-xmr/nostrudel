@@ -7,11 +7,12 @@ import UserName from "../../../../components/user/user-name";
 import WebRtcRelayClient from "../../../../classes/webrtc/webrtc-relay-client";
 import WebRtcRelayServer from "../../../../classes/webrtc/webrtc-relay-server";
 import NostrWebRTCPeer from "../../../../classes/webrtc/nostr-webrtc-peer";
-import { localRelay } from "../../../../services/local-relay";
-import useCurrentAccount from "../../../../hooks/use-current-account";
+import { cacheRelay$ } from "../../../../services/cache-relay";
+import { useActiveAccount } from "applesauce-react/hooks";
 import useUserContactList from "../../../../hooks/use-user-contact-list";
 import { getPubkeysFromList } from "../../../../helpers/nostr/lists";
 import useForceUpdate from "../../../../hooks/use-force-update";
+import { useObservable } from "applesauce-react/hooks";
 
 export default function Connection({
   call,
@@ -24,21 +25,22 @@ export default function Connection({
   client: WebRtcRelayClient;
   server: WebRtcRelayServer;
 }) {
+  const cacheRelay = useObservable(cacheRelay$);
   const update = useForceUpdate();
   useInterval(update, 1000);
   // const toggleRead = () => {
   // if(clientRelaysService.readRelays.value.has(client))
   // };
 
-  const account = useCurrentAccount();
+  const account = useActiveAccount();
   const contacts = useUserContactList(account?.pubkey);
 
   const [sending, setSending] = useState(false);
   const sendEvents = async () => {
-    if (!account?.pubkey || !localRelay) return;
+    if (!account?.pubkey || !cacheRelay) return;
 
     setSending(true);
-    const sub = localRelay.subscribe([{ authors: [account.pubkey] }], {
+    const sub = cacheRelay.subscribe([{ authors: [account.pubkey] }], {
       onevent: (event) => {
         client.publish(event);
         update();
@@ -52,12 +54,12 @@ export default function Connection({
 
   const [requesting, setRequesting] = useState(false);
   const requestEvents = async () => {
-    if (!contacts || !localRelay) return;
+    if (!contacts || !cacheRelay) return;
 
     setRequesting(true);
     const sub = client.subscribe([{ authors: getPubkeysFromList(contacts).map((p) => p.pubkey) }], {
       onevent: (event) => {
-        if (localRelay) localRelay.publish(event);
+        if (cacheRelay) cacheRelay.publish(event);
         update();
       },
       oneose: () => {

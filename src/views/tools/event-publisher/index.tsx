@@ -30,11 +30,11 @@ import { getVariables, LooseEventTemplate, processEvent, Variable } from "./proc
 import { EditIcon, WritingIcon } from "../../../components/icons";
 import { useSigningContext } from "../../../providers/global/signing-provider";
 import { usePublishEvent } from "../../../providers/global/publish-provider";
-import useCurrentAccount from "../../../hooks/use-current-account";
+import { useActiveAccount } from "applesauce-react/hooks";
 import UserAvatar from "../../../components/user/user-avatar";
 import { RelayUrlInput } from "../../../components/relay-url-input";
 import { TEMPLATES } from "./templates";
-import RequireCurrentAccount from "../../../providers/route/require-current-account";
+import RequireActiveAccount from "../../../components/router/require-active-account";
 import VariableEditor from "./components/variable-editor";
 import EventTemplateEditor from "./components/event-template-editor";
 import useRouteStateValue from "../../../hooks/use-route-state-value";
@@ -44,7 +44,7 @@ function EventPublisherPage({ initDraft }: { initDraft?: LooseEventTemplate }) {
   const [loading, setLoading] = useState(false);
   const { requestSignature } = useSigningContext();
   const publish = usePublishEvent();
-  const account = useCurrentAccount()!;
+  const account = useActiveAccount()!;
   const customRelay = useDisclosure();
 
   const editor = useDisclosure({ defaultIsOpen: true });
@@ -158,7 +158,9 @@ function EventPublisherPage({ initDraft }: { initDraft?: LooseEventTemplate }) {
               <Text fontWeight="bold">Template</Text>
               <Select onChange={(e) => selectTemplate(e.target.value)} w="auto">
                 {TEMPLATES.map((template) => (
-                  <option value={template.name}>{template.name}</option>
+                  <option key={template.name} value={template.name}>
+                    {template.name}
+                  </option>
                 ))}
               </Select>
               <Spacer />
@@ -265,8 +267,8 @@ export default function EventPublisherView() {
   }
 
   return (
-    <RequireCurrentAccount>
+    <RequireActiveAccount>
       <EventPublisherPage initDraft={draft} />
-    </RequireCurrentAccount>
+    </RequireActiveAccount>
   );
 }

@@ -5,7 +5,7 @@ import useTimelineLoader from "../../hooks/use-timeline-loader";
 import { useReadRelays } from "../../hooks/use-client-relays";
 import { NostrEvent } from "../../types/nostr-event";
 import RelayReviewNote from "../relays/components/relay-review-note";
-import { RelayFavicon } from "../../components/relay-favicon";
+import RelayFavicon from "../../components/relay-favicon";
 import { RelayDebugButton, RelayMetadata } from "../relays/components/relay-card";
 import IntersectionObserverProvider from "../../providers/local/intersection-observer";
 import { useTimelineCurserIntersectionCallback } from "../../hooks/use-timeline-cursor-intersection-callback";
@@ -14,6 +14,7 @@ import { ErrorBoundary } from "../../components/error-boundary";
 import { RelayShareButton } from "../relays/components/relay-share-button";
 import useUserMailboxes from "../../hooks/use-user-mailboxes";
 import { truncateId } from "../../helpers/string";
+import SimpleView from "../../components/layout/presets/simple-view";
 
 function Relay({ url, reviews }: { url: string; reviews: NostrEvent[] }) {
   const { info } = useRelayInfo(url);
@@ -73,40 +74,42 @@ const UserRelaysTab = () => {
   });
 
   return (
-    <IntersectionObserverProvider callback={callback}>
-      <Heading size="lg" ml="2" mt="2">
-        Inboxes
-      </Heading>
-      <VStack divider={<StackDivider />} py="2" align="stretch">
-        {Array.from(mailboxes?.inboxes ?? []).map((url) => (
-          <ErrorBoundary key={url}>
-            <Relay url={url} reviews={getRelayReviews(url, reviews)} />
-          </ErrorBoundary>
-        ))}
-      </VStack>
-      <Heading size="lg" ml="2" mt="2">
-        Outboxes
-      </Heading>
-      <VStack divider={<StackDivider />} py="2" align="stretch">
-        {Array.from(mailboxes?.outboxes ?? []).map((url) => (
-          <ErrorBoundary key={url}>
-            <Relay url={url} reviews={getRelayReviews(url, reviews)} />
-          </ErrorBoundary>
-        ))}
-      </VStack>
-      {otherReviews.length > 0 && (
-        <>
-          <Heading size="lg" ml="2" mt="2">
-            Reviews
-          </Heading>
-          <Flex direction="column" gap="2" pb="8">
-            {otherReviews.map((event) => (
-              <RelayReviewNote key={event.id} event={event} />
-            ))}
-          </Flex>
-        </>
-      )}
-    </IntersectionObserverProvider>
+    <SimpleView title="Relays">
+      <IntersectionObserverProvider callback={callback}>
+        <Heading size="lg" ml="2" mt="2">
+          Inboxes
+        </Heading>
+        <VStack divider={<StackDivider />} py="2" align="stretch">
+          {Array.from(mailboxes?.inboxes ?? []).map((url) => (
+            <ErrorBoundary key={url}>
+              <Relay url={url} reviews={getRelayReviews(url, reviews)} />
+            </ErrorBoundary>
+          ))}
+        </VStack>
+        <Heading size="lg" ml="2" mt="2">
+          Outboxes
+        </Heading>
+        <VStack divider={<StackDivider />} py="2" align="stretch">
+          {Array.from(mailboxes?.outboxes ?? []).map((url) => (
+            <ErrorBoundary key={url}>
+              <Relay url={url} reviews={getRelayReviews(url, reviews)} />
+            </ErrorBoundary>
+          ))}
+        </VStack>
+        {otherReviews.length > 0 && (
+          <>
+            <Heading size="lg" ml="2" mt="2">
+              Reviews
+            </Heading>
+            <Flex direction="column" gap="2" pb="8">
+              {otherReviews.map((event) => (
+                <RelayReviewNote key={event.id} event={event} />
+              ))}
+            </Flex>
+          </>
+        )}
+      </IntersectionObserverProvider>
+    </SimpleView>
   );
 };
 

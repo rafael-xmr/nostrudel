@@ -1,70 +1,48 @@
 import { Flex, Heading, IconButton, Spacer } from "@chakra-ui/react";
+import { ReadonlyAccount } from "applesauce-accounts/accounts";
 import { useNavigate } from "react-router-dom";
 
-import { EditIcon, GhostIcon } from "../../../components/icons";
+import { EditIcon } from "../../../components/icons";
 import UserAvatar from "../../../components/user/user-avatar";
 import UserDnsIdentity from "../../../components/user/user-dns-identity";
-import useCurrentAccount from "../../../hooks/use-current-account";
-import useUserProfile from "../../../hooks/use-user-profile";
+import { useActiveAccount } from "applesauce-react/hooks";
 import { UserProfileMenu } from "./user-profile-menu";
 import { UserFollowButton } from "../../../components/user/user-follow-button";
-import accountService from "../../../services/account";
 import { useBreakpointValue } from "../../../providers/global/breakpoint-provider";
 import UserName from "../../../components/user/user-name";
 
-export default function Header({
-  pubkey,
-  showRelaySelectionModal,
-}: {
-  pubkey: string;
-  showRelaySelectionModal: () => void;
-}) {
-  const navigate = useNavigate();
-  const metadata = useUserProfile(pubkey);
+export default function Header({ pubkey }: { pubkey: string }) {
+	const navigate = useNavigate();
 
-  const account = useCurrentAccount();
-  const isSelf = pubkey === account?.pubkey;
+	const account = useActiveAccount();
+	const isSelf = pubkey === account?.pubkey;
 
-  const showExtraButtons = useBreakpointValue({ base: false, sm: true });
+	const showExtraButtons = useBreakpointValue({ base: false, sm: true });
 
-  const showFullNip05 = useBreakpointValue({ base: false, md: true });
-
-  return (
-    <Flex direction="column" gap="2" px="2" pt="2">
-      <Flex gap="2" alignItems="center">
-        <UserAvatar pubkey={pubkey} size="sm" noProxy mr="2" />
-        <Heading size="md" isTruncated>
-          <UserName pubkey={pubkey} />
-        </Heading>
-        <UserDnsIdentity pubkey={pubkey} onlyIcon={showFullNip05} />
-        <Spacer />
-        {isSelf && !account.readonly && (
-          <IconButton
-            icon={<EditIcon />}
-            aria-label="Edit profile"
-            title="Edit profile"
-            size="sm"
-            colorScheme="primary"
-            onClick={() => navigate("/profile")}
-          />
-        )}
-        {showExtraButtons && !isSelf && <UserFollowButton pubkey={pubkey} size="sm" />}
-        {showExtraButtons && !isSelf && (
-          <IconButton
-            icon={<GhostIcon />}
-            size="sm"
-            aria-label="ghost user"
-            title="ghost user"
-            onClick={() => accountService.startGhost(pubkey)}
-          />
-        )}
-        <UserProfileMenu
-          pubkey={pubkey}
-          aria-label="More Options"
-          size="sm"
-          showRelaySelectionModal={showRelaySelectionModal}
-        />
-      </Flex>
-    </Flex>
-  );
+	return (
+		<Flex direction="column" gap="2" px="2" pt="2">
+			<Flex gap="2" alignItems="center">
+				<UserAvatar pubkey={pubkey} size="sm" noProxy mr="2" />
+				<Heading size="md" isTruncated>
+					<UserName pubkey={pubkey} />
+				</Heading>
+				<UserDnsIdentity pubkey={pubkey} onlyIcon />
+				<Spacer />
+				{isSelf && !(account instanceof ReadonlyAccount) && (
+					<IconButton
+						icon={<EditIcon />}
+						aria-label="Edit profile"
+						title="Edit profile"
+						size="sm"
+						colorScheme="primary"
+						onClick={() => navigate("/profile")}
+					/>
+				)}
+				{showExtraButtons && !isSelf && (
+					<UserFollowButton pubkey={pubkey} size="sm" />
+				)}
+				<UserProfileMenu pubkey={pubkey} aria-label="More Options" size="sm" />
+			</Flex>
+		</Flex>
+	);
 }

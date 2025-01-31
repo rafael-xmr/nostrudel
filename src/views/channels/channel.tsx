@@ -1,26 +1,14 @@
 import { memo, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-	Button,
-	Flex,
-	Heading,
-	Spacer,
-	Spinner,
-	useDisclosure,
-} from "@chakra-ui/react";
+import { Button, ButtonGroup, Flex, Spinner, useDisclosure } from "@chakra-ui/react";
 import { kinds } from "nostr-tools";
-import {
-	ChannelHiddenQuery,
-	ChannelMessagesQuery,
-	ChannelMutedQuery,
-} from "applesauce-channel";
 import { useStoreQuery } from "applesauce-react/hooks";
+import { ChannelHiddenQuery, ChannelMessagesQuery, ChannelMutedQuery } from "applesauce-core/queries";
 
 import useSingleEvent from "../../hooks/use-single-event";
 import { ErrorBoundary } from "../../components/error-boundary";
 import { NostrEvent } from "../../types/nostr-event";
 import useChannelMetadata from "../../hooks/use-channel-metadata";
-import { ChevronLeftIcon } from "../../components/icons";
 import ChannelMetadataDrawer from "./components/channel-metadata-drawer";
 import ChannelJoinButton from "./components/channel-join-button";
 import ChannelMenu from "./components/channel-menu";
@@ -37,6 +25,8 @@ import ChannelMessageForm from "./components/send-message-form";
 import useParamsEventPointer from "../../hooks/use-params-event-pointer";
 import { useReadRelays } from "../../hooks/use-client-relays";
 import { truncateId } from "../../helpers/string";
+import ContainedSimpleView from "../../components/layout/presets/contained-simple-view";
+import ChannelImage from "./components/channel-image";
 
 const ChannelChatLog = memo(
 	({
@@ -100,57 +90,33 @@ function ChannelPage({ channel }: { channel: NostrEvent }) {
 	);
 	const callback = useTimelineCurserIntersectionCallback(loader);
 
-	return (
-		<ThreadsProvider timeline={loader}>
-			<IntersectionObserverProvider callback={callback}>
-				<Flex
-					h="full"
-					overflow="hidden"
-					direction="column"
-					p="2"
-					gap="2"
-					flexGrow={1}
-				>
-					<Flex gap="2" alignItems="center">
-						<Button leftIcon={<ChevronLeftIcon />} onClick={() => navigate(-1)}>
-							Back
-						</Button>
-						<Heading hideBelow="lg" size="lg">
-							{metadata?.name}
-						</Heading>
-						<Spacer />
-						<ChannelJoinButton channel={channel} hideBelow="lg" />
-						<Button onClick={drawer.onOpen}>Channel Info</Button>
-						<ChannelMenu channel={channel} aria-label="More Options" />
-					</Flex>
-
-					<Flex
-						h="0"
-						flexGrow={1}
-						overflowX="hidden"
-						overflowY="scroll"
-						direction="column-reverse"
-						gap="2"
-						py="4"
-						px="2"
-					>
-						<ChannelChatLog timeline={loader} channel={channel} />
-						<TimelineActionAndStatus timeline={loader} />
-					</Flex>
-
-					<ChannelMessageForm channel={channel} />
-				</Flex>
-				{drawer.isOpen && (
-					<ChannelMetadataDrawer
-						isOpen
-						onClose={drawer.onClose}
-						channel={channel}
-						size="lg"
-					/>
-				)}
-			</IntersectionObserverProvider>
-		</ThreadsProvider>
-	);
+  return (
+    <ThreadsProvider timeline={loader}>
+      <IntersectionObserverProvider callback={callback}>
+        <ContainedSimpleView
+          reverse
+          title={
+            <Flex gap="2" alignItems="center">
+              <ChannelImage channel={channel} w="10" rounded="md" />
+              {metadata?.name}
+            </Flex>
+          }
+          actions={
+            <ButtonGroup size="sm" ms="auto">
+              <ChannelJoinButton channel={channel} hideBelow="lg" />
+              <Button onClick={drawer.onOpen}>Channel Info</Button>
+              <ChannelMenu channel={channel} aria-label="More Options" />
+            </ButtonGroup>
+          }
+          bottom={<ChannelMessageForm channel={channel} p="2" />}
+        >
+          <ChannelChatLog timeline={loader} channel={channel} />
+          <TimelineActionAndStatus timeline={loader} />
+        </ContainedSimpleView>
+        {drawer.isOpen && <ChannelMetadataDrawer isOpen onClose={drawer.onClose} channel={channel} size="lg" />}
+      </IntersectionObserverProvider>
+    </ThreadsProvider>
+  );
 }
 
 export default function ChannelView() {

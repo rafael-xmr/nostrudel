@@ -35,14 +35,15 @@ import { WIKI_RELAYS } from "../../const";
 import GitBranch01 from "../../components/icons/git-branch-01";
 import { ExternalLinkIcon } from "../../components/icons";
 import FileSearch01 from "../../components/icons/file-search-01";
-import QuoteEventButton from "../../components/note/quote-event-button";
+import EventZapButton from "../../components/zap/event-zap-button";
+import EventQuoteButton from "../../components/note/event-quote-button";
 import WikiPageMenu from "./components/wiki-page-menu";
 import EventVoteButtons from "../../components/reactions/event-vote-buttions";
-import useCurrentAccount from "../../hooks/use-current-account";
+import { useActiveAccount } from "applesauce-react/hooks";
 import dictionaryService from "../../services/dictionary";
 import { useReadRelays } from "../../hooks/use-client-relays";
 import { useWebOfTrust } from "../../providers/global/web-of-trust-provider";
-import { getSharableEventAddress } from "../../services/event-relay-hint";
+import { getSharableEventAddress } from "../../services/relay-hints";
 
 function ForkAlert({
 	page,
@@ -104,59 +105,51 @@ function DeferAlert({
 }
 
 export function WikiPagePage({ page }: { page: NostrEvent }) {
-	const account = useCurrentAccount();
+  const account = useActiveAccount();
 
 	const { address } = getPageForks(page);
 	const defer = getPageDefer(page);
 	const summary = getPageSummary(page, false);
 
-	return (
-		<>
-			<Flex gap="2" wrap="wrap">
-				<Box flex={1}>
-					<Heading>{getPageTitle(page)}</Heading>
-					<Text>
-						by <UserLink pubkey={page.pubkey} /> -{" "}
-						<Timestamp timestamp={page.created_at} />
-					</Text>
-				</Box>
-				<Flex direction="column" gap="2" ml="auto">
-					<ButtonGroup ml="auto" size="sm">
-						{page.pubkey === account?.pubkey && (
-							<Button
-								as={RouterLink}
-								colorScheme="primary"
-								to={`/wiki/edit/${getPageTopic(page)}`}
-							>
-								Edit
-							</Button>
-						)}
-						{page.pubkey !== account?.pubkey && (
-							<Button
-								as={RouterLink}
-								colorScheme="primary"
-								to={`/wiki/create?fork=${getSharableEventAddress(page)}`}
-							>
-								Fork
-							</Button>
-						)}
-					</ButtonGroup>
-					<Flex alignItems="flex-end" gap="2" ml="auto">
-						<EventVoteButtons event={page} inline chevrons={false} />
-						<ButtonGroup size="sm">
-							<QuoteEventButton event={page} />
-							<WikiPageMenu page={page} aria-label="Page Options" />
-						</ButtonGroup>
-					</Flex>
-				</Flex>
-			</Flex>
-			{address && <ForkAlert page={page} address={address} />}
-			{defer?.address && <DeferAlert page={page} address={defer.address} />}
-			<Divider />
-			{summary && <Text fontStyle="italic">{summary}</Text>}
-			<MarkdownContent event={page} />
-		</>
-	);
+  return (
+    <>
+      <Flex gap="2" wrap="wrap">
+        <Box flex={1}>
+          <Heading>{getPageTitle(page)}</Heading>
+          <Text>
+            by <UserLink pubkey={page.pubkey} /> - <Timestamp timestamp={page.created_at} />
+          </Text>
+        </Box>
+        <Flex direction="column" gap="2" ml="auto">
+          <ButtonGroup ml="auto" size="sm">
+            {page.pubkey === account?.pubkey && (
+              <Button as={RouterLink} colorScheme="primary" to={`/wiki/edit/${getPageTopic(page)}`}>
+                Edit
+              </Button>
+            )}
+            {page.pubkey !== account?.pubkey && (
+              <Button as={RouterLink} colorScheme="primary" to={`/wiki/create?fork=${getSharableEventAddress(page)}`}>
+                Fork
+              </Button>
+            )}
+          </ButtonGroup>
+          <Flex alignItems="flex-end" gap="2" ml="auto">
+            <EventVoteButtons event={page} inline chevrons={false} />
+            <ButtonGroup size="sm">
+              <EventQuoteButton event={page} />
+              <EventZapButton event={page} showEventPreview={false} />
+              <WikiPageMenu page={page} aria-label="Page Options" />
+            </ButtonGroup>
+          </Flex>
+        </Flex>
+      </Flex>
+      {address && <ForkAlert page={page} address={address} />}
+      {defer?.address && <DeferAlert page={page} address={defer.address} />}
+      <Divider />
+      {summary && <Text fontStyle="italic">{summary}</Text>}
+      <MarkdownContent event={page} />
+    </>
+  );
 }
 
 function WikiPageFooter({ page }: { page: NostrEvent }) {

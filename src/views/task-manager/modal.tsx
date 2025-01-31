@@ -19,7 +19,7 @@ export default function TaskManagerModal({
   onClose,
 }: { router: Router } & Omit<ModalProps, "children">) {
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="6xl" scrollBehavior="inside">
+    <Modal isOpen={isOpen} onClose={onClose} size={{ base: "full", lg: "6xl" }} scrollBehavior="inside">
       <ModalOverlay />
       <ModalContent>
         <ModalBody display="flex" flexDirection="column" gap="2" p="0">
@@ -32,30 +32,6 @@ export default function TaskManagerModal({
           >
             <RouterProvider router={router} />
           </Suspense>
-          {/* <Tabs
-            display="flex"
-            flexDirection="column"
-            flexGrow="1"
-            isLazy
-            colorScheme="primary"
-            position="relative"
-            variant="unstyled"
-          >
-            <TabList overflowX="auto" overflowY="hidden" flexShrink={0} mr="10">
-              <Tab>Network</Tab>
-              <Tab>Database</Tab>
-            </TabList>
-            <TabIndicator height="2px" bg="primary.500" borderRadius="1px" />
-
-            <TabPanels minH="50vh">
-              <TabPanel p={0}>
-                <TaskManagerNetwork />
-              </TabPanel>
-              <TabPanel>
-                <DatabaseView />
-              </TabPanel>
-            </TabPanels>
-          </Tabs> */}
         </ModalBody>
         <ModalCloseButton />
       </ModalContent>

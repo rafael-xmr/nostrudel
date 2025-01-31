@@ -20,10 +20,10 @@ import {
   Text,
 } from "@chakra-ui/react";
 import { Event, kinds } from "nostr-tools";
-import dayjs from "dayjs";
+import { useActiveAccount } from "applesauce-react/hooks";
+import { createDefer, Deferred } from "applesauce-core/promise";
 
-import createDefer, { Deferred } from "../../classes/deferred";
-import { RelayFavicon } from "../../components/relay-favicon";
+import RelayFavicon from "../../components/relay-favicon";
 import { ExternalLinkIcon } from "../../components/icons";
 import { getEventCoordinate, isReplaceable } from "../../helpers/nostr/event";
 import { Tag } from "../../types/nostr-event";
@@ -31,8 +31,8 @@ import { EmbedEvent } from "../../components/embed-event";
 import { useWriteRelays } from "../../hooks/use-client-relays";
 import { usePublishEvent } from "../global/publish-provider";
 import { useUserOutbox } from "../../hooks/use-user-mailboxes";
-import useCurrentAccount from "../../hooks/use-current-account";
 import { eventStore } from "../../services/event-store";
+import { unixNow } from "applesauce-core/helpers";
 
 type DeleteEventContextType = {
   isLoading: boolean;
@@ -49,7 +49,7 @@ export function useDeleteEventContext() {
 }
 
 export default function DeleteEventProvider({ children }: PropsWithChildren) {
-  const account = useCurrentAccount();
+  const account = useActiveAccount();
   const publish = usePublishEvent();
   const [isLoading, setLoading] = useState(false);
   const [event, setEvent] = useState<Event>();
@@ -80,7 +80,7 @@ export default function DeleteEventProvider({ children }: PropsWithChildren) {
         kind: kinds.EventDeletion,
         tags,
         content: reason,
-        created_at: dayjs().unix(),
+        created_at: unixNow(),
       };
       const pub = await publish("Delete", draft, undefined, false);
       eventStore.add(pub.event);
@@ -132,7 +132,7 @@ export default function DeleteEventProvider({ children }: PropsWithChildren) {
                   </AccordionButton>
                   <AccordionPanel>
                     <Flex wrap="wrap" gap="2" py="2">
-                      {writeRelays.urls.map((url) => (
+                      {writeRelays.map((url) => (
                         <Box alignItems="center" key={url} px="2" borderRadius="lg" display="flex" borderWidth="1px">
                           <RelayFavicon relay={url} size="2xs" mr="2" />
                           <Text isTruncated>{url}</Text>

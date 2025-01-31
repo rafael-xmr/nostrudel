@@ -1,10 +1,10 @@
 import _throttle from "lodash.throttle";
 import { BehaviorSubject } from "rxjs";
+import { createDefer, Deferred } from "applesauce-core/promise";
 
-import createDefer, { Deferred } from "../classes/deferred";
 import signingService from "./signing";
-import accountService from "./account";
 import { logger } from "../helpers/debug";
+import accounts from "./accounts";
 
 type EncryptionType = "nip04" | "nip44";
 
@@ -43,7 +43,7 @@ class DecryptionCache {
   }
 
   private async decryptContainer(container: DecryptionContainer) {
-    const account = accountService.current.value;
+    const account = accounts.active;
     if (!account) throw new Error("Missing account");
 
     switch (container.type) {
@@ -119,7 +119,7 @@ class DecryptionCache {
 const decryptionCacheService = new DecryptionCache();
 
 if (import.meta.env.DEV) {
-  // @ts-expect-error
+  // @ts-expect-error debug
   window.decryptionCacheService = decryptionCacheService;
 }
 

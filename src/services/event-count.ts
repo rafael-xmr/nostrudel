@@ -3,7 +3,7 @@ import stringify from "json-stringify-deterministic";
 import { BehaviorSubject } from "rxjs";
 
 import SuperMap from "../classes/super-map";
-import { localRelay } from "./local-relay";
+import { getCacheRelay } from "./cache-relay";
 
 class EventCountService {
   subjects = new SuperMap<string, BehaviorSubject<number | undefined>>(
@@ -20,9 +20,11 @@ class EventCountService {
 
     if (sub.value === undefined || alwaysRequest) {
       // try to get a count from the local relay
-      localRelay?.count(Array.isArray(filter) ? filter : [filter], {}).then((count) => {
-        if (Number.isFinite(count)) sub.next(count);
-      });
+      getCacheRelay()
+        ?.count(Array.isArray(filter) ? filter : [filter], {})
+        .then((count) => {
+          if (Number.isFinite(count)) sub.next(count);
+        });
     }
 
     return sub;
@@ -38,7 +40,7 @@ class EventCountService {
 const eventCountService = new EventCountService();
 
 if (import.meta.env.DEV) {
-  // @ts-ignore
+  // @ts-expect-error debug
   window.eventCountService = eventCountService;
 }
 

@@ -1,9 +1,10 @@
 import { ReactNode, memo, useMemo, useState } from "react";
 import { useInterval } from "react-use";
 import { Button, ButtonGroup, Divider, Flex, Heading } from "@chakra-ui/react";
+import { NostrEvent } from "nostr-tools";
 import dayjs from "dayjs";
 
-import useCurrentAccount from "../../../hooks/use-current-account";
+import { useActiveAccount } from "applesauce-react/hooks";
 import useStreamChatTimeline from "../stream/stream-chat/use-stream-chat-timeline";
 import UserAvatar from "../../../components/user/user-avatar";
 import UserLink from "../../../components/user/user-link";
@@ -11,7 +12,6 @@ import useUserMuteActions from "../../../hooks/use-user-mute-actions";
 import { useMuteModalContext } from "../../../providers/route/mute-modal-provider";
 import useUserMuteList from "../../../hooks/use-user-mute-list";
 import { isPubkeyInList } from "../../../helpers/nostr/lists";
-import { ParsedStream } from "../../../helpers/nostr/stream";
 
 function Countdown({ time }: { time: number }) {
   const [now, setNow] = useState(dayjs().unix());
@@ -55,8 +55,8 @@ function UserCard({ pubkey }: { pubkey: string }) {
   );
 }
 
-function UsersCard({ stream }: { stream: ParsedStream }) {
-  const account = useCurrentAccount()!;
+function UsersCard({ stream }: { stream: NostrEvent }) {
+  const account = useActiveAccount()!;
   const { loader, timeline: chatEvents } = useStreamChatTimeline(stream);
 
   const muteList = useUserMuteList(account.pubkey);

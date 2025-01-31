@@ -34,6 +34,7 @@ import UserAvatar from "../../../../components/user/user-avatar";
 import UserLink from "../../../../components/user/user-link";
 import UserDnsIdentity from "../../../../components/user/user-dns-identity";
 import DebugEventButton from "../../../../components/debug-modal/debug-event-button";
+import EventZapButton from "../../../../components/zap/event-zap-button";
 
 function NextPageButton({
 	chain,

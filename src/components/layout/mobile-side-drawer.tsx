@@ -1,48 +1,63 @@
 import {
-  Avatar,
-  Box,
-  Button,
-  Drawer,
-  DrawerBody,
-  DrawerContent,
-  DrawerOverlay,
-  DrawerProps,
-  Flex,
-  Text,
+	Avatar,
+	Box,
+	Button,
+	Drawer,
+	DrawerBody,
+	DrawerContent,
+	DrawerOverlay,
+	DrawerProps,
+	Flex,
+	Text,
 } from "@chakra-ui/react";
 import { Link as RouterLink } from "react-router-dom";
 
 import AccountSwitcher from "./account-switcher";
-import useCurrentAccount from "../../hooks/use-current-account";
+import { useActiveAccount } from "applesauce-react/hooks";
 import NavItems from "./nav-items";
 import TaskManagerButtons from "./task-manager-buttons";
 
-export default function MobileSideDrawer({ ...props }: Omit<DrawerProps, "children">) {
-  const account = useCurrentAccount();
+export default function MobileSideDrawer({
+	...props
+}: Omit<DrawerProps, "children">) {
+	const account = useActiveAccount();
 
-  return (
-    <Drawer placement="left" {...props}>
-      <DrawerOverlay />
-      <DrawerContent>
-        <DrawerBody display="flex" flexDirection="column" px="4" pt="4" overflowY="auto" overflowX="hidden" gap="2">
-          {account ? (
-            <AccountSwitcher />
-          ) : (
-            <Flex gap="2" my="2" alignItems="center">
-              <Avatar src="/transparent.jpeg" size="md" />
-              <Text m={0}>moStard</Text>
-            </Flex>
-          )}
-          <NavItems />
-          <Box h="2" />
-          {!account && (
-            <Button as={RouterLink} to="/signin" colorScheme="primary" flexShrink={0}>
-              Sign in
-            </Button>
-          )}
-          <TaskManagerButtons mt="auto" flexShrink={0} />
-        </DrawerBody>
-      </DrawerContent>
-    </Drawer>
-  );
+	return (
+		<Drawer placement="left" {...props}>
+			<DrawerOverlay />
+			<DrawerContent>
+				<DrawerBody
+					display="flex"
+					flexDirection="column"
+					px="4"
+					pt="4"
+					overflowY="auto"
+					overflowX="hidden"
+					gap="2"
+				>
+					{account ? (
+						<AccountSwitcher />
+					) : (
+						<Flex gap="2" my="2" alignItems="center">
+							<Avatar src="/transparent.jpeg" size="md" />
+							<Text m={0}>moStard</Text>
+						</Flex>
+					)}
+					<NavItems />
+					<Box h="2" />
+					{!account && (
+						<Button
+							as={RouterLink}
+							to="/signin"
+							colorScheme="primary"
+							flexShrink={0}
+						>
+							Sign in
+						</Button>
+					)}
+					<TaskManagerButtons mt="auto" flexShrink={0} />
+				</DrawerBody>
+			</DrawerContent>
+		</Drawer>
+	);
 }

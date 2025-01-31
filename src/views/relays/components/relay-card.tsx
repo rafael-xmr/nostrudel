@@ -23,7 +23,7 @@ import styled from "@emotion/styled";
 import { Link as RouterLink } from "react-router-dom";
 
 import { useRelayInfo } from "../../../hooks/use-relay-info";
-import { RelayFavicon } from "../../../components/relay-favicon";
+import RelayFavicon from "../../../components/relay-favicon";
 import { CodeIcon } from "../../../components/icons";
 import UserLink from "../../../components/user/user-link";
 import UserAvatar from "../../../components/user/user-avatar";
@@ -70,7 +70,7 @@ export function RelayMetadata({ url, extended }: { url: string; extended?: boole
 }
 
 // export function RelayJoinAction({ url, ...props }: { url: string } & Omit<ButtonProps, "children" | "onClick">) {
-//   const account = useCurrentAccount();
+//   const account = useActiveAccount();
 //   const clientRelays = useClientRelays();
 //   const relayConfig = clientRelays.find((r) => r.url === url);
 

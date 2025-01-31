@@ -7,10 +7,7 @@ import { logger } from "../helpers/debug";
 import { safeRelayUrl, validateRelayURL } from "../helpers/relay";
 import SuperMap from "./super-map";
 import verifyEventMethod from "../services/verify-event";
-import { offlineMode } from "../services/offline-mode";
 import processManager from "../services/process-manager";
-import signingService from "../services/signing";
-import accountService from "../services/account";
 import localSettings from "../services/local-settings";
 
 export type Notice = {
@@ -106,7 +103,7 @@ export default class RelayPool implements IConnectionPool {
   }
 
   async waitForOpen(relayOrUrl: string | URL | AbstractRelay, quite = true) {
-    let relay = this.getRelay(relayOrUrl);
+    const relay = this.getRelay(relayOrUrl);
     if (!relay) return Promise.reject("Missing relay");
 
     if (relay.connected) return true;
@@ -123,10 +120,10 @@ export default class RelayPool implements IConnectionPool {
   }
 
   async requestConnect(relayOrUrl: string | URL | AbstractRelay, quite = true) {
-    let relay = this.getRelay(relayOrUrl);
+    const relay = this.getRelay(relayOrUrl);
     if (!relay) return;
 
-    if (!relay.connected && !offlineMode.value) {
+    if (!relay.connected) {
       this.connecting.get(relay).next(true);
       try {
         await relay.connect();
@@ -144,11 +141,11 @@ export default class RelayPool implements IConnectionPool {
   }
 
   getRelayAuthStorageKey(relayOrUrl: string | URL | AbstractRelay) {
-    let relay = this.getRelay(relayOrUrl);
+    const relay = this.getRelay(relayOrUrl);
     return `${relay!.url}-auth-mode`;
   }
   getRelayAuthMode(relayOrUrl: string | URL | AbstractRelay): RelayAuthMode | undefined {
-    let relay = this.getRelay(relayOrUrl);
+    const relay = this.getRelay(relayOrUrl);
     if (!relay) return;
 
     const defaultMode = localSettings.defaultAuthenticationMode.value;
@@ -157,7 +154,7 @@ export default class RelayPool implements IConnectionPool {
     return mode || defaultMode;
   }
   setRelayAuthMode(relayOrUrl: string | URL | AbstractRelay, mode: RelayAuthMode) {
-    let relay = this.getRelay(relayOrUrl);
+    const relay = this.getRelay(relayOrUrl);
     if (!relay) return;
 
     localStorage.setItem(this.getRelayAuthStorageKey(relay), mode);
@@ -169,7 +166,7 @@ export default class RelayPool implements IConnectionPool {
     sign: Parameters<AbstractRelay["auth"]>[0],
     quite = true,
   ) {
-    let relay = this.getRelay(relayOrUrl);
+    const relay = this.getRelay(relayOrUrl);
     if (!relay) return;
 
     const pending = this.pendingAuth.get(relay);
@@ -204,34 +201,15 @@ export default class RelayPool implements IConnectionPool {
   }
 
   canSubscribe(relayOrUrl: string | URL | AbstractRelay) {
-    let relay = this.getRelay(relayOrUrl);
+    const relay = this.getRelay(relayOrUrl);
     if (!relay) return false;
 
     return this.authForSubscribe.get(relay).value !== false;
   }
 
-  private automaticallyAuthenticate(relay: AbstractRelay) {
-    const authMode = this.getRelayAuthMode(relay);
-    // only automatically authenticate if auth mode is set to "always"
-    if (authMode === "always") {
-      const account = accountService.current.value;
-      if (!account) return;
-
-      this.authenticate(relay, (draft) => {
-        return signingService.requestSignature(draft, account);
-      }).then(() => {
-        this.log(`Automatically authenticated to ${relay.url}`);
-      });
-    }
-  }
-
   private handleRelayChallenge(relay: AbstractRelay, challenge: string) {
     this.onRelayChallenge.next([relay, challenge]);
     this.challenges.get(relay).next(challenge);
-
-    if (localSettings.proactivelyAuthenticate.value) {
-      this.automaticallyAuthenticate(relay);
-    }
   }
 
   handleRelayNotice(relay: AbstractRelay, message: string) {
@@ -241,9 +219,6 @@ export default class RelayPool implements IConnectionPool {
     if (message.includes("auth-required")) {
       const authForSubscribe = this.authForSubscribe.get(relay);
       if (!authForSubscribe.value) authForSubscribe.next(true);
-
-      // try to authenticate
-      this.automaticallyAuthenticate(relay);
     }
   }
 

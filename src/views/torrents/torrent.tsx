@@ -41,8 +41,8 @@ import ReplyForm from "../thread/components/reply-form";
 import { getThreadReferences } from "../../helpers/nostr/event";
 import MessageTextCircle01 from "../../components/icons/message-text-circle-01";
 import useParamsEventPointer from "../../hooks/use-params-event-pointer";
-import NoteZapButton from "../../components/note/note-zap-button";
-import QuoteEventButton from "../../components/note/quote-event-button";
+import EventZapButton from "../../components/zap/event-zap-button";
+import EventQuoteButton from "../../components/note/event-quote-button";
 import { TextNoteContents } from "../../components/note/timeline-note/text-note-contents";
 
 function TorrentDetailsPage({ torrent }: { torrent: NostrEvent }) {
@@ -74,8 +74,8 @@ function TorrentDetailsPage({ torrent }: { torrent: NostrEvent }) {
             ))}
         </Flex>
         <ButtonGroup variant="ghost" size="sm">
-          <NoteZapButton event={torrent} />
-          <QuoteEventButton event={torrent} />
+          <EventZapButton event={torrent} />
+          <EventQuoteButton event={torrent} />
           <Button as={Link} leftIcon={<Magnet boxSize={5} />} href={getTorrentMagnetLink(torrent)} isExternal>
             Download torrent
           </Button>

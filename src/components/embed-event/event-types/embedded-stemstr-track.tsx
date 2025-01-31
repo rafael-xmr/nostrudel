@@ -21,8 +21,8 @@ import Timestamp from "../../timestamp";
 import TrackStemstrButton from "../../../views/tracks/components/track-stemstr-button";
 import TrackDownloadButton from "../../../views/tracks/components/track-download-button";
 import TrackPlayer from "../../../views/tracks/components/track-player";
-import QuoteEventButton from "../../note/quote-event-button";
-import NoteZapButton from "../../note/note-zap-button";
+import EventQuoteButton from "../../note/event-quote-button";
+import EventZapButton from "../../zap/event-zap-button";
 
 // example nevent1qqst32cnyhhs7jt578u7vp3y047dduuwjquztpvwqc43f3nvg8dh28gpzamhxue69uhhyetvv9ujuum5v4khxarj9eshquq4rxdxa
 export default function EmbeddedStemstrTrack({ track, ...props }: Omit<CardProps, "children"> & { track: NostrEvent }) {
@@ -53,8 +53,8 @@ export default function EmbeddedStemstrTrack({ track, ...props }: Omit<CardProps
               Comment
             </Button>
           </Tooltip>
-          <QuoteEventButton event={track} />
-          <NoteZapButton event={track} />
+          <EventQuoteButton event={track} />
+          <EventZapButton event={track} />
         </ButtonGroup>
         <ButtonGroup size="sm" ml="auto">
           <TrackDownloadButton track={track} />

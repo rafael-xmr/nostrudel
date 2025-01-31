@@ -1,7 +1,7 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { VitePWA } from "vite-plugin-pwa";
-import fundingPlugin from "vite-plugin-funding";
+import tsconfigPaths from "vite-tsconfig-paths";
 
 console.log("Build with:");
 for (const [key, value] of Object.entries(process.env)) {
@@ -14,22 +14,26 @@ export default defineConfig({
   build: {
     target: ["chrome89", "edge89", "firefox89", "safari15"],
     sourcemap: true,
+    minify: false,
   },
   plugins: [
     react(),
+    tsconfigPaths(),
     VitePWA({
-      registerType: "prompt",
       // strategies: "injectManifest",
       // srcDir: "src",
-      // filename: "sw.ts",
-      // devOptions: {
-      //   // NOTE: ESM service workers is not supported by firefox
-      //   type: "module",
-      //   enabled: true,
-      // },
+      // filename: "worker.ts",
+      registerType: "prompt",
+      // injectRegister: null,
+      injectManifest: {
+        minify: false,
+        sourcemap: true,
+        // This increase the cache limit to 4mB
+        maximumFileSizeToCacheInBytes: 1024 * 1024 * 8,
+      },
       workbox: {
         // This increase the cache limit to 4mB
-        maximumFileSizeToCacheInBytes: 2097152 * 2,
+        maximumFileSizeToCacheInBytes: 1024 * 1024 * 8,
       },
       manifest: {
         name: "moStard",
@@ -37,7 +41,7 @@ export default defineConfig({
         description: "A sandbox for exploring nostr",
         display: "standalone",
         orientation: "portrait-primary",
-        theme_color: "#8DB600",
+        theme_color: "#ff6600",
         categories: ["social"],
         icons: [
           { src: "/favicon.ico", type: "image/x-icon", sizes: "16x16 32x32" },
@@ -51,33 +55,23 @@ export default defineConfig({
         scope: "/",
         shortcuts: [
           {
-            name: "Notifications",
-            url: "/#/notifications",
-            description: "",
-          },
-          {
             name: "Notes",
-            url: "/#/",
+            url: "/",
             description: "",
           },
           {
             name: "Notifications",
-            url: "/#/notifications",
+            url: "/notifications",
             description: "",
           },
           {
             name: "Messages",
-            url: "/#/dm",
+            url: "/messages",
             description: "",
           },
           {
             name: "Streams",
-            url: "/#/streams",
-            description: "",
-          },
-          {
-            name: "Wiki",
-            url: "/#/wiki",
+            url: "/streams",
             description: "",
           },
         ],
@@ -93,6 +87,5 @@ export default defineConfig({
         ],
       },
     }),
-    fundingPlugin({ types: ["lightning"] }),
   ],
 });

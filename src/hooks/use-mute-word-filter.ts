@@ -1,8 +1,7 @@
 import { useCallback, useMemo } from "react";
 
-import type { NostrEvent } from "../types/nostr-event";
-import useAppSettings from "./use-app-settings";
-import type { Kind0ParsedContent } from "../helpers/nostr/user-metadata";
+import { NostrEvent } from "../types/nostr-event";
+import useAppSettings from "./use-user-app-settings";
 
 export default function useWordMuteFilter() {
 	const { mutedWords } = useAppSettings();

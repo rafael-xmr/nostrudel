@@ -20,7 +20,7 @@ import useThreadTimelineLoader from "../../../hooks/use-thread-timeline-loader";
 import { countReplies, repliesByDate } from "../../../helpers/thread";
 import { useTimelineCurserIntersectionCallback } from "../../../hooks/use-timeline-cursor-intersection-callback";
 import IntersectionObserverProvider from "../../../providers/local/intersection-observer";
-import useAppSettings from "../../../hooks/use-app-settings";
+import useAppSettings from "../../../hooks/use-user-app-settings";
 import useClientSideMuteFilter from "../../../hooks/use-client-side-mute-filter";
 import UserAvatarLink from "../../../components/user/user-avatar-link";
 import UserLink from "../../../components/user/user-link";
@@ -34,7 +34,7 @@ import ReplyForm from "../../thread/components/reply-form";
 import useThreadColorLevelProps from "../../../hooks/use-thread-color-level-props";
 import TorrentCommentMenu from "./torrent-comment-menu";
 import NoteReactions from "../../../components/note/timeline-note/components/note-reactions";
-import NoteZapButton from "../../../components/note/note-zap-button";
+import EventZapButton from "../../../components/zap/event-zap-button";
 import { TextNoteContents } from "../../../components/note/timeline-note/text-note-contents";
 import useEventIntersectionRef from "../../../hooks/use-event-intersection-ref";
 
@@ -104,7 +104,7 @@ export const ThreadPost = memo(({ post, level = -1 }: { post: ThreadItem; level?
     <Flex gap="2" alignItems="center">
       <ButtonGroup variant="ghost" size="sm">
         <IconButton aria-label="Reply" title="Reply" onClick={replyForm.onToggle} icon={<ReplyIcon />} />
-        <NoteZapButton event={post.event} />
+        <EventZapButton event={post.event} />
       </ButtonGroup>
       {!showReactionsOnNewLine && reactionButtons}
       <Spacer />

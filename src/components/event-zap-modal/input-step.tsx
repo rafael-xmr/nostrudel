@@ -2,10 +2,9 @@ import { Box, Button, Flex, Input, Text } from "@chakra-ui/react";
 import { useForm } from "react-hook-form";
 
 import type { NostrEvent } from "../../types/nostr-event";
-import useUserXMRMetadata from "../../hooks/use-user-xmr-metadata";
-import { getZapSplits } from "../../helpers/nostr/zaps";
+import useUserXMRMetadata from "~/hooks/use-user-xmr-metadata";
 import { EmbedEvent, type EmbedProps } from "../embed-event";
-import useAppSettings from "../../hooks/use-app-settings";
+import useAppSettings from "../../hooks/use-user-app-settings";
 import CustomZapAmountOptions from "./zap-options";
 import UserAvatar from "../user/user-avatar";
 import UserLink from "../user/user-link";
@@ -72,10 +71,9 @@ export default function InputStep({
 		},
 	});
 
-	const splits = event ? getZapSplits(event, pubkey) : [];
 	const minTip = 0.0005;
 
-  // TODO
+	// TODO
 	const showComment = false;
 	// const showComment = allowComment && splits.length > 0;
 	// const actionName = canZap ? "Zap" : "Tip";
@@ -85,10 +83,6 @@ export default function InputStep({
 	return (
 		<form onSubmit={onSubmitZap}>
 			<Flex gap="4" direction="column">
-				{splits.map((p) => (
-					<UserCard key={p.pubkey} pubkey={p.pubkey} percent={p.percent} />
-				))}
-
 				{showEmbed && event && <EmbedEvent event={event} {...embedProps} />}
 
 				{showComment && (

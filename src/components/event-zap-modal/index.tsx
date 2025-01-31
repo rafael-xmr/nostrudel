@@ -10,7 +10,6 @@ import {
 } from "@chakra-ui/react";
 
 import type { NostrEvent } from "../../types/nostr-event";
-import { getZapSplits } from "../../helpers/nostr/zaps";
 import type { EmbedProps } from "../embed-event";
 import InputStep from "./input-step";
 import PayStep from "./pay-step";
@@ -25,25 +24,6 @@ export type PayRequest = {
 	amount: number;
 	comment?: string;
 };
-
-async function getPayRequestsForEvent(
-	event: NostrEvent,
-	amount: number,
-	address?: string,
-	comment?: string,
-	fallbackPubkey?: string,
-	// additionalRelays?: Iterable<string>,
-) {
-	const splits = getZapSplits(event, fallbackPubkey);
-
-	const draftZapRequests: PayRequest[] = [];
-	for (const { pubkey, percent } of splits) {
-		const splitAmount = amount * percent;
-		draftZapRequests.push({ address, pubkey, amount: splitAmount, comment });
-	}
-
-	return draftZapRequests;
-}
 
 export type ZapModalProps = Omit<ModalProps, "children"> & {
 	address?: string;
@@ -101,16 +81,7 @@ export default function ZapModal({
 				allowComment={allowComment}
 				onSubmit={async (values) => {
 					if (event) {
-						setCallbacks(
-							await getPayRequestsForEvent(
-								event,
-								values.amount,
-								address,
-								values.comment,
-								pubkey,
-								// additionalRelays,
-							),
-						);
+						setCallbacks([]);
 					} else {
 						setCallbacks([
 							{

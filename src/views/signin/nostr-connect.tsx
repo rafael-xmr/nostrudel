@@ -12,16 +12,16 @@ import {
   useToast,
 } from "@chakra-ui/react";
 import { useNavigate } from "react-router-dom";
-import { NostrConnectSigner } from "applesauce-signer/signers/nostr-connect-signer";
+import { NostrConnectSigner } from "applesauce-signers/signers/nostr-connect-signer";
+import { useAccountManager } from "applesauce-react/hooks";
+import { NostrConnectAccount } from "applesauce-accounts/accounts";
 
-import accountService from "../../services/account";
+import { NOSTR_CONNECT_PERMISSIONS } from "../../const";
 import QRCodeScannerButton from "../../components/qr-code/qr-code-scanner-button";
 import { RelayUrlInput } from "../../components/relay-url-input";
 import QrCodeSvg from "../../components/qr-code/qr-code-svg";
 import { CopyIconButton } from "../../components/copy-icon-button";
-import NostrConnectAccount from "../../classes/accounts/nostr-connect-account";
-import relayPoolService from "../../services/relay-pool";
-import { NOSTR_CONNECT_PERMISSIONS } from "../../const";
+import { createNostrConnectConnection } from "../../classes/nostr-connect-connection";
 
 function ClientConnectForm() {
   const navigate = useNavigate();
@@ -29,6 +29,7 @@ function ClientConnectForm() {
   const [relay, setRelay] = useState("wss://relay.nsec.app/");
   const [signer, setSigner] = useState<NostrConnectSigner>();
   const [listening, setListening] = useState(false);
+  const manager = useAccountManager();
 
   const connectionURL = useMemo(() => {
     if (!signer || !relay) return "";
@@ -44,21 +45,26 @@ function ClientConnectForm() {
   }, [relay, signer]);
 
   const create = useCallback(() => {
-    const c = new NostrConnectSigner({ relays: [relay], pool: relayPoolService });
-    setSigner(c);
-    c.waitForSigner().then(() => {
-      const account = new NostrConnectAccount(c.pubkey!, c);
-      accountService.addAccount(account);
-      accountService.switchAccount(c.pubkey!);
+    const tempSigner = new NostrConnectSigner({ relays: [relay], ...createNostrConnectConnection() });
+    setSigner(tempSigner);
+
+    tempSigner.waitForSigner().then(async () => {
+      const pubkey = await tempSigner.getPublicKey();
+      setListening(false);
+
+      const account = new NostrConnectAccount(pubkey, tempSigner);
+      manager.addAccount(account);
+      manager.setActive(account);
     });
+
     setListening(true);
-  }, [relay]);
+  }, [relay, manager]);
 
   return (
     <>
       {signer ? (
         <>
-          <a href={connectionURL} target="_blank">
+          <a href={connectionURL} target="_blank" rel="noreferrer">
             <QrCodeSvg content={connectionURL} />
           </a>
           <Flex gap="2">
@@ -102,6 +108,7 @@ export default function LoginNostrConnectView() {
   const toast = useToast();
   const [connection, setConnection] = useState("");
   const fromClient = useDisclosure();
+  const manager = useAccountManager();
 
   const [loading, setLoading] = useState<string | undefined>();
   const handleSubmit: React.FormEventHandler<HTMLDivElement> = async (e) => {
@@ -109,12 +116,15 @@ export default function LoginNostrConnectView() {
 
     try {
       setLoading("Connecting...");
-      let client = await NostrConnectSigner.fromBunkerURI(connection, relayPoolService, NOSTR_CONNECT_PERMISSIONS);
-      const pubkey = await client.getPublicKey();
+      const signer = await NostrConnectSigner.fromBunkerURI(connection, {
+        ...createNostrConnectConnection(),
+        permissions: NOSTR_CONNECT_PERMISSIONS,
+      });
+      const pubkey = await signer.getPublicKey();
 
-      const account = new NostrConnectAccount(pubkey, client);
-      accountService.addAccount(account);
-      accountService.switchAccount(pubkey);
+      const account = new NostrConnectAccount(pubkey, signer);
+      manager.addAccount(account);
+      manager.setActive(account);
     } catch (e) {
       if (e instanceof Error) toast({ status: "error", description: e.message });
     }

@@ -1,7 +1,6 @@
 import { useMemo, useRef, useState } from "react";
 import { VisuallyHidden } from "@chakra-ui/react";
 import SimpleMDE, { SimpleMDEReactProps } from "react-simplemde-editor";
-import { multiServerUpload } from "blossom-client-sdk/actions/upload";
 import ReactDOMServer from "react-dom/server";
 import { Global, css } from "@emotion/react";
 
@@ -9,8 +8,8 @@ import EasyMDE from "easymde";
 import "easymde/dist/easymde.min.css";
 
 import useUsersMediaServers from "../../../hooks/use-user-media-servers";
-import useAppSettings from "../../../hooks/use-app-settings";
-import useCurrentAccount from "../../../hooks/use-current-account";
+import useAppSettings from "../../../hooks/use-user-app-settings";
+import { useActiveAccount } from "applesauce-react/hooks";
 
 import { CharkaMarkdown } from "../../../components/markdown/markdown";
 import { useSigningContext } from "../../../providers/global/signing-provider";
@@ -24,7 +23,7 @@ const fixCodeMirrorFont = css`
 `;
 
 export default function MarkdownEditor({ options, ...props }: SimpleMDEReactProps) {
-  const account = useCurrentAccount();
+  const account = useActiveAccount();
   const { requestSignature } = useSigningContext();
   const { mediaUploadService } = useAppSettings();
   const { servers } = useUsersMediaServers(account?.pubkey);

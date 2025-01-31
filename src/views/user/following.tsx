@@ -7,13 +7,14 @@ import useUserContactList from "../../hooks/use-user-contact-list";
 import { getPubkeysFromList } from "../../helpers/nostr/lists";
 import { useWebOfTrust } from "../../providers/global/web-of-trust-provider";
 import { ErrorBoundary } from "../../components/error-boundary";
+import SimpleView from "../../components/layout/presets/simple-view";
 
 export default function UserFollowingTab() {
   const webOfTrust = useWebOfTrust();
   const { pubkey } = useOutletContext() as { pubkey: string };
   const contextRelays = useAdditionalRelayContext();
 
-  const contactsList = useUserContactList(pubkey, contextRelays, { alwaysRequest: true });
+  const contactsList = useUserContactList(pubkey, contextRelays, true);
 
   const people = contactsList ? getPubkeysFromList(contactsList) : [];
   const sorted = webOfTrust ? webOfTrust.sortByDistanceAndConnections(people, (p) => p.pubkey) : people;
@@ -21,12 +22,14 @@ export default function UserFollowingTab() {
   if (!contactsList) return <Spinner />;
 
   return (
-    <SimpleGrid columns={{ base: 1, lg: 2, xl: 3 }} spacing="2" p="2">
-      {sorted.map(({ pubkey, relay }) => (
-        <ErrorBoundary key={pubkey}>
-          <UserCard pubkey={pubkey} relay={relay} />
-        </ErrorBoundary>
-      ))}
-    </SimpleGrid>
+    <SimpleView title="Following">
+      <SimpleGrid columns={{ base: 1, lg: 2, xl: 3 }} spacing="2" p="2">
+        {sorted.map(({ pubkey, relay }) => (
+          <ErrorBoundary key={pubkey}>
+            <UserCard pubkey={pubkey} relay={relay} />
+          </ErrorBoundary>
+        ))}
+      </SimpleGrid>
+    </SimpleView>
   );
 }

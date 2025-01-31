@@ -14,14 +14,18 @@ import {
   Text,
 } from "@chakra-ui/react";
 import { kinds } from "nostr-tools";
-import { getAddressPointersFromList, getEventPointersFromList } from "applesauce-lists/helpers";
+import {
+  getAddressPointersFromList,
+  getEventPointersFromList,
+  getProfilePointersFromList,
+  getReplaceableUID,
+} from "applesauce-core/helpers";
 
 import UserAvatarLink from "../../../components/user/user-avatar-link";
 import UserLink from "../../../components/user/user-link";
 import {
   getListDescription,
   getListName,
-  getPubkeysFromList,
   getReferencesFromList,
   isSpecialListKind,
 } from "../../../helpers/nostr/lists";
@@ -29,22 +33,20 @@ import { NostrEvent } from "../../../types/nostr-event";
 import useReplaceableEvent from "../../../hooks/use-replaceable-event";
 import ListFavoriteButton from "./list-favorite-button";
 import ListMenu from "./list-menu";
-import { CommunityIcon, NotesIcon } from "../../../components/icons";
+import { NotesIcon } from "../../../components/icons";
 import User01 from "../../../components/icons/user-01";
 import HoverLinkOverlay from "../../../components/hover-link-overlay";
-import NoteZapButton from "../../../components/note/note-zap-button";
+import EventZapButton from "../../../components/zap/event-zap-button";
 import Link01 from "../../../components/icons/link-01";
 import File02 from "../../../components/icons/file-02";
 import SimpleLikeButton from "../../../components/event-reactions/simple-like-button";
-import { createCoordinate } from "../../../classes/batch-kind-pubkey-loader";
 import useEventIntersectionRef from "../../../hooks/use-event-intersection-ref";
-import { getSharableEventAddress } from "../../../services/event-relay-hint";
+import { getSharableEventAddress } from "../../../services/relay-hints";
 
-export function ListCardContent({ list, ...props }: Omit<CardProps, "children"> & { list: NostrEvent }) {
-  const people = getPubkeysFromList(list);
+export function ListCardContent({ list }: { list: NostrEvent }) {
+  const people = getProfilePointersFromList(list);
   const notes = getEventPointersFromList(list);
   const coordinates = getAddressPointersFromList(list);
-  const communities = coordinates.filter((cord) => cord.kind === kinds.CommunityDefinition);
   const articles = coordinates.filter((cord) => cord.kind === kinds.LongFormArticle);
   const references = getReferencesFromList(list);
 
@@ -70,18 +72,13 @@ export function ListCardContent({ list, ...props }: Omit<CardProps, "children"> 
           <File02 /> {articles.length}
         </Text>
       )}
-      {communities.length > 0 && (
-        <Text>
-          <CommunityIcon boxSize={5} /> {communities.length}
-        </Text>
-      )}
     </SimpleGrid>
   );
 }
 
 export function createListLink(list: NostrEvent) {
   const isSpecialList = isSpecialListKind(list.kind);
-  return "/lists/" + (isSpecialList ? createCoordinate(list.kind, list.pubkey) : getSharableEventAddress(list));
+  return "/lists/" + (isSpecialList ? getReplaceableUID(list.kind, list.pubkey) : getSharableEventAddress(list));
 }
 
 function ListCardRender({
@@ -119,7 +116,7 @@ function ListCardRender({
         <ListCardContent list={list} />
       </CardBody>
       <CardFooter p="2">
-        {!isSpecialList && <NoteZapButton event={list} size="sm" variant="ghost" />}
+        {!isSpecialList && <EventZapButton event={list} size="sm" variant="ghost" />}
         {!isSpecialList && <SimpleLikeButton event={list} variant="ghost" size="sm" />}
         <ButtonGroup size="sm" variant="ghost" ml="auto">
           <ListFavoriteButton list={list} />

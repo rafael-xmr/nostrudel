@@ -1,33 +1,32 @@
-import { EventTemplate, kinds, validateEvent } from "nostr-tools";
+import { EventTemplate, kinds } from "nostr-tools";
 import { getEventUID } from "nostr-idb";
 import dayjs from "dayjs";
 import { nanoid } from "nanoid";
 import { getNip10References } from "applesauce-core/helpers";
 
-import { ATag, ETag, isDTag, isETag, isPTag, NostrEvent, Tag } from "../../types/nostr-event";
+import { ATag, ETag, isDTag, NostrEvent, Tag } from "../../types/nostr-event";
 import { getMatchNostrLink } from "../regexp";
 import { AddressPointer, DecodeResult, EventPointer } from "nostr-tools/nip19";
-import { safeJson } from "../parse";
 import { safeDecode } from "../nip19";
-import { safeRelayUrl, safeRelayUrls } from "../relay";
-import RelaySet from "../../classes/relay-set";
 import { truncateId } from "../string";
+import { createATagFromAddressPointer, createETagFromEventPointer } from "applesauce-factory/helpers";
 
 export { truncateId as truncatedId };
 
+/** @deprecated use isReplaceableKind or isParameterizedReplaceableKind instead */
 export function isReplaceable(kind: number) {
   return kinds.isReplaceableKind(kind) || kinds.isParameterizedReplaceableKind(kind);
 }
 
 export function pointerMatchEvent(event: NostrEvent, pointer: AddressPointer | EventPointer) {
   if (isReplaceable(event.kind)) {
-    if (Object.hasOwn(pointer, "pubkey")) {
+    if (Reflect.has(pointer, "pubkey")) {
       const p = pointer as AddressPointer;
       const d = event.tags.find(isDTag)?.[1];
       return event.pubkey === p.pubkey && event.kind === p.kind && d === p.identifier;
     }
   } else {
-    if (Object.hasOwn(pointer, "id")) {
+    if (Reflect.has(pointer, "id")) {
       const p = pointer as EventPointer;
       return p.id === event.id;
     }
@@ -115,7 +114,7 @@ export function getContentTagRefs(content: string, tags: Tag[]) {
         break;
     }
 
-    let matchingTags = tags.filter((t) => t[0] === type && t[1] === id);
+    const matchingTags = tags.filter((t) => t[0] === type && t[1] === id);
     for (const t of matchingTags) foundTags.add(t);
   }
 
@@ -131,84 +130,27 @@ export function filterTagsByContentRefs(content: string, tags: Tag[], referenced
 /** @deprecated */
 export { getNip10References as getThreadReferences };
 
+/** @deprecated */
 export function getEventCoordinate(event: NostrEvent) {
   const d = event.tags.find(isDTag)?.[1];
   return d ? `${event.kind}:${event.pubkey}:${d}` : `${event.kind}:${event.pubkey}`;
 }
 
-export function getEventAddressPointer(event: NostrEvent): AddressPointer {
-  const { kind, pubkey } = event;
-  if (!isReplaceable(kind)) throw new Error("Event is not replaceable");
-  const identifier = event.tags.find(isDTag)?.[1];
-  if (!identifier) throw new Error("Missing identifier");
-  return { kind, pubkey, identifier };
+/** @deprecated use createATagFromAddressPointer instead*/
+export function addressPointerToATag(pointer: AddressPointer): ATag {
+  return createATagFromAddressPointer(pointer) as ATag;
 }
 
-export function eTagToEventPointer(tag: ETag): EventPointer {
-  return { id: tag[1], relays: tag[2] ? safeRelayUrls([tag[2]]) : [] };
-}
-export function aTagToAddressPointer(tag: ATag): AddressPointer {
-  const cord = parseCoordinate(tag[1], true, false);
-  if (tag[2]) cord.relays = safeRelayUrls([tag[2]]);
-  return cord;
-}
-export function addressPointerToATag(pointer: AddressPointer): ATag {
-  const relay = pointer.relays?.[0];
-  const coordinate = `${pointer.kind}:${pointer.pubkey}:${pointer.identifier}`;
-  return relay ? ["a", coordinate, relay] : ["a", coordinate];
-}
+/** @deprecated use createETagFromEventPointer instead*/
 export function eventPointerToETag(pointer: EventPointer): ETag {
-  return pointer.relays?.length ? ["e", pointer.id, pointer.relays[0]] : ["e", pointer.id];
+  return createETagFromEventPointer(pointer) as ETag;
 }
 
 export type CustomAddressPointer = Omit<AddressPointer, "identifier"> & {
   identifier?: string;
 };
 
-export function parseCoordinate(a: string): CustomAddressPointer | null;
-export function parseCoordinate(a: string, requireD: false): CustomAddressPointer | null;
-export function parseCoordinate(a: string, requireD: true): AddressPointer | null;
-export function parseCoordinate(a: string, requireD: false, silent: false): CustomAddressPointer;
-export function parseCoordinate(a: string, requireD: true, silent: false): AddressPointer;
-export function parseCoordinate(a: string, requireD: true, silent: true): AddressPointer | null;
-export function parseCoordinate(a: string, requireD: false, silent: true): CustomAddressPointer | null;
-export function parseCoordinate(a: string, requireD = false, silent = true): CustomAddressPointer | null {
-  const parts = a.split(":") as (string | undefined)[];
-  const kind = parts[0] && parseInt(parts[0]);
-  const pubkey = parts[1];
-  const d = parts[2];
-
-  if (!kind) {
-    if (silent) return null;
-    else throw new Error("Missing kind");
-  }
-  if (!pubkey) {
-    if (silent) return null;
-    else throw new Error("Missing pubkey");
-  }
-  if (requireD && d === undefined) {
-    if (silent) return null;
-    else throw new Error("Missing identifier");
-  }
-
-  return {
-    kind,
-    pubkey,
-    identifier: d,
-  };
-}
-
-export function parseHardcodedNoteContent(event: NostrEvent) {
-  const json = safeJson<NostrEvent>(event.content);
-  if (!json) return null;
-
-  // ensure the note has tags
-  json.tags = json.tags || [];
-
-  validateEvent(json);
-
-  return (json as NostrEvent) ?? null;
-}
+export { parseCoordinate } from "applesauce-core/helpers/pointers";
 
 export function sortByDate(a: NostrEvent, b: NostrEvent) {
   return b.created_at - a.created_at;
@@ -238,17 +180,6 @@ export function replaceOrAddSimpleTag(draft: EventTemplate, tagName: string, val
   } else {
     draft.tags.push([tagName, value]);
   }
-}
-
-export function getAllRelayHints(draft: NostrEvent | EventTemplate) {
-  const hints = new RelaySet();
-  for (const tag of draft.tags) {
-    if ((isPTag(tag) || isETag(tag)) && tag[2]) {
-      const url = safeRelayUrl(tag[2]);
-      if (url) hints.add(url.toString());
-    }
-  }
-  return hints;
 }
 
 function groupByKind(events: NostrEvent[]) {

@@ -22,7 +22,7 @@ import { useInterval } from "react-use";
 
 import { getDisplayName } from "../../helpers/nostr/profile";
 import useUserProfile from "../../hooks/use-user-profile";
-import useCurrentAccount from "../../hooks/use-current-account";
+import { useActiveAccount } from "applesauce-react/hooks";
 import {
   createEmptyMuteList,
   getPubkeysExpiration,
@@ -55,8 +55,8 @@ function MuteModal({ pubkey, onClose, ...props }: Omit<ModalProps, "children"> &
   const metadata = useUserProfile(pubkey);
   const publish = usePublishEvent();
 
-  const account = useCurrentAccount();
-  const muteList = useUserMuteList(account?.pubkey, [], { ignoreCache: true });
+  const account = useActiveAccount();
+  const muteList = useUserMuteList(account?.pubkey, [], true);
   const handleClick = async (expiration: number) => {
     let draft = muteList ? cloneList(muteList) : createEmptyMuteList();
     draft = pruneExpiredPubkeys(draft);
@@ -116,8 +116,8 @@ function MuteModal({ pubkey, onClose, ...props }: Omit<ModalProps, "children"> &
 
 function UnmuteHandler() {
   const publish = usePublishEvent();
-  const account = useCurrentAccount()!;
-  const muteList = useUserMuteList(account?.pubkey, [], { ignoreCache: true });
+  const account = useActiveAccount()!;
+  const muteList = useUserMuteList(account?.pubkey, [], true);
   const modal = useDisclosure();
 
   const unmuteAll = async () => {
@@ -152,8 +152,8 @@ function UnmuteHandler() {
 
 function UnmuteModal({ onClose }: Omit<ModalProps, "children">) {
   const publish = usePublishEvent();
-  const account = useCurrentAccount()!;
-  const muteList = useUserMuteList(account?.pubkey, [], { ignoreCache: true });
+  const account = useActiveAccount()!;
+  const muteList = useUserMuteList(account?.pubkey, [], true);
 
   const getExpiredPubkeys = useCallback(() => {
     if (!muteList) return [];

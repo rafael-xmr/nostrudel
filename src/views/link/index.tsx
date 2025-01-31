@@ -9,6 +9,7 @@ import { WIKI_PAGE_KIND } from "../../helpers/nostr/wiki";
 import { EmbedEvent, EmbedEventPointer } from "../../components/embed-event";
 import useReplaceableEvent from "../../hooks/use-replaceable-event";
 import useSingleEvent from "../../hooks/use-single-event";
+import { MEDIA_POST_KIND } from "../../helpers/nostr/media";
 
 function LoadUnknownAddress({ pointer, link }: { pointer: nip19.AddressPointer; link: string }) {
   const event = useReplaceableEvent(pointer, pointer.relays);
@@ -44,7 +45,7 @@ function RenderRedirect({ event, link }: { event?: NostrEvent; link: string }) {
       return <Navigate to={`/n/${link}`} replace />;
     case "nevent":
     case "naddr": {
-      let k = decoded.data.kind || event?.kind;
+      const k = decoded.data.kind || event?.kind;
       if (k === kinds.ShortTextNote) return <Navigate to={`/n/${link}`} replace />;
       if (k === TORRENT_KIND) return <Navigate to={`/torrents/${link}`} replace />;
       if (k === kinds.LiveEvent) return <Navigate to={`/streams/${link}`} replace />;
@@ -53,12 +54,13 @@ function RenderRedirect({ event, link }: { event?: NostrEvent; link: string }) {
       if (k === kinds.Followsets) return <Navigate to={`/lists/${link}`} replace />;
       if (k === kinds.Bookmarksets) return <Navigate to={`/lists/${link}`} replace />;
       if (k === kinds.BadgeDefinition) return <Navigate to={`/badges/${link}`} replace />;
-      if (k === kinds.CommunityDefinition) return <Navigate to={`/c/${link}`} replace />;
       if (k === FLARE_VIDEO_KIND) return <Navigate to={`/videos/${link}`} replace />;
       if (k === kinds.ChannelCreation) return <Navigate to={`/channels/${link}`} replace />;
       if (k === kinds.ShortTextNote) return <Navigate to={`/n/${link}`} replace />;
       if (k === kinds.LongFormArticle) return <Navigate to={`/articles/${link}`} replace />;
       if (k === WIKI_PAGE_KIND) return <Navigate to={`/wiki/page/${link}`} replace />;
+      if (k === MEDIA_POST_KIND) return <Navigate to={`/media/${link}`} replace />;
+      if (k === kinds.FileMetadata) return <Navigate to={`/files/${link}`} replace />;
 
       if (!event && decoded.type === "naddr") return <LoadUnknownAddress pointer={decoded.data} link={link} />;
       if (!event && decoded.type === "nevent") return <LoadUnknownEvent pointer={decoded.data} link={link} />;

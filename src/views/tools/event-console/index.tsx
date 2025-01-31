@@ -22,10 +22,10 @@ import { Subscription as IDBSubscription } from "nostr-idb";
 import _throttle from "lodash.throttle";
 import stringify from "json-stringify-deterministic";
 import { useLocation, useSearchParams } from "react-router-dom";
+import { safeParse } from "applesauce-core/helpers/json";
 
 import VerticalPageLayout from "../../../components/vertical-page-layout";
 import BackButton from "../../../components/router/back-button";
-import { localRelay } from "../../../services/local-relay";
 import Play from "../../../components/icons/play";
 import ClockRewind from "../../../components/icons/clock-rewind";
 import HistoryDrawer from "./history-drawer";
@@ -37,8 +37,8 @@ import { DownloadIcon, ShareIcon } from "../../../components/icons";
 import { RelayUrlInput } from "../../../components/relay-url-input";
 import { validateRelayURL } from "../../../helpers/relay";
 import FilterEditor from "./filter-editor";
-import { safeJson } from "../../../helpers/parse";
 import relayPoolService from "../../../services/relay-pool";
+import useCacheRelay from "../../../hooks/use-cache-relay";
 
 const EventTimeline = memo(({ events }: { events: NostrEvent[] }) => {
   return (
@@ -51,6 +51,7 @@ const EventTimeline = memo(({ events }: { events: NostrEvent[] }) => {
 });
 
 export default function EventConsoleView() {
+  const cacheRelay = useCacheRelay();
   const [params, setParams] = useSearchParams();
   const location = useLocation();
   const historyDrawer = useDisclosure();
@@ -66,7 +67,7 @@ export default function EventConsoleView() {
     if (params.has("filter") || location.state?.filter) {
       const str = params.get("filter");
       if (str) {
-        const f = safeJson(str, null);
+        const f = safeParse(str);
         if (f) return JSON.stringify(f, null, 2);
       } else if (typeof location.state.filter === "object") {
         return JSON.stringify(location.state.filter, null, 2);
@@ -90,8 +91,8 @@ export default function EventConsoleView() {
 
       if (sub) sub.close();
 
-      if (!localRelay) throw new Error("Local relay disabled");
-      let r = localRelay!;
+      if (!cacheRelay) throw new Error("Local relay disabled");
+      let r = cacheRelay!;
       if (queryRelay.isOpen) {
         const url = validateRelayURL(relayURL);
         if (!relay || relay.url !== url.toString()) {
@@ -104,7 +105,7 @@ export default function EventConsoleView() {
       }
 
       await new Promise<void>((res) => {
-        let buffer: NostrEvent[] = [];
+        const buffer: NostrEvent[] = [];
         const flush = _throttle(() => setEvents([...buffer]), 1000 / 10, { trailing: true });
 
         setError("");
@@ -128,7 +129,7 @@ export default function EventConsoleView() {
       if (e instanceof Error) setError(e.message);
     }
     setLoading(false);
-  }, [queryRelay.isOpen, query, relayURL, relay, sub]);
+  }, [queryRelay.isOpen, query, relayURL, relay, sub, cacheRelay]);
 
   const submitRef = useRef(loadEvents);
   submitRef.current = loadEvents;

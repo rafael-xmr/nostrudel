@@ -1,13 +1,20 @@
 import { generateSecretKey } from "nostr-tools";
 import { bytesToHex, hexToBytes } from "@noble/hashes/utils";
+import { nanoid } from "nanoid";
 
+import { type RelayAuthMode } from "./authentication-signer";
 import { DEFAULT_SIGNAL_RELAYS } from "../const";
 import {
-	BooleanLocalStorageEntry,
-	NullableNumberLocalStorageEntry,
-	NumberLocalStorageEntry,
+  ArrayLocalStorageEntry,
+  BooleanLocalStorageEntry,
+  NullableNumberLocalStorageEntry,
+  NumberLocalStorageEntry,
 } from "../classes/local-settings/types";
 import { LocalStorageEntry } from "../classes/local-settings/entry";
+
+// relays
+const readRelays = new ArrayLocalStorageEntry<string>("read-relays", []);
+const writeRelays = new ArrayLocalStorageEntry<string>("write-relays", []);
 
 // local relay
 const idbMaxEvents = new NumberLocalStorageEntry(
@@ -17,14 +24,6 @@ const idbMaxEvents = new NumberLocalStorageEntry(
 const wasmPersistForDays = new NullableNumberLocalStorageEntry(
 	"wasm-relay-oldest-event",
 	365,
-);
-
-// note behavior
-const enableNoteThreadDrawer = new LocalStorageEntry(
-	"enable-note-thread-drawer",
-	false,
-	(raw) => raw === "true",
-	(v) => String(v),
 );
 
 // webrtc relay
@@ -59,38 +58,53 @@ const enableKeyboardShortcuts = new BooleanLocalStorageEntry(
 );
 
 // privacy
-const defaultAuthenticationMode = new LocalStorageEntry(
-	"default-relay-auth-mode",
-	"ask",
-); // ask, always, never
-const proactivelyAuthenticate = new BooleanLocalStorageEntry(
-	"proactively-authenticate",
-	false,
-);
 const debugApi = new BooleanLocalStorageEntry("debug-api", false);
 
-// display settings
-const showBrandLogo = new BooleanLocalStorageEntry("show-brand-logo", true);
+// relay authentication
+const defaultAuthenticationMode = new LocalStorageEntry<RelayAuthMode>("default-authentication-mode", "ask");
+const proactivelyAuthenticate = new BooleanLocalStorageEntry("proactively-authenticate", false);
+const relayAuthenticationMode = new ArrayLocalStorageEntry<{ relay: string; mode: RelayAuthMode }>(
+  "relay-authentication-mode",
+  [],
+);
+
+// notifications
+const deviceId = new LocalStorageEntry("device-id", nanoid());
+
+const ntfyTopic = new LocalStorageEntry("ntfy-topic", nanoid());
+const ntfyServer = new LocalStorageEntry("ntfy-server", "https://ntfy.sh");
+
+// cache relay
+const cacheRelayURL = new LocalStorageEntry("cache-relay-url", "");
+
+// bakery
+const bakeryURL = new LocalStorageEntry<string>("bakery-url", "");
 
 const localSettings = {
-	idbMaxEvents,
-	wasmPersistForDays,
-	enableNoteThreadDrawer,
-	webRtcLocalIdentity,
-	webRtcSignalingRelays,
-	webRtcRecentConnections,
-	addClientTag,
-	verifyEventMethod,
-	enableKeyboardShortcuts,
-	showBrandLogo,
-	defaultAuthenticationMode,
-	proactivelyAuthenticate,
-	debugApi,
+  readRelays,
+  writeRelays,
+  idbMaxEvents,
+  wasmPersistForDays,
+  webRtcLocalIdentity,
+  webRtcSignalingRelays,
+  webRtcRecentConnections,
+  addClientTag,
+  verifyEventMethod,
+  enableKeyboardShortcuts,
+  defaultAuthenticationMode,
+  proactivelyAuthenticate,
+  relayAuthenticationMode,
+  debugApi,
+  deviceId,
+  ntfyTopic,
+  ntfyServer,
+  bakeryURL,
+  cacheRelayURL,
 };
 
 if (import.meta.env.DEV) {
-	// @ts-expect-error
-	window.localSettings = localSettings;
+  // @ts-expect-error debug
+  window.localSettings = localSettings;
 }
 
 export default localSettings;

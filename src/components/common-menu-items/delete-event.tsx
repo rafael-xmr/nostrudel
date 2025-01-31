@@ -1,18 +1,18 @@
 import { MenuItem } from "@chakra-ui/react";
+import { useActiveAccount } from "applesauce-react/hooks";
 
 import { NostrEvent } from "../../types/nostr-event";
 import { useDeleteEventContext } from "../../providers/route/delete-event-provider";
-import useCurrentAccount from "../../hooks/use-current-account";
 import { TrashIcon } from "../icons";
 
-export default function DeleteEventMenuItem({ event, label }: { event: NostrEvent; label?: string }) {
-  const account = useCurrentAccount();
+export default function DeleteEventMenuItem({ event, label = "Delete Event" }: { event: NostrEvent; label?: string }) {
+  const account = useActiveAccount();
   const { deleteEvent } = useDeleteEventContext();
 
   return (
     account?.pubkey === event.pubkey && (
       <MenuItem icon={<TrashIcon />} color="red.500" onClick={() => deleteEvent(event)}>
-        {label ?? "Delete Note"}
+        {label}
       </MenuItem>
     )
   );

@@ -1,27 +1,18 @@
 import { useEffect, useMemo } from "react";
-import {
-	useObservable,
-	useQueryStore,
-	useStoreQuery,
-} from "applesauce-react/hooks";
+import { NostrEvent } from "nostr-tools";
+import { useStoreQuery } from "applesauce-react/hooks";
 import { ReplaceableSetQuery } from "applesauce-core/queries";
 
 import { useReadRelays } from "./use-client-relays";
-import replaceableEventsService, {
-	type RequestOptions,
-} from "../services/replaceable-events";
-import {
-	type CustomAddressPointer,
-	parseCoordinate,
-} from "../helpers/nostr/event";
+import replaceableEventLoader from "../services/replaceable-loader";
+import { CustomAddressPointer, parseCoordinate } from "../helpers/nostr/event";
 
 export default function useReplaceableEvents(
-	coordinates: string[] | CustomAddressPointer[] | undefined,
-	additionalRelays?: Iterable<string>,
-	opts: RequestOptions = {},
-) {
-	const readRelays = useReadRelays(additionalRelays);
-	const store = useQueryStore();
+  coordinates: string[] | CustomAddressPointer[] | undefined,
+  additionalRelays?: Iterable<string>,
+  force?: boolean,
+): NostrEvent[] {
+  const readRelays = useReadRelays(additionalRelays);
 
 	const pointers = useMemo(() => {
 		if (!coordinates) return undefined;
@@ -35,20 +26,21 @@ export default function useReplaceableEvents(
 		return arr;
 	}, [coordinates]);
 
-	// load events
-	useEffect(() => {
-		if (!pointers) return;
-		for (const pointer of pointers) {
-			replaceableEventsService.requestEvent(
-				pointer.relays ? [...readRelays, ...pointer.relays] : readRelays,
-				pointer.kind,
-				pointer.pubkey,
-				pointer.identifier,
-				opts,
-			);
-		}
-	}, [pointers, readRelays.urls.join("|")]);
+  // load events
+  useEffect(() => {
+    if (!pointers) return;
 
-	const map = useStoreQuery(ReplaceableSetQuery, pointers && [pointers]);
-	return Array.from(map?.values() ?? []);
+    for (const pointer of pointers) {
+      replaceableEventLoader.next({
+        relays: [...readRelays, ...(pointer.relays ?? [])],
+        kind: pointer.kind,
+        pubkey: pointer.pubkey,
+        identifier: pointer.identifier,
+        force,
+      });
+    }
+  }, [pointers, readRelays.join("|"), force]);
+
+  const events = useStoreQuery(ReplaceableSetQuery, pointers && [pointers]);
+  return events ? Object.values(events) : [];
 }
