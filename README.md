@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="public/mostard_sat.png" alt="Project Logo" width="21%">
+  <img src="public/logo.svg" alt="Project Logo" width="21%">
 </p>
 
 # moStard
