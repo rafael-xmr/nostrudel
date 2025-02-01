@@ -13,7 +13,7 @@ export default function UserPinnedEvents({ pubkey }: { pubkey: string }) {
   if (pointers.length === 0) return null;
 
   return (
-    <Flex direction="column" gap="2">
+    <Flex direction="column" gap="2" p="2">
       <Heading size="md" my="2">
         Pinned
       </Heading>

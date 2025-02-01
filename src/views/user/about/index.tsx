@@ -262,7 +262,7 @@ export default function UserAboutTab() {
 			</Box>
 			<UserStatsAccordion pubkey={pubkey} />
 
-			<Flex gap="2" wrap="wrap">
+			<Flex gap="2" wrap="wrap" p="2">
 				<Button
 					as={Link}
 					href={`https://nosta.me/${nprofile}`}

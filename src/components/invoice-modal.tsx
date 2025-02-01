@@ -20,10 +20,15 @@ import { useBreakpointValue } from "../providers/global/breakpoint-provider";
 type CommonProps = { address?: string; amount: number; onPaid: () => void };
 
 export function InvoiceModalContent({ address, amount, onPaid }: CommonProps) {
-	const isMobile = useBreakpointValue({ base: true, md: false });
-	const showQr = useDisclosure({ isOpen: !isMobile });
+	const showQr = useDisclosure({ isOpen: true });
 	const [payingApp, setPayingApp] = useState(false);
-	const uri = `monero:${address?.replace(/\s/g, "")}?tx_amount=${amount}`;
+	let uri = "";
+	// TODO: tx_payment_id
+	if (Number.isNaN("amount")) {
+		uri = `monero:${address?.replace(/\s/g, "")}`;
+	} else {
+		uri = `monero:${address?.replace(/\s/g, "")}?tx_amount=${amount}`;
+	}
 
 	const payWithApp = async () => {
 		setPayingApp(true);
@@ -46,13 +51,6 @@ export function InvoiceModalContent({ address, amount, onPaid }: CommonProps) {
 			{showQr.isOpen && <QrCodeSvg content={uri} xmrIcon />}
 			<Flex gap="2">
 				<Input value={uri} readOnly />
-				<IconButton
-					icon={<QrCodeIcon boxSize={6} />}
-					aria-label="Show QrCode"
-					onClick={showQr.onToggle}
-					variant="solid"
-					size="md"
-				/>
 				<CopyIconButton
 					value={uri}
 					aria-label="Copy Invoice"
@@ -69,7 +67,7 @@ export function InvoiceModalContent({ address, amount, onPaid }: CommonProps) {
 					size="md"
 					isLoading={payingApp}
 				>
-					Open App
+					Pay in Wallet
 				</Button>
 			</Flex>
 		</Flex>

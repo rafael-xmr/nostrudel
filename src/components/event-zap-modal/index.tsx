@@ -79,20 +79,7 @@ export default function ZapModal({
 				showEmbed={showEmbed}
 				embedProps={embedProps}
 				allowComment={allowComment}
-				onSubmit={async (values) => {
-					if (event) {
-						setCallbacks([]);
-					} else {
-						setCallbacks([
-							{
-								pubkey,
-								address,
-								amount: values.amount,
-								comment: values.comment,
-							},
-						]);
-					}
-				}}
+				address={address}
 			/>
 		);
 	};

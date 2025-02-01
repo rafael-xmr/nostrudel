@@ -20,7 +20,7 @@ export default function UserAboutContent({ pubkey, ...props }: { pubkey: string 
   });
 
   return (
-    <Box whiteSpace="pre-line" {...props}>
+    <Box whiteSpace="pre-line" p={2} {...props}>
       {content}
     </Box>
   );

@@ -35,7 +35,7 @@ export default function EventZapButton({
 	};
 
 	// const total = totalZaps(zaps);
-	const canZap = !!address || event.tags.some((t) => t[0] === "zap");
+	const canZap = !!address;
 
 	return (
 		<>

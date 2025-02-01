@@ -9,6 +9,7 @@ import CustomZapAmountOptions from "./zap-options";
 import UserAvatar from "../user/user-avatar";
 import UserLink from "../user/user-link";
 import Monero from "../icons/monero";
+import { InvoiceModalContent } from "../invoice-modal";
 
 function UserCard({ pubkey, percent }: { pubkey: string; percent?: number }) {
 	const { address } = useUserXMRMetadata(pubkey);
@@ -37,24 +38,21 @@ export type InputStepProps = {
 	allowComment?: boolean;
 	showEmbed?: boolean;
 	embedProps?: EmbedProps;
-	onSubmit: (values: { amount: number; comment: string }) => void;
+	address?: string;
 };
 
 export default function InputStep({
 	event,
-	pubkey,
 	initialComment,
 	initialAmount,
-	allowComment = true,
 	showEmbed = true,
 	embedProps,
-	onSubmit,
+	address,
 }: InputStepProps) {
 	const { customZapAmounts } = useAppSettings();
 
 	const {
 		register,
-		handleSubmit,
 		watch,
 		setValue,
 		formState: { errors, isSubmitting },
@@ -78,61 +76,50 @@ export default function InputStep({
 	// const showComment = allowComment && splits.length > 0;
 	// const actionName = canZap ? "Zap" : "Tip";
 
-	const onSubmitZap = handleSubmit(onSubmit);
-
 	return (
-		<form onSubmit={onSubmitZap}>
-			<Flex gap="4" direction="column">
-				{showEmbed && event && <EmbedEvent event={event} {...embedProps} />}
+		<Flex gap="4" direction="column">
+			{showEmbed && event && <EmbedEvent event={event} {...embedProps} />}
 
-				{showComment && (
-					<Input
-						placeholder="Comment"
-						{...register("comment", { maxLength: 150 })}
-						autoComplete="off"
-					/>
-				)}
-
-				<CustomZapAmountOptions
-					onSelect={(amount) =>
-						setValue("amount", amount, { shouldDirty: true })
-					}
+			{showComment && (
+				<Input
+					placeholder="Comment"
+					{...register("comment", { maxLength: 150 })}
+					autoComplete="off"
 				/>
+			)}
 
-				<Flex gap="2">
-					<Input
-						type="number"
-						placeholder="Custom amount"
-						isInvalid={!!errors.amount}
-						step={0.0001}
-						min={minTip}
-						flex={1}
-						{...register("amount", {
-							valueAsNumber: true,
-							min: 0.0001,
-							onBlur: () => {
-								const amount = watch("amount");
-								if (Number.isNaN(amount)) {
-									setValue("amount", 0);
-								} else {
-									setValue("amount", amount);
-								}
-							},
-						})}
-					/>
-					<Button
-						leftIcon={<Monero />}
-						type="submit"
-						isLoading={isSubmitting}
-						variant="solid"
-						size="md"
-						autoFocus
-						isDisabled={false}
-					>
-						Tip {Number.isNaN(watch("amount")) ? 0 : watch("amount")} XMR
-					</Button>
-				</Flex>
+			<InvoiceModalContent
+				address={address}
+				amount={watch("amount")}
+				onPaid={() => {}}
+			/>
+
+			<CustomZapAmountOptions
+				onSelect={(amount) => setValue("amount", amount, { shouldDirty: true })}
+			/>
+
+			<Flex gap="2">
+				<Input
+					type="number"
+					placeholder="Custom amount"
+					isInvalid={!!errors.amount}
+					step={0.0001}
+					min={minTip}
+					flex={1}
+					{...register("amount", {
+						valueAsNumber: true,
+						min: 0.0001,
+						onBlur: () => {
+							const amount = watch("amount");
+							if (Number.isNaN(amount)) {
+								setValue("amount", 0);
+							} else {
+								setValue("amount", amount);
+							}
+						},
+					})}
+				/>
 			</Flex>
-		</form>
+		</Flex>
 	);
 }

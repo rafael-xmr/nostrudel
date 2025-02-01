@@ -117,7 +117,8 @@ export default function DesktopSideNav({
 					</Link>{" "}
 					(and add it to your list).
 				</Text>
-				<Image src="/donate_qr.png" />
+				<Image src="/qr_with_logo_black2.png" />
+				{/* TODO: monthly goal */}
 				<Text>Cheers!</Text>
 				<Image src="/monero_chan.webp" />
 			</Flex>
