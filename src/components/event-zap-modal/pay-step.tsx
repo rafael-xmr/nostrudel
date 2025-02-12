@@ -1,6 +1,7 @@
 import {
 	ButtonGroup,
 	Flex,
+	type FlexProps,
 	IconButton,
 	Spacer,
 	useDisclosure,
@@ -59,9 +60,14 @@ function PayRequestCard({
 }
 export default function PayStep({
 	callbacks,
-}: { callbacks: PayRequest[]; onComplete: () => void }) {
+	onComplete,
+	...props
+}: Omit<FlexProps, "children"> & {
+	callbacks: PayRequest[];
+	onComplete: () => void;
+}) {
 	return (
-		<Flex direction="column" gap="4">
+		<Flex direction="column" gap="4" {...props}>
 			{callbacks.map((callback) => {
 				return (
 					<PayRequestCard

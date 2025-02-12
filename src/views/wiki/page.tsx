@@ -1,4 +1,3 @@
-import { useMemo } from "react";
 import { NostrEvent, nip19 } from "nostr-tools";
 import {
 	Alert,
@@ -14,7 +13,6 @@ import {
 	Text,
 } from "@chakra-ui/react";
 import { Link as RouterLink } from "react-router-dom";
-import { useObservable } from "applesauce-react/hooks";
 
 import useParamsAddressPointer from "../../hooks/use-params-address-pointer";
 import useReplaceableEvent from "../../hooks/use-replaceable-event";
@@ -40,10 +38,10 @@ import EventQuoteButton from "../../components/note/event-quote-button";
 import WikiPageMenu from "./components/wiki-page-menu";
 import EventVoteButtons from "../../components/reactions/event-vote-buttions";
 import { useActiveAccount } from "applesauce-react/hooks";
-import dictionaryService from "../../services/dictionary";
 import { useReadRelays } from "../../hooks/use-client-relays";
 import { useWebOfTrust } from "../../providers/global/web-of-trust-provider";
 import { getSharableEventAddress } from "../../services/relay-hints";
+import useWikiPages from "../../hooks/use-wiki-pages";
 
 function ForkAlert({
 	page,
@@ -105,51 +103,60 @@ function DeferAlert({
 }
 
 export function WikiPagePage({ page }: { page: NostrEvent }) {
-  const account = useActiveAccount();
+	const account = useActiveAccount();
 
 	const { address } = getPageForks(page);
 	const defer = getPageDefer(page);
 	const summary = getPageSummary(page, false);
 
-  return (
-    <>
-      <Flex gap="2" wrap="wrap">
-        <Box flex={1}>
-          <Heading>{getPageTitle(page)}</Heading>
-          <Text>
-            by <UserLink pubkey={page.pubkey} /> - <Timestamp timestamp={page.created_at} />
-          </Text>
-        </Box>
-        <Flex direction="column" gap="2" ml="auto">
-          <ButtonGroup ml="auto" size="sm">
-            {page.pubkey === account?.pubkey && (
-              <Button as={RouterLink} colorScheme="primary" to={`/wiki/edit/${getPageTopic(page)}`}>
-                Edit
-              </Button>
-            )}
-            {page.pubkey !== account?.pubkey && (
-              <Button as={RouterLink} colorScheme="primary" to={`/wiki/create?fork=${getSharableEventAddress(page)}`}>
-                Fork
-              </Button>
-            )}
-          </ButtonGroup>
-          <Flex alignItems="flex-end" gap="2" ml="auto">
-            <EventVoteButtons event={page} inline chevrons={false} />
-            <ButtonGroup size="sm">
-              <EventQuoteButton event={page} />
-              <EventZapButton event={page} showEventPreview={false} />
-              <WikiPageMenu page={page} aria-label="Page Options" />
-            </ButtonGroup>
-          </Flex>
-        </Flex>
-      </Flex>
-      {address && <ForkAlert page={page} address={address} />}
-      {defer?.address && <DeferAlert page={page} address={defer.address} />}
-      <Divider />
-      {summary && <Text fontStyle="italic">{summary}</Text>}
-      <MarkdownContent event={page} />
-    </>
-  );
+	return (
+		<>
+			<Flex gap="2" wrap="wrap">
+				<Box flex={1}>
+					<Heading>{getPageTitle(page)}</Heading>
+					<Text>
+						by <UserLink pubkey={page.pubkey} /> -{" "}
+						<Timestamp timestamp={page.created_at} />
+					</Text>
+				</Box>
+				<Flex direction="column" gap="2" ml="auto">
+					<ButtonGroup ml="auto" size="sm">
+						{page.pubkey === account?.pubkey && (
+							<Button
+								as={RouterLink}
+								colorScheme="primary"
+								to={`/wiki/edit/${getPageTopic(page)}`}
+							>
+								Edit
+							</Button>
+						)}
+						{page.pubkey !== account?.pubkey && (
+							<Button
+								as={RouterLink}
+								colorScheme="primary"
+								to={`/wiki/create?fork=${getSharableEventAddress(page)}`}
+							>
+								Fork
+							</Button>
+						)}
+					</ButtonGroup>
+					<Flex alignItems="flex-end" gap="2" ml="auto">
+						<EventVoteButtons event={page} inline chevrons={false} />
+						<ButtonGroup size="sm">
+							<EventQuoteButton event={page} />
+							<EventZapButton event={page} showEventPreview={false} />
+							<WikiPageMenu page={page} aria-label="Page Options" />
+						</ButtonGroup>
+					</Flex>
+				</Flex>
+			</Flex>
+			{address && <ForkAlert page={page} address={address} />}
+			{defer?.address && <DeferAlert page={page} address={defer.address} />}
+			<Divider />
+			{summary && <Text fontStyle="italic">{summary}</Text>}
+			<MarkdownContent event={page} />
+		</>
+	);
 }
 
 function WikiPageFooter({ page }: { page: NostrEvent }) {
@@ -157,11 +164,7 @@ function WikiPageFooter({ page }: { page: NostrEvent }) {
 	const topic = getPageTopic(page);
 
 	const readRelays = useReadRelays();
-	const subject = useMemo(
-		() => dictionaryService.requestTopic(topic, readRelays),
-		[topic, readRelays],
-	);
-	const pages = useObservable(subject);
+	const pages = useWikiPages(topic, readRelays, true);
 
 	let forks = pages
 		? Array.from(pages.values()).filter(

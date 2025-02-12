@@ -132,7 +132,30 @@ export function DVMStatusCard({
 	const statusType = getTagValue(status, "status");
 	switch (statusType) {
 		case "payment-required":
-			return null;
+			const [_, msats, invoice] =
+				status.tags.find((t) => t[0] === "amount") ?? [];
+			const amount = parseInt(msats) / 1000;
+
+			return (
+				<Card {...cardProps}>
+					{cardHeader}
+					<CardBody
+						px="4"
+						pb="4"
+						pt="0"
+						gap="2"
+						display="flex"
+						flexDirection="column"
+					>
+						<Heading size="sm">{status.content}</Heading>
+						<EventZapButton
+							event={status}
+							showEventPreview={false}
+							allowComment={false}
+						/>
+					</CardBody>
+				</Card>
+			);
 		case "processing":
 			return (
 				<Alert status="info" {...cardProps}>

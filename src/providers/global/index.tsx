@@ -8,10 +8,8 @@ import {
 import { SigningProvider } from "./signing-provider";
 import buildTheme from "../../theme";
 import useAppSettings from "../../hooks/use-user-app-settings";
-import NotificationsProvider from "./notifications-provider";
 import { UserEmojiProvider } from "./emoji-provider";
 import BreakpointProvider from "./breakpoint-provider";
-import DMTimelineProvider from "./dms-provider";
 import PublishProvider from "./publish-provider";
 import WebOfTrustProvider from "./web-of-trust-provider";
 import { queryStore } from "../../services/event-store";
@@ -39,15 +37,11 @@ export const GlobalProviders = ({
 				<ThemeProviders>
 					<SigningProvider>
 						<PublishProvider>
-							<NotificationsProvider>
-								<DMTimelineProvider>
-									<UserEmojiProvider>
-										<EventFactoryProvider>
-											<WebOfTrustProvider>{children}</WebOfTrustProvider>
-										</EventFactoryProvider>
-									</UserEmojiProvider>
-								</DMTimelineProvider>
-							</NotificationsProvider>
+							<UserEmojiProvider>
+								<EventFactoryProvider>
+									<WebOfTrustProvider>{children}</WebOfTrustProvider>
+								</EventFactoryProvider>
+							</UserEmojiProvider>
 						</PublishProvider>
 					</SigningProvider>
 				</ThemeProviders>

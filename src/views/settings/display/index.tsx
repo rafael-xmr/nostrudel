@@ -5,22 +5,16 @@ import {
 	FormLabel,
 	Switch,
 	FormHelperText,
-	Input,
-	Select,
 	Textarea,
 	Link,
 	Button,
 } from "@chakra-ui/react";
-import { useObservable } from "applesauce-react/hooks";
 
-import localSettings from "../../../services/local-settings";
 import useSettingsForm from "../use-settings-form";
 import SimpleView from "../../../components/layout/presets/simple-view";
 
 export default function DisplaySettings() {
 	const { register, submit, formState } = useSettingsForm();
-
-	const hideZapBubbles = useObservable(localSettings.hideZapBubbles);
 
 	return (
 		<SimpleView
@@ -92,25 +86,6 @@ export default function DisplaySettings() {
 						Enabled: Removes all emojis in other users usernames and display
 						names
 					</span>
-				</FormHelperText>
-			</FormControl>
-			<FormControl>
-				<Flex alignItems="center">
-					<FormLabel htmlFor="hideZapBubbles" mb="0">
-						Hide individual zaps on notes
-					</FormLabel>
-					<Switch
-						id="hideZapBubbles"
-						isChecked={hideZapBubbles}
-						onChange={() =>
-							localSettings.hideZapBubbles.next(
-								!localSettings.hideZapBubbles.value,
-							)
-						}
-					/>
-				</Flex>
-				<FormHelperText>
-					<span>Enabled: Hides individual zaps on notes in the timeline</span>
 				</FormHelperText>
 			</FormControl>
 			<FormControl>

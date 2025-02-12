@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from "react";
 
-import { NostrEvent } from "../types/nostr-event";
+import type { NostrEvent } from "../types/nostr-event";
 import useAppSettings from "./use-user-app-settings";
 
 export default function useWordMuteFilter() {
@@ -16,10 +16,10 @@ export default function useWordMuteFilter() {
 	}, [mutedWords]);
 
 	return useCallback(
-		(event: NostrEvent, _userMetadata?: Kind0ParsedContent) => {
+		(event: NostrEvent) => {
 			if (!regexp) return false;
 			return event.content.match(regexp) !== null;
 		},
-		[regexp],
+		[mutedWords],
 	);
 }

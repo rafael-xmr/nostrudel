@@ -49,6 +49,5 @@ export default function useReplaceableEvents(
 	}, [pointers, relaysDep, force]);
 
 	const events = useStoreQuery(ReplaceableSetQuery, pointers && [pointers]);
-  console.info("events", events);
 	return events ? Object.values(events) : [];
 }

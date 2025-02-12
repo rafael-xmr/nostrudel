@@ -1,7 +1,7 @@
 import { ColorModeContext, useColorMode } from "@chakra-ui/react";
 import ReactDiffViewer, { DiffMethod } from "react-diff-viewer-continued";
 import computeStyles, {
-	ReactDiffViewerStylesOverride,
+	type ReactDiffViewerStylesOverride,
 } from "react-diff-viewer-continued/lib/src/styles";
 
 const fixedStyles: ReactDiffViewerStylesOverride = {
@@ -25,13 +25,11 @@ function getComputedStyles(dark = false) {
 class FixedReactDiffViewer extends ReactDiffViewer {
 	static contextType = ColorModeContext;
 
-	// @ts-expect-error
 	constructor(...args) {
 		// @ts-expect-error
 		super(...args);
 		// @ts-expect-error
 		this.computeStyles = () => {
-			// @ts-expect-error
 			return getComputedStyles(true);
 		};
 	}

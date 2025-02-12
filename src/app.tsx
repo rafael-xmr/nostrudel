@@ -20,7 +20,6 @@ import TaskManagerProvider from "./views/task-manager/provider";
 import NostrLinkView from "./views/link";
 import HomeView from "./views/home";
 import ThreadView from "./views/thread";
-import SupportView from "./views/support";
 import ProfileView from "./views/profile";
 import SearchView from "./views/search";
 import LaunchpadView from "./views/launchpad";
@@ -114,7 +113,6 @@ const router = createBrowserRouter(
 				{ path: "tools", children: toolsRoutes },
 				{ path: "discovery", children: discoveryRoutes },
 				{ path: "wiki", children: wikiRoutes },
-				{ path: "support", Component: SupportView },
 				{ path: "l/:link", Component: NostrLinkView },
 				{ path: "t/:hashtag", Component: HashTagView },
 

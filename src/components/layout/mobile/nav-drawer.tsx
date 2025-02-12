@@ -45,7 +45,7 @@ export default function NavDrawer({ onClose, ...props }: Omit<DrawerProps, "chil
             {!account && (
               <Flex gap="2" my="2" alignItems="center">
                 <Avatar src="/apple-touch-icon.png" size="md" />
-                <Text m={0}>Nostrudel</Text>
+                <Text m={0}>moStard</Text>
               </Flex>
             )}
             <AccountSwitcher />

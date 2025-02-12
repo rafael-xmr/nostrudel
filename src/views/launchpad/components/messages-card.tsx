@@ -1,12 +1,10 @@
 import { useMemo, useState } from "react";
 import { Button, Card, CardBody, CardHeader, CardProps, Flex, Heading, Link, LinkBox, Text } from "@chakra-ui/react";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
-import { useObservable } from "applesauce-react/hooks";
 import { nip19 } from "nostr-tools";
 
 import KeyboardShortcut from "../../../components/keyboard-shortcut";
 import { useActiveAccount } from "applesauce-react/hooks";
-import { useDMTimeline } from "../../../providers/global/dms-provider";
 import {
   KnownConversation,
   groupIntoConversations,
@@ -22,6 +20,7 @@ import UserDnsIdentity from "../../../components/user/user-dns-identity";
 import Timestamp from "../../../components/timestamp";
 import { useKind4Decrypt } from "../../../hooks/use-kind4-decryption";
 import decryptionCacheService from "../../../services/decryption-cache";
+import { useDirectMessagesTimeline } from "../../messages";
 
 function MessagePreview({ message, pubkey }: { message: NostrEvent; pubkey: string }) {
   const { plaintext } = useKind4Decrypt(message);
@@ -52,9 +51,8 @@ export default function DMsCard({ ...props }: Omit<CardProps, "children">) {
   const navigate = useNavigate();
   const account = useActiveAccount()!;
 
-  const timeline = useDMTimeline();
+  const { timeline: messages } = useDirectMessagesTimeline(account.pubkey);
 
-  const messages = useObservable(timeline.timeline) ?? [];
   const conversations = useMemo(() => {
     const grouped = groupIntoConversations(messages)
       .map((c) => identifyConversation(c, account.pubkey))
@@ -92,7 +90,7 @@ export default function DMsCard({ ...props }: Omit<CardProps, "children">) {
     <Card variant="outline" {...props}>
       <CardHeader display="flex" justifyContent="space-between" alignItems="center">
         <Heading size="lg">
-          <Link as={RouterLink} to="/dm">
+          <Link as={RouterLink} to="/messages">
             Messages
           </Link>
         </Heading>
@@ -105,7 +103,7 @@ export default function DMsCard({ ...props }: Omit<CardProps, "children">) {
         {conversations.slice(0, 4).map((conversation) => (
           <Conversation key={conversation.pubkeys.join("-")} conversation={conversation} />
         ))}
-        <Button as={RouterLink} to="/dm" flexShrink={0} variant="link" size="lg" py="4">
+        <Button as={RouterLink} to="/messages" flexShrink={0} variant="link" size="lg" py="4">
           View More
         </Button>
       </CardBody>

@@ -1,9 +1,7 @@
 import { type ButtonProps, IconButton, useDisclosure } from "@chakra-ui/react";
 
-import eventZapsService from "../../services/event-zaps";
 import ZapModal from "../event-zap-modal";
 import useUserXMRMetadata from "../../hooks/use-user-xmr-metadata";
-import { getEventUID } from "../../helpers/nostr/event";
 import { useReadRelays } from "../../hooks/use-client-relays";
 
 import type { NostrEvent } from "nostr-tools";
@@ -29,10 +27,6 @@ export default function EventZapButton({
 	const { isOpen, onOpen, onClose } = useDisclosure();
 
 	const readRelays = useReadRelays();
-	const onZapped = () => {
-		onClose();
-		eventZapsService.requestZaps(getEventUID(event), readRelays, true);
-	};
 
 	// const total = totalZaps(zaps);
 	const canZap = !!address;
@@ -54,7 +48,7 @@ export default function EventZapButton({
 					pubkey={event.pubkey}
 					event={event}
 					onClose={onClose}
-					onZapped={onZapped}
+					onZapped={() => {}}
 					allowComment={allowComment}
 					showEmbed={showEventPreview}
 				/>

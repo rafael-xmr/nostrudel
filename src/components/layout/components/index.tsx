@@ -4,11 +4,12 @@ import { useActiveAccount } from "applesauce-react/hooks";
 import { ReadonlyAccount } from "applesauce-accounts/accounts";
 import { QuestionIcon } from "@chakra-ui/icons";
 
-import { LightningIcon, SettingsIcon } from "../../icons";
+import { LightningIcon, RelayIcon, SettingsIcon } from "../../icons";
 import Package from "../../icons/package";
 import useRecentIds from "../../../hooks/use-recent-ids";
 import {
-	defaultFavoriteApps,
+	defaultAnonFavoriteApps,
+	defaultUserFavoriteApps,
 	internalApps,
 	internalTools,
 } from "../../navigation/apps";
@@ -19,7 +20,10 @@ import useFavoriteInternalIds from "../../../hooks/use-favorite-internal-ids";
 export default function NavItems() {
 	const account = useActiveAccount();
 
-	const { ids: favorites = defaultFavoriteApps } = useFavoriteInternalIds(
+	const defaultApps = account
+		? defaultUserFavoriteApps
+		: defaultAnonFavoriteApps;
+	const { ids: favorites = defaultApps } = useFavoriteInternalIds(
 		"apps",
 		"app",
 	);
@@ -65,6 +69,7 @@ export default function NavItems() {
 				</>
 			)}
 			<Spacer />
+			<NavItem label="Relays" icon={RelayIcon} to="/relays" />
 			<NavItem label="Settings" icon={SettingsIcon} to="/settings" />
 			{account && !(account instanceof ReadonlyAccount) && (
 				<NavItem

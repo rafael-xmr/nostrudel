@@ -18,10 +18,10 @@ import {
 } from "@chakra-ui/react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { Global, css } from "@emotion/react";
-import { NostrEvent } from "nostr-tools";
+import type { NostrEvent } from "nostr-tools";
 
 import LiveVideoPlayer from "../../../components/live-video-player";
-import StreamChat, { ChatDisplayMode } from "./stream-chat";
+import StreamChat, { type ChatDisplayMode } from "./stream-chat";
 import UserAvatarLink from "../../../components/user/user-avatar-link";
 import UserLink from "../../../components/user/user-link";
 import StreamSummaryContent from "../components/stream-summary-content";
@@ -172,7 +172,6 @@ function DesktopStreamPage({ stream }: { stream: NostrEvent }) {
 						<UserLink pubkey={host} />
 					</Box>
 					<Spacer />
-					{!!window.webln && <StreamSatsPerMinute pubkey={host} />}
 				</Flex>
 				<StreamSummaryContent stream={stream} />
 				{stream.tags.length > 0 && (

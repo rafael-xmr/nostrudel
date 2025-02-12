@@ -1,5 +1,5 @@
-import { PropsWithChildren, Suspense } from "react";
-import { Outlet, OutletProps, useMatch } from "react-router-dom";
+import { type PropsWithChildren, Suspense } from "react";
+import { Outlet, type OutletProps, useMatch } from "react-router-dom";
 import { Box, Flex, Spinner } from "@chakra-ui/react";
 
 import { useBreakpointValue } from "../../../providers/global/breakpoint-provider";
@@ -31,7 +31,29 @@ export default function SimpleParentView({
 				flex={1}
 				direction={floating ? "row" : "column"}
 			>
-				
+				{children && (
+					<>
+						<Box w={floating ? width : 0} flexGrow={0} flexShrink={0} />
+						<Flex
+							w={{ base: "full", lg: width }}
+							direction="column"
+							position={floating ? "fixed" : "initial"}
+							top="var(--safe-top)"
+							bottom="var(--safe-bottom)"
+						>
+							{title && <SimpleHeader title={title} />}
+							<Flex
+								direction="column"
+								p="2"
+								gap="2"
+								overflowY="auto"
+								overflowX="hidden"
+							>
+								{children}
+							</Flex>
+						</Flex>
+					</>
+				)}
 				{!isMobile && (
 					<Suspense fallback={<Spinner />}>
 						<ErrorBoundary>

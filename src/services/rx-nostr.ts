@@ -1,30 +1,22 @@
-import { ConnectionState, createRxNostr } from "rx-nostr";
+import { ConnectionState, createRxNostr, noopVerifier } from "rx-nostr";
 import { BehaviorSubject, combineLatest } from "rxjs";
 import { unixNow } from "applesauce-core/helpers";
 import { nanoid } from "nanoid";
-
-import { logger } from "../helpers/debug";
-import verifyEvent from "./verify-event";
 
 import authenticationSigner from "./authentication-signer";
 import localSettings from "./local-settings";
 import { unique } from "../helpers/array";
 
-const log = logger.extend("rx-nostr");
-
 const rxNostr = createRxNostr({
-  verifier: async (event) => {
-    try {
-      return verifyEvent(event);
-    } catch (error) {}
-    return false;
-  },
+  verifier: noopVerifier,
+  // don't verify the events at the rx-nostr level
+  skipVerify: true,
   authenticator: { signer: authenticationSigner },
   connectionStrategy: "lazy-keep",
   disconnectTimeout: 120_000,
 });
 
-// TODO: remove this when client relays are not longer needed
+// Set the default relays based on local app settings
 combineLatest([localSettings.readRelays, localSettings.writeRelays]).subscribe(([read, write]) => {
   const relays = unique([...read, ...write]);
 
@@ -40,7 +32,6 @@ rxNostr.createConnectionStateObservable().subscribe((packet) => {
 
   const url = new URL(packet.from).toString();
   connections$.next({ ...connections$.value, [url]: packet.state });
-  if (import.meta.env.DEV) log(packet.state, url);
 });
 
 // capture all notices sent from relays

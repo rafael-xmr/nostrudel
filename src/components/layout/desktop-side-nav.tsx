@@ -4,21 +4,19 @@ import {
 	Box,
 	Button,
 	Flex,
-	FlexProps,
+	type FlexProps,
 	Heading,
-	IconButton,
 	LinkOverlay,
 } from "@chakra-ui/react";
 import { Link as RouterLink } from "react-router-dom";
 import { css } from "@emotion/react";
-import { useObservable } from "applesauce-react/hooks";
 
 import { useActiveAccount } from "applesauce-react/hooks";
 import AccountSwitcher from "./components/account-switcher";
 import NavItems from "./desktop/side-nav";
 import { PostModalContext } from "../../providers/route/post-modal-provider";
 import { WritingIcon } from "../icons";
-import localSettings from "../../services/local-settings";
+import { ReadonlyAccount } from "applesauce-accounts/accounts";
 
 const hideScrollbar = css`
   -ms-overflow-style: none;
@@ -31,7 +29,6 @@ const hideScrollbar = css`
 export default function DesktopSideNav(props: Omit<FlexProps, "children">) {
 	const account = useActiveAccount();
 	const { openModal } = useContext(PostModalContext);
-	const showBrandLogo = useObservable(localSettings.showBrandLogo);
 
 	return (
 		<Flex
@@ -48,16 +45,15 @@ export default function DesktopSideNav(props: Omit<FlexProps, "children">) {
 			css={hideScrollbar}
 		>
 			<Flex direction="column" flexShrink={0} gap="2">
-				{showBrandLogo && (
-					<Flex gap="2" alignItems="center" position="relative" my="2">
-						<Avatar src="/transparent.png" size="md" />
-						<Heading size="md">
-							<LinkOverlay as={RouterLink} to="/">
-								moStard
-							</LinkOverlay>
-						</Heading>
-					</Flex>
-				)}
+				<Flex gap="2" alignItems="center" position="relative" my="2">
+					<Avatar src="/transparent.png" size="md" />
+					<Heading size="md">
+						<LinkOverlay as={RouterLink} to="/">
+							moStard
+						</LinkOverlay>
+					</Heading>
+				</Flex>
+
 				{account && (
 					<>
 						<AccountSwitcher />
@@ -68,7 +64,7 @@ export default function DesktopSideNav(props: Omit<FlexProps, "children">) {
 							onClick={() => openModal()}
 							colorScheme="primary"
 							size="lg"
-							isDisabled={account.readonly}
+							isDisabled={account instanceof ReadonlyAccount}
 						>
 							Write Note
 						</Button>

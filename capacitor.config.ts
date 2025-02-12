@@ -1,8 +1,8 @@
 import type { CapacitorConfig } from "@capacitor/cli";
 
 const config: CapacitorConfig = {
-  appId: "ninja.nostrudel",
-  appName: "noStrudel",
+  appId: "org.mostard",
+  appName: "moStard",
   webDir: "dist",
   backgroundColor: "171819",
   android: {

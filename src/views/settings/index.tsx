@@ -5,6 +5,7 @@ import {
 	DatabaseIcon,
 	GithubIcon,
 	LightningIcon,
+	MoneroIcon,
 	NotesIcon,
 	PerformanceIcon,
 	RelayIcon,
@@ -100,10 +101,10 @@ export default function SettingsView() {
 				Performance
 			</SimpleNavItem>
 			<SimpleNavItem
-				to="/settings/lightning"
-				leftIcon={<LightningIcon boxSize={5} />}
+				to="/settings/monero"
+				leftIcon={<MoneroIcon boxSize={5} />}
 			>
-				Lightning
+				Monero
 			</SimpleNavItem>
 			<SimpleNavItem to="/settings/privacy" leftIcon={<SpyIcon boxSize={5} />}>
 				Privacy
