@@ -15,54 +15,57 @@ import useUserMuteList from "../../hooks/use-user-mute-list";
 import useUserProfile from "../../hooks/use-user-profile";
 
 export const UserIdenticon = memo(({ pubkey }: { pubkey: string }) => {
-  const { value: identicon } = useAsync(() => getIdenticon(pubkey), [pubkey]);
+	const { value: identicon } = useAsync(() => getIdenticon(pubkey), [pubkey]);
 
-  return identicon ? (
-    <img
-      src={`data:image/svg+xml;base64,${identicon}`}
-      width="100%"
-      style={{ borderRadius: "var(--chakra-radii-lg)" }}
-    />
-  ) : null;
+	return identicon ? (
+		<img
+			src={`data:image/svg+xml;base64,${identicon}`}
+			width="100%"
+			style={{ borderRadius: "var(--chakra-radii-lg)" }}
+		/>
+	) : null;
 });
 
 const RESIZE_PROFILE_SIZE = 96;
 
-export type UserAvatarProps = Omit<MetadataAvatarProps, "pubkey" | "metadata"> & {
-  pubkey: string;
-  relay?: string;
+export type UserAvatarProps = Omit<
+	MetadataAvatarProps,
+	"pubkey" | "metadata"
+> & {
+	pubkey: string;
+	relay?: string;
 };
 export const UserAvatar = forwardRef<HTMLDivElement, UserAvatarProps>(
-  ({ pubkey, noProxy, relay, size, ...props }, ref) => {
-    const profile = useUserProfile(pubkey, relay ? [relay] : undefined);
-    const account = useActiveAccount();
-    const muteList = useUserMuteList(account?.pubkey);
+	({ pubkey, noProxy, relay, size, ...props }, ref) => {
+		const profile = useUserProfile(pubkey, relay ? [relay] : undefined);
+		const account = useActiveAccount();
+		const muteList = useUserMuteList(account?.pubkey);
 
-    const muted = muteList?.tags.some((t) => t[0] === "p" && t[1] === pubkey);
+		const muted = muteList?.tags.some((t) => t[0] === "p" && t[1] === pubkey);
 
-    return (
-      <MetadataAvatar
-        pubkey={pubkey}
-        metadata={muted ? undefined : profile}
-        noProxy={noProxy}
-        ref={ref}
-        size={size}
-        {...props}
-      >
-        {size !== "xs" && (
-          <UserDnsIdentityIcon
-            pubkey={pubkey}
-            position="absolute"
-            right={-1}
-            bottom={-1}
-            bgColor="white"
-            borderRadius="50%"
-            boxSize="1em"
-          />
-        )}
-      </MetadataAvatar>
-    );
-  },
+		return (
+			<MetadataAvatar
+				pubkey={pubkey}
+				metadata={muted ? undefined : profile}
+				noProxy={noProxy}
+				ref={ref}
+				size={size}
+				{...props}
+			>
+				{size !== "xs" && (
+					<UserDnsIdentityIcon
+						pubkey={pubkey}
+						position="absolute"
+						right={-1}
+						bottom={-1}
+						bgColor="white"
+						borderRadius="50%"
+						boxSize="1em"
+					/>
+				)}
+			</MetadataAvatar>
+		);
+	},
 );
 UserAvatar.displayName = "UserAvatar";
 
@@ -80,51 +83,50 @@ const SquareAvatarWithBorder = styled(SquareAvatar)`
 `;
 
 export type MetadataAvatarProps = Omit<AvatarProps, "src"> & {
-  metadata?: ProfileContent;
-  pubkey?: string;
-  noProxy?: boolean;
-  square?: boolean;
+	metadata?: ProfileContent;
+	pubkey?: string;
+	noProxy?: boolean;
+	square?: boolean;
 };
 export const MetadataAvatar = forwardRef<HTMLDivElement, MetadataAvatarProps>(
-  ({ pubkey, metadata, noProxy, children, square = true, ...props }, ref) => {
-    const { imageProxy, proxyUserMedia, hideUsernames, showPubkeyColor } = useAppSettings();
-    const account = useActiveAccount();
-    const picture = useMemo(() => {
-      if (hideUsernames && pubkey && pubkey !== account?.pubkey) return undefined;
-      if (metadata?.picture) {
-        const src = safeUrl(metadata?.picture);
-        if (src) {
-          const proxyURL = buildImageProxyURL(src, RESIZE_PROFILE_SIZE);
-          if (proxyURL) return proxyURL;
-        } else if (!noProxy && proxyUserMedia && pubkey) {
-          const last4 = String(pubkey).slice(pubkey.length - 4, pubkey.length);
-          return `https://media.nostr.band/thumbs/${last4}/${pubkey}-picture-64`;
-        }
-        return src;
-      }
-    }, [metadata?.picture, imageProxy, proxyUserMedia, hideUsernames, account]);
+	({ pubkey, metadata, noProxy, children, square = true, ...props }, ref) => {
+		const { imageProxy, proxyUserMedia, hideUsernames } = useAppSettings();
+		const account = useActiveAccount();
+		const picture = useMemo(() => {
+			if (hideUsernames && pubkey && pubkey !== account?.pubkey)
+				return undefined;
+			if (metadata?.picture) {
+				const src = safeUrl(metadata?.picture);
+				if (src) {
+					const proxyURL = buildImageProxyURL(src, RESIZE_PROFILE_SIZE);
+					if (proxyURL) return proxyURL;
+				} else if (!noProxy && proxyUserMedia && pubkey) {
+					const last4 = String(pubkey).slice(pubkey.length - 4, pubkey.length);
+					return `https://media.nostr.band/thumbs/${last4}/${pubkey}-picture-64`;
+				}
+				return src;
+			}
+		}, [metadata?.picture, imageProxy, proxyUserMedia, hideUsernames, account]);
 
-    const color = pubkey ? "#" + pubkey.slice(0, 6) : undefined;
+		const color = pubkey ? "#" + pubkey.slice(0, 6) : undefined;
 
-    const showColor = showPubkeyColor === "avatar" && color !== undefined && props.size !== "xs";
+		const AvatarComponent = square ? SquareAvatar : Avatar;
 
-    const AvatarComponent = square ? (showColor ? SquareAvatarWithBorder : SquareAvatar) : Avatar;
-
-    return (
-      <AvatarComponent
-        ref={ref}
-        src={picture}
-        icon={pubkey ? <UserIdenticon pubkey={pubkey} /> : undefined}
-        // overflow="hidden"
-        title={getDisplayName(metadata, pubkey ?? "")}
-        borderColor={showColor ? color : undefined}
-        borderStyle="none"
-        {...props}
-      >
-        {children}
-      </AvatarComponent>
-    );
-  },
+		return (
+			<AvatarComponent
+				ref={ref}
+				src={picture}
+				icon={pubkey ? <UserIdenticon pubkey={pubkey} /> : undefined}
+				// overflow="hidden"
+				title={getDisplayName(metadata, pubkey ?? "")}
+				borderColor={undefined}
+				borderStyle="none"
+				{...props}
+			>
+				{children}
+			</AvatarComponent>
+		);
+	},
 );
 
 export default memo(UserAvatar);

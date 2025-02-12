@@ -5,14 +5,14 @@ export const APP_SETTINGS_KIND = kinds.Application;
 export const APP_SETTING_IDENTIFIER = "nostrudel-settings";
 
 type AppSettingsV0 = {
-  version: 0;
-  colorMode: ColorModeWithSystem;
-  defaultRelays: string[];
-  blurImages: boolean;
-  autoShowMedia: boolean;
-  proxyUserMedia: boolean;
-  showReactions: boolean;
-  showSignatureVerification: boolean;
+	version: 0;
+	colorMode: ColorModeWithSystem;
+	defaultRelays: string[];
+	blurImages: boolean;
+	autoShowMedia: boolean;
+	proxyUserMedia: boolean;
+	showReactions: boolean;
+	showSignatureVerification: boolean;
 
 	customZapAmounts: string;
 
@@ -25,64 +25,88 @@ type AppSettingsV0 = {
 	youtubeRedirect?: string;
 };
 type AppSettingsV1 = Omit<AppSettingsV0, "version"> & {
-  version: 1;
-  mutedWords?: string;
-  maxPageWidth: "none" | "sm" | "md" | "lg" | "xl" | "full";
+	version: 1;
+	mutedWords?: string;
+	maxPageWidth: "none" | "sm" | "md" | "lg" | "xl" | "full";
 };
-type AppSettingsV2 = Omit<AppSettingsV1, "version"> & { version: 2; theme: string };
-type AppSettingsV3 = Omit<AppSettingsV2, "version"> & { version: 3; quickReactions: string[] };
-type AppSettingsV4 = Omit<AppSettingsV3, "version"> & { version: 4; loadOpenGraphData: boolean };
-type AppSettingsV5 = Omit<AppSettingsV4, "version"> & { version: 5; hideUsernames: boolean };
-type AppSettingsV6 = Omit<AppSettingsV5, "version"> & { version: 6; noteDifficulty: number | null };
-type AppSettingsV7 = Omit<AppSettingsV6, "version"> & { version: 7; autoDecryptDMs: boolean };
+type AppSettingsV2 = Omit<AppSettingsV1, "version"> & {
+	version: 2;
+	theme: string;
+};
+type AppSettingsV3 = Omit<AppSettingsV2, "version"> & {
+	version: 3;
+	quickReactions: string[];
+};
+type AppSettingsV4 = Omit<AppSettingsV3, "version"> & {
+	version: 4;
+	loadOpenGraphData: boolean;
+};
+type AppSettingsV5 = Omit<AppSettingsV4, "version"> & {
+	version: 5;
+	hideUsernames: boolean;
+};
+type AppSettingsV6 = Omit<AppSettingsV5, "version"> & {
+	version: 6;
+	noteDifficulty: number | null;
+};
+type AppSettingsV7 = Omit<AppSettingsV6, "version"> & {
+	version: 7;
+	autoDecryptDMs: boolean;
+};
 type AppSettingsV8 = Omit<AppSettingsV7, "version"> & {
-  version: 8;
-  mediaUploadService: "nostr.build" | "blossom";
+	version: 8;
+	mediaUploadService: "nostr.build" | "blossom";
 };
-type AppSettingsV9 = Omit<AppSettingsV8, "version"> & { version: 9; removeEmojisInUsernames: boolean };
+type AppSettingsV9 = Omit<AppSettingsV8, "version"> & {
+	version: 9;
+	removeEmojisInUsernames: boolean;
+};
 
 type AppSettingsV10 = Omit<AppSettingsV9, "version" | "defaultRelays"> & {
-  version: 10;
-  showPubkeyColor: "none" | "avatar" | "underline";
+	version: 10;
+	showPubkeyColor: "underline";
 };
 
 type AppSettingsV11 = Omit<AppSettingsV10, "quickReactions" | "version"> & {
-  version: 11;
+	version: 11;
 };
 
-type AppSettingsV12 = Omit<AppSettingsV11, "showSignatureVerification" | "version"> & {
-  version: 12;
-  mirrorBlobsOnShare: boolean;
+type AppSettingsV12 = Omit<
+	AppSettingsV11,
+	"showSignatureVerification" | "version"
+> & {
+	version: 12;
+	mirrorBlobsOnShare: boolean;
 };
 
 export type AppSettings = AppSettingsV12;
 
 export const defaultSettings: AppSettings = {
-  version: 12,
+	version: 12,
 
-  // display
-  theme: "default",
-  colorMode: "system",
-  primaryColor: "#ff6600",
-  maxPageWidth: "none",
-  showPubkeyColor: "avatar",
-  blurImages: true,
-  hideUsernames: false,
-  removeEmojisInUsernames: false,
-  autoShowMedia: true,
-  showContentWarning: true,
-  loadOpenGraphData: true,
+	// display
+	theme: "default",
+	colorMode: "system",
+	primaryColor: "#ff6600",
+	maxPageWidth: "none",
+	showPubkeyColor: "underline",
+	blurImages: true,
+	hideUsernames: false,
+	removeEmojisInUsernames: false,
+	autoShowMedia: true,
+	showContentWarning: true,
+	loadOpenGraphData: true,
 
-  // posting
-  noteDifficulty: null,
-  proxyUserMedia: false,
-  mirrorBlobsOnShare: false,
+	// posting
+	noteDifficulty: null,
+	proxyUserMedia: false,
+	mirrorBlobsOnShare: false,
 
 	// performance
 	showReactions: true,
 	autoDecryptDMs: false,
 
-  mediaUploadService: "nostr.build",
+	mediaUploadService: "nostr.build",
 
 	customZapAmounts: "0.1,0.05,0.02,0.005,0.001",
 
