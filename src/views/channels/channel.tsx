@@ -33,8 +33,8 @@ import ChannelMessageForm from "./components/send-message-form";
 import useParamsEventPointer from "../../hooks/use-params-event-pointer";
 import { useReadRelays } from "../../hooks/use-client-relays";
 import { truncateId } from "../../helpers/string";
-import ContainedSimpleView from "../../components/layout/presets/contained-simple-view";
 import ChannelImage from "./components/channel-image";
+import SimpleView from "../../components/layout/presets/simple-view";
 
 const ChannelChatLog = memo(({ channel }: { channel: NostrEvent }) => {
 	const messages = useStoreQuery(ChannelMessagesQuery, [channel]) ?? [];
@@ -95,8 +95,9 @@ function ChannelPage({ channel }: { channel: NostrEvent }) {
 	return (
 		<ThreadsProvider messages={timeline}>
 			<IntersectionObserverProvider callback={callback}>
-				<ContainedSimpleView
-					reverse
+				<SimpleView
+					scroll={false}
+					flush
 					title={
 						<Flex gap="2" alignItems="center">
 							<ChannelImage channel={channel} w="10" rounded="md" />
@@ -110,11 +111,22 @@ function ChannelPage({ channel }: { channel: NostrEvent }) {
 							<ChannelMenu channel={channel} aria-label="More Options" />
 						</ButtonGroup>
 					}
-					bottom={<ChannelMessageForm channel={channel} p="2" />}
 				>
-					<ChannelChatLog channel={channel} />
-					<TimelineActionAndStatus loader={loader} />
-				</ContainedSimpleView>
+					<Flex
+						direction="column-reverse"
+						p="4"
+						gap={2}
+						flexGrow={1}
+						h={0}
+						overflowX="hidden"
+						overflowY="auto"
+					>
+						<ChannelChatLog channel={channel} />
+						<TimelineActionAndStatus loader={loader} />
+					</Flex>
+
+					<ChannelMessageForm channel={channel} px="2" pb="2" />
+				</SimpleView>
 				{drawer.isOpen && (
 					<ChannelMetadataDrawer
 						isOpen

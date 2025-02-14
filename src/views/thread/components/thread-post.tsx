@@ -134,27 +134,37 @@ function ThreadPost({
 		);
 	};
 
-  const showReactionsOnNewLine = useBreakpointValue({ base: true, lg: false });
-  const reactionButtons = showReactions && (
-    <NoteReactions event={post.event} flexWrap="wrap" variant="ghost" size="sm" />
-  );
-  const footer = (
-    <Flex gap="2" alignItems="center">
-      <ButtonGroup variant="ghost" size="sm">
-        <IconButton aria-label="Reply" title="Reply" onClick={replyForm.onToggle} icon={<ReplyIcon />} />
-        <EventShareButton event={post.event} />
-        <EventQuoteButton event={post.event} />
-        <EventZapButton event={post.event} />
-      </ButtonGroup>
-      {!showReactionsOnNewLine && reactionButtons}
-      <Spacer />
-      <ButtonGroup size="sm" variant="ghost">
-        <NoteProxyLink event={post.event} />
-        <BookmarkEventButton event={post.event} aria-label="Bookmark" />
-        <NoteMenu event={post.event} aria-label="More Options" />
-      </ButtonGroup>
-    </Flex>
-  );
+	const showReactionsOnNewLine = useBreakpointValue({ base: true, lg: false });
+	const reactionButtons = showReactions && (
+		<NoteReactions
+			event={post.event}
+			flexWrap="wrap"
+			variant="ghost"
+			size="sm"
+		/>
+	);
+	const footer = (
+		<Flex gap="2" alignItems="center">
+			<ButtonGroup variant="ghost" size="sm">
+				<IconButton
+					aria-label="Reply"
+					title="Reply"
+					onClick={replyForm.onToggle}
+					icon={<ReplyIcon />}
+				/>
+				<EventShareButton event={post.event} />
+				<EventQuoteButton event={post.event} />
+				<EventZapButton event={post.event} />
+			</ButtonGroup>
+			{!showReactionsOnNewLine && reactionButtons}
+			<Spacer />
+			<ButtonGroup size="sm" variant="ghost">
+				<NoteProxyLink event={post.event} />
+				<BookmarkEventButton event={post.event} aria-label="Bookmark" />
+				<NoteMenu event={post.event} aria-label="More Options" />
+			</ButtonGroup>
+		</Flex>
+	);
 
 	const ref = useEventIntersectionRef(post.event);
 
@@ -165,9 +175,9 @@ function ThreadPost({
 			<Flex
 				direction="column"
 				gap="2"
-				p="2"
-				borderRadius="md"
-				borderWidth=".1rem .1rem .1rem .35rem"
+				px="2"
+				py="0"
+				borderWidth="0 1px 0 .35rem"
 				{...colorProps}
 				ref={ref}
 			>

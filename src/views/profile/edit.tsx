@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import {
 	Avatar,
 	Button,
@@ -9,11 +9,15 @@ import {
 	Input,
 	Link,
 	Textarea,
+	InputGroup,
+	InputRightElement,
+	IconButton,
+	VisuallyHiddenInput,
 } from "@chakra-ui/react";
 import { useForm } from "react-hook-form";
 import { type ProfileContent, unixNow } from "applesauce-core/helpers";
 
-import { ExternalLinkIcon } from "../../components/icons";
+import { ExternalLinkIcon, OutboxIcon } from "../../components/icons";
 import { isXMR } from "../../helpers/monero";
 import { useReadRelays } from "../../hooks/use-client-relays";
 import { useActiveAccount } from "applesauce-react/hooks";
@@ -23,6 +27,7 @@ import type { DraftNostrEvent } from "../../types/nostr-event";
 import VerticalPageLayout from "../../components/vertical-page-layout";
 import { COMMON_CONTACT_RELAYS } from "../../const";
 import { usePublishEvent } from "../../providers/global/publish-provider";
+import { useInputUploadFileWithForm } from "../../hooks/use-input-upload-file";
 
 type FormData = {
 	displayName?: string;
@@ -47,6 +52,7 @@ const MetadataForm = ({ defaultValues, onSubmit }: MetadataFormProps) => {
 		reset,
 		handleSubmit,
 		watch,
+		setValue,
 		formState: { errors, isSubmitting },
 	} = useForm<FormData>({
 		mode: "onBlur",
@@ -56,6 +62,12 @@ const MetadataForm = ({ defaultValues, onSubmit }: MetadataFormProps) => {
 	useEffect(() => {
 		reset(defaultValues);
 	}, [defaultValues]);
+
+	const pictureUploadManage = useInputUploadFileWithForm(setValue, "picture");
+	const pictureUploadRef = useRef<HTMLInputElement | null>(null);
+
+	const bannerUploadManage = useInputUploadFileWithForm(setValue, "banner");
+	const bannerUploadRef = useRef<HTMLInputElement | null>(null);
 
 	return (
 		<VerticalPageLayout as="form" onSubmit={handleSubmit(onSubmit)}>
@@ -106,24 +118,62 @@ const MetadataForm = ({ defaultValues, onSubmit }: MetadataFormProps) => {
 			<Flex gap="2" alignItems="center">
 				<FormControl isInvalid={!!errors.picture}>
 					<FormLabel>Picture</FormLabel>
-					<Input
-						autoComplete="off"
-						isDisabled={isSubmitting}
-						placeholder="https://domain.com/path/picture.png"
-						{...register("picture", { maxLength: 150 })}
-					/>
+					<InputGroup>
+						<Input
+							onPaste={pictureUploadManage.onPaste}
+							autoComplete="off"
+							isDisabled={isSubmitting}
+							placeholder="https://domain.com/path/picture.png"
+							{...register("picture", { maxLength: 150 })}
+						/>
+						<InputRightElement>
+							<IconButton
+								isLoading={pictureUploadManage.uploading}
+								size="sm"
+								icon={<OutboxIcon />}
+								title="Upload picture"
+								aria-label="Upload picture"
+								onClick={() => pictureUploadRef.current?.click()}
+							/>
+						</InputRightElement>
+						<VisuallyHiddenInput
+							type="file"
+							accept="image/*"
+							ref={pictureUploadRef}
+							onChange={pictureUploadManage.onFileInputChange}
+						/>
+					</InputGroup>
 				</FormControl>
 				<Avatar src={watch("picture")} size="lg" ignoreFallback />
 			</Flex>
 			<Flex gap="2" alignItems="center">
 				<FormControl isInvalid={!!errors.banner}>
 					<FormLabel>Banner</FormLabel>
-					<Input
-						autoComplete="off"
-						isDisabled={isSubmitting}
-						placeholder="https://domain.com/path/banner.png"
-						{...register("banner", { maxLength: 150 })}
-					/>
+					<InputGroup>
+						<Input
+							onPaste={bannerUploadManage.onPaste}
+							autoComplete="off"
+							isDisabled={isSubmitting}
+							placeholder="https://domain.com/path/banner.png"
+							{...register("banner", { maxLength: 150 })}
+						/>
+						<InputRightElement>
+							<IconButton
+								isLoading={bannerUploadManage.uploading}
+								size="sm"
+								icon={<OutboxIcon />}
+								title="Upload baner"
+								aria-label="Upload banner"
+								onClick={() => bannerUploadRef.current?.click()}
+							/>
+						</InputRightElement>
+						<VisuallyHiddenInput
+							type="file"
+							accept="image/*"
+							ref={bannerUploadRef}
+							onChange={bannerUploadManage.onFileInputChange}
+						/>
+					</InputGroup>
 				</FormControl>
 				<Avatar src={watch("banner")} size="lg" ignoreFallback />
 			</Flex>

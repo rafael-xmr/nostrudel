@@ -24,6 +24,7 @@ import {
 import { ChevronLeftIcon } from "@chakra-ui/icons";
 import dayjs from "dayjs";
 import { useNavigate } from "react-router-dom";
+import { getCoordinateFromAddressPointer } from "applesauce-core/helpers";
 
 import {
 	DVM_CONTENT_DISCOVERY_JOB_KIND,
@@ -47,20 +48,19 @@ import useParamsAddressPointer from "../../../hooks/use-params-address-pointer";
 import DVMParams from "./components/dvm-params";
 import { useUserOutbox } from "../../../hooks/use-user-mailboxes";
 import { usePublishEvent } from "../../../providers/global/publish-provider";
-import { getHumanReadableCoordinate } from "../../../services/replaceable-loader";
 import Timestamp from "../../../components/timestamp";
 
 function DVMFeedPage({ pointer }: { pointer: AddressPointer }) {
-  const [since] = useState(() => dayjs().subtract(1, "day").unix());
-  const publish = usePublishEvent();
-  const navigate = useNavigate();
-  const account = useActiveAccount()!;
-  const debugModal = useDisclosure();
+	const [since] = useState(() => dayjs().subtract(1, "day").unix());
+	const publish = usePublishEvent();
+	const navigate = useNavigate();
+	const account = useActiveAccount()!;
+	const debugModal = useDisclosure();
 
 	const dvmRelays = useUserOutbox(pointer.pubkey);
 	const readRelays = useReadRelays(dvmRelays);
 	const { loader, timeline } = useTimelineLoader(
-		`${getHumanReadableCoordinate(pointer.kind, pointer.pubkey, pointer.identifier)}-jobs`,
+		`${getCoordinateFromAddressPointer(pointer)}-jobs`,
 		readRelays,
 		{
 			authors: [account.pubkey, pointer.pubkey],
@@ -204,9 +204,9 @@ function DVMFeedPage({ pointer }: { pointer: AddressPointer }) {
 export default function DVMFeedView() {
 	const pointer = useParamsAddressPointer("addr");
 
-  return (
-    <RequireActiveAccount>
-      <DVMFeedPage pointer={pointer} />
-    </RequireActiveAccount>
-  );
+	return (
+		<RequireActiveAccount>
+			<DVMFeedPage pointer={pointer} />
+		</RequireActiveAccount>
+	);
 }

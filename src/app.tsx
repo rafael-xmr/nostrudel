@@ -1,12 +1,6 @@
 import { lazy, Suspense } from "react";
 import { Spinner } from "@chakra-ui/react";
-import {
-	createBrowserRouter,
-	Outlet,
-	RouterProvider,
-	ScrollRestoration,
-	Location,
-} from "react-router-dom";
+import { createBrowserRouter, Outlet, RouterProvider } from "react-router-dom";
 
 import GlobalStyles from "./styles";
 
@@ -17,6 +11,7 @@ import { RouteProviders } from "./providers/route";
 import TaskManagerProvider from "./views/task-manager/provider";
 
 // one off views
+import NoteFoundView from "./views/404";
 import NostrLinkView from "./views/link";
 import HomeView from "./views/home";
 import ThreadView from "./views/thread";
@@ -62,7 +57,6 @@ import podcastsRoutes from "./views/podcasts/routes";
 const RootPage = () => {
 	return (
 		<RouteProviders>
-			<ScrollRestoration />
 			<AppLayout />
 		</RouteProviders>
 	);
@@ -71,7 +65,6 @@ const RootPage = () => {
 const NoLayoutPage = () => {
 	return (
 		<RouteProviders>
-			<ScrollRestoration />
 			<Outlet />
 		</RouteProviders>
 	);
@@ -79,6 +72,7 @@ const NoLayoutPage = () => {
 
 const router = createBrowserRouter(
 	[
+		{ path: "*", Component: NoteFoundView },
 		{
 			path: "signin",
 			Component: NoLayoutPage,
