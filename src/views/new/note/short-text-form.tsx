@@ -124,7 +124,7 @@ export default function ShortTextNoteForm({
 			contentWarning: values.nsfw ? values.nsfwReason || values.nsfw : false,
 		});
 
-		const unsigned = await finalizeDraft(draft);
+		const unsigned = await factory.stamp(draft);
 
 		setDraft(unsigned);
 		return unsigned;

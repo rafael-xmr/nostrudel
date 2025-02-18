@@ -50,7 +50,6 @@ import useAppSettings from "../../hooks/use-user-app-settings";
 import { ErrorBoundary } from "../error-boundary";
 import {
 	PublishLogEntry,
-	useFinalizeDraft,
 	usePublishEvent,
 } from "../../providers/global/publish-provider";
 import { TextNoteContents } from "../note/timeline-note/text-note-contents";
@@ -78,7 +77,6 @@ export default function PostModal({
 	initContent = "",
 }: Omit<ModalProps, "children"> & PostModalProps) {
 	const publish = usePublishEvent();
-	const finalizeDraft = useFinalizeDraft();
 	const account = useActiveAccount()!;
 	const { noteDifficulty } = useAppSettings();
 	const addClientTag = useObservable(localSettings.addClientTag);
@@ -128,8 +126,7 @@ export default function PostModal({
 			contentWarning: values.nsfw ? values.nsfwReason || values.nsfw : false,
 		});
 
-		const unsigned = await finalizeDraft(draft);
-
+		const unsigned = await factory.stamp(draft);
 		setDraft(unsigned);
 		return unsigned;
 	};
