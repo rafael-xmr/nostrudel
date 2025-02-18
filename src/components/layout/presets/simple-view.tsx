@@ -41,7 +41,7 @@ export default function SimpleView({
   UNSAFE_useScrollRestoration;
 
   return (
-    <Flex as={as} flex={1} direction="column" pr="var(--safe-right)" pl="var(--safe-left)" {...props}>
+    <Flex as={as} flex={1} direction="column" pr="var(--safe-right)" pl="var(--safe-left)" overflow="hidden" {...props}>
       <SimpleHeader title={title}>{actions}</SimpleHeader>
 
       {scroll ? (

@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
 	Button,
 	ButtonGroup,
@@ -33,20 +33,11 @@ import { useKind4Decrypt } from "../../hooks/use-kind4-decryption";
 import { truncateId } from "../../helpers/string";
 import useTimelineLoader from "../../hooks/use-timeline-loader";
 import useUserMailboxes from "../../hooks/use-user-mailboxes";
-import useClientSideMuteFilter from "../../hooks/use-client-side-mute-filter";
 import useUserContacts from "../../hooks/use-user-contacts";
 import useUserMutes from "../../hooks/use-user-mutes";
 import SimpleParentView from "../../components/layout/presets/simple-parent-view";
 
 export function useDirectMessagesTimeline(pubkey?: string) {
-	const userMuteFilter = useClientSideMuteFilter();
-	const eventFilter = useCallback(
-		(event: NostrEvent) => {
-			if (userMuteFilter(event)) return false;
-			return true;
-		},
-		[userMuteFilter],
-	);
 	const mailboxes = useUserMailboxes(pubkey);
 
 	return useTimelineLoader(
@@ -58,7 +49,6 @@ export function useDirectMessagesTimeline(pubkey?: string) {
 					{ "#p": [pubkey], kinds: [kinds.EncryptedDirectMessage] },
 				]
 			: undefined,
-		{ eventFilter },
 	);
 }
 
@@ -154,12 +144,19 @@ function MessagesHomePage() {
 					mutes?.pubkeys?.has(c.correspondent),
 				);
 				break;
+			case "other":
+				filtered = conversations.filter(
+					(c) =>
+						!contacts?.includes(c.correspondent) &&
+						!mutes?.pubkeys.has(c.correspondent),
+				);
+				break;
 		}
 
 		return filtered.sort(
 			(a, b) => b.messages[0].created_at - a.messages[0].created_at,
 		);
-	}, [messages, account.pubkey, contacts?.length, filter, mutes?.pubkeys]);
+	}, [messages, account.pubkey, contacts?.length, filter, mutes?.pubkeys.size]);
 
 	const callback = useTimelineCurserIntersectionCallback(loader);
 

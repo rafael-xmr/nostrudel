@@ -3,8 +3,8 @@ import { MenuItem, useDisclosure } from "@chakra-ui/react";
 import { Link as RouterLink } from "react-router-dom";
 
 import { BroadcastEventIcon } from "../icons";
-import { NostrEvent } from "../../types/nostr-event";
-import { DotsMenuButton, MenuIconButtonProps } from "../dots-menu-button";
+import type { NostrEvent } from "../../types/nostr-event";
+import { DotsMenuButton, type MenuIconButtonProps } from "../dots-menu-button";
 import NoteTranslationModal from "../../views/tools/transform-note/translation";
 import Translate01 from "../icons/translate-01";
 import PinEventMenuItem from "../common-menu-items/pin-event";
@@ -18,40 +18,57 @@ import { usePublishEvent } from "../../providers/global/publish-provider";
 import DebugEventMenuItem from "../debug-modal/debug-event-menu-item";
 import { getSharableEventAddress } from "../../services/relay-hints";
 
-export default function NoteMenu({ event, ...props }: { event: NostrEvent } & Omit<MenuIconButtonProps, "children">) {
-  const translationsModal = useDisclosure();
-  const publish = usePublishEvent();
+export default function NoteMenu({
+	event,
+	...props
+}: { event: NostrEvent } & Omit<MenuIconButtonProps, "children">) {
+	const translationsModal = useDisclosure();
+	const publish = usePublishEvent();
 
-  const address = useMemo(() => getSharableEventAddress(event), [event]);
+	const address = useMemo(() => getSharableEventAddress(event), [event]);
 
-  const broadcast = useCallback(async () => {
-    await publish("Broadcast", event);
-  }, []);
+	const broadcast = useCallback(async () => {
+		await publish("Broadcast", event);
+	}, []);
 
-  return (
-    <>
-      <DotsMenuButton {...props}>
-        <OpenInAppMenuItem event={event} />
-        <ShareLinkMenuItem event={event} />
-        <CopyEmbedCodeMenuItem event={event} />
-        <MuteUserMenuItem event={event} />
-        <DeleteEventMenuItem event={event} />
+	return (
+		<>
+			<DotsMenuButton {...props}>
+				<OpenInAppMenuItem event={event} />
+				<ShareLinkMenuItem event={event} />
+				<CopyEmbedCodeMenuItem event={event} />
+				<MuteUserMenuItem event={event} />
+				<DeleteEventMenuItem event={event} />
 
-        <MenuItem as={RouterLink} icon={<Recording02 />} to={`/tools/transform/${address}?tab=tts`}>
-          Text to speech
-        </MenuItem>
-        <MenuItem as={RouterLink} icon={<Translate01 />} to={`/tools/transform/${address}?tab=translation`}>
-          Translate
-        </MenuItem>
+				<MenuItem
+					as={RouterLink}
+					icon={<Recording02 />}
+					to={`/tools/transform/${address}?tab=tts`}
+				>
+					Text to speech
+				</MenuItem>
+				<MenuItem
+					as={RouterLink}
+					icon={<Translate01 />}
+					to={`/tools/transform/${address}?tab=translation`}
+				>
+					Translate
+				</MenuItem>
 
-        <MenuItem onClick={broadcast} icon={<BroadcastEventIcon />}>
-          Broadcast
-        </MenuItem>
-        <PinEventMenuItem event={event} />
-        <DebugEventMenuItem event={event} />
-      </DotsMenuButton>
+				<MenuItem onClick={broadcast} icon={<BroadcastEventIcon />}>
+					Broadcast
+				</MenuItem>
+				<PinEventMenuItem event={event} />
+				<DebugEventMenuItem event={event} />
+			</DotsMenuButton>
 
-      {translationsModal.isOpen && <NoteTranslationModal isOpen onClose={translationsModal.onClose} note={event} />}
-    </>
-  );
+			{translationsModal.isOpen && (
+				<NoteTranslationModal
+					isOpen
+					onClose={translationsModal.onClose}
+					note={event}
+				/>
+			)}
+		</>
+	);
 }

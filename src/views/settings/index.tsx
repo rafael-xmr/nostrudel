@@ -5,12 +5,12 @@ import {
 	DatabaseIcon,
 	GithubIcon,
 	LightningIcon,
-	MoneroIcon,
 	NotesIcon,
 	PerformanceIcon,
 	RelayIcon,
 	SearchIcon,
 	SpyIcon,
+	VerifiedIcon,
 } from "../../components/icons";
 import { useActiveAccount } from "applesauce-react/hooks";
 import Image01 from "../../components/icons/image-01";
@@ -68,6 +68,12 @@ export default function SettingsView() {
 						leftIcon={<SearchIcon boxSize={6} />}
 					>
 						Search
+					</SimpleNavItem>
+					<SimpleNavItem
+						to="/settings/identity"
+						leftIcon={<VerifiedIcon boxSize={6} />}
+					>
+						DNS Identity
 					</SimpleNavItem>
 				</>
 			)}

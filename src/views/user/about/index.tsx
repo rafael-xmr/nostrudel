@@ -19,10 +19,12 @@ import {
 } from "@chakra-ui/react";
 import { nip19 } from "nostr-tools";
 import { ChatIcon } from "@chakra-ui/icons";
-import { parseLNURLOrAddress } from "applesauce-core/helpers";
+import {
+	parseLNURLOrAddress,
+	parseNIP05Address,
+} from "applesauce-core/helpers";
 
 import { truncatedId } from "../../../helpers/nostr/event";
-import { parseAddress } from "../../../services/dns-identity";
 import { useAdditionalRelayContext } from "../../../providers/local/additional-relay-context";
 import useUserProfile from "../../../hooks/use-user-profile";
 import {
@@ -50,53 +52,9 @@ import UserName from "../../../components/user/user-name";
 import { useUserDNSIdentity } from "../../../hooks/use-user-dns-identity";
 import UserAboutContent from "../../../components/user/user-about-content";
 import UserRecentEvents from "./user-recent-events";
-import useAppSettings, {
-	useUserAppSettings,
-} from "../../../hooks/use-user-app-settings";
+import { useUserAppSettings } from "../../../hooks/use-user-app-settings";
 import UserJoinedGroups from "./user-joined-groups";
-
-function DNSIdentityWarning({ pubkey }: { pubkey: string }) {
-	const metadata = useUserProfile(pubkey);
-	const dnsIdentity = useUserDNSIdentity(pubkey);
-	const parsedNip05 = metadata?.nip05
-		? parseAddress(metadata.nip05)
-		: undefined;
-	const nip05URL = parsedNip05
-		? `https://${parsedNip05.domain}/.well-known/nostr.json?name=${parsedNip05.name}`
-		: undefined;
-
-	if (dnsIdentity === undefined)
-		return (
-			<Text color="yellow.500">
-				Unable to check DNS identity due to CORS error{" "}
-				{nip05URL && (
-					<Link
-						color="blue.500"
-						href={`https://cors-test.codehappy.dev/?url=${encodeURIComponent(nip05URL)}&method=get`}
-						isExternal
-					>
-						Test
-						<ExternalLinkIcon ml="1" />
-					</Link>
-				)}
-			</Text>
-		);
-	else if (dnsIdentity.exists === false)
-		return <Text color="red.500">Unable to find nostr.json file</Text>;
-	else if (dnsIdentity.pubkey === undefined)
-		return (
-			<Text color="red.500">
-				Unable to find DNS Identity in nostr.json file
-			</Text>
-		);
-	else if (dnsIdentity.pubkey === pubkey) return null;
-	else
-		return (
-			<Text color="red.500" fontWeight="bold">
-				Invalid DNS Identity!
-			</Text>
-		);
-}
+import DNSIdentityWarning from "../../settings/dns-identity/identity-warning";
 
 export default function UserAboutTab() {
 	const expanded = useDisclosure();
@@ -111,11 +69,13 @@ export default function UserAboutTab() {
 	const settings = useUserAppSettings(pubkey);
 
 	const parsedNip05 = metadata?.nip05
-		? parseAddress(metadata.nip05)
+		? parseNIP05Address(metadata.nip05)
 		: undefined;
 	const nip05URL = parsedNip05
 		? `https://${parsedNip05.domain}/.well-known/nostr.json?name=${parsedNip05.name}`
 		: undefined;
+
+	const identity = useUserDNSIdentity(pubkey);
 
 	return (
 		<Flex
@@ -218,7 +178,9 @@ export default function UserAboutTab() {
 								<UserDnsIdentity pubkey={pubkey} />
 							</Link>
 						</Flex>
-						<DNSIdentityWarning pubkey={pubkey} />
+						{identity && (
+							<DNSIdentityWarning identity={identity} pubkey={pubkey} />
+						)}
 					</Box>
 				)}
 				{metadata?.website && (
@@ -252,6 +214,18 @@ export default function UserAboutTab() {
 						/>
 					</Flex>
 				)}
+
+				{settings?.primaryColor && (
+					<Flex gap="2">
+						<Box
+							w="5"
+							h="5"
+							backgroundColor={settings.primaryColor}
+							rounded="full"
+						/>
+						<Text>noStrudel theme color</Text>
+					</Flex>
+				)}
 			</Flex>
 
 			<UserProfileBadges pubkey={pubkey} px="2" />
@@ -262,7 +236,7 @@ export default function UserAboutTab() {
 			</Box>
 			<UserStatsAccordion pubkey={pubkey} />
 
-			<Flex gap="2" wrap="wrap" p="2">
+			<Flex gap="2" wrap="wrap">
 				<Button
 					as={Link}
 					href={`https://nosta.me/${nprofile}`}
