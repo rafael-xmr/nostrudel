@@ -4,7 +4,7 @@ import {
 	AppearanceIcon,
 	DatabaseIcon,
 	GithubIcon,
-	LightningIcon,
+	MoneroIcon,
 	NotesIcon,
 	PerformanceIcon,
 	RelayIcon,
