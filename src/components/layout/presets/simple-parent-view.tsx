@@ -5,6 +5,7 @@ import { Box, Flex, type FlexProps, Spinner } from "@chakra-ui/react";
 import { useBreakpointValue } from "../../../providers/global/breakpoint-provider";
 import SimpleHeader from "./simple-header";
 import { ErrorBoundary } from "../../error-boundary";
+import useScrollRestoreRef from "../../../hooks/use-scroll-restore";
 
 export default function SimpleParentView({
 	children,
@@ -31,6 +32,7 @@ export default function SimpleParentView({
 	const showMenu = !isMobile || !!match;
 
 	const floating = useBreakpointValue({ base: false, lg: true });
+	const ref = useScrollRestoreRef("parent");
 
 	if (showMenu)
 		return (
@@ -58,6 +60,7 @@ export default function SimpleParentView({
 									overflowY={scroll ? "auto" : "hidden"}
 									overflowX="hidden"
 									flex={1}
+									ref={ref}
 								>
 									{children}
 								</Flex>
