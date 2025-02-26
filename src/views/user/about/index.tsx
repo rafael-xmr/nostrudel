@@ -214,18 +214,6 @@ export default function UserAboutTab() {
 						/>
 					</Flex>
 				)}
-
-				{settings?.primaryColor && (
-					<Flex gap="2">
-						<Box
-							w="5"
-							h="5"
-							backgroundColor={settings.primaryColor}
-							rounded="full"
-						/>
-						<Text>noStrudel theme color</Text>
-					</Flex>
-				)}
 			</Flex>
 
 			<UserProfileBadges pubkey={pubkey} px="2" />
