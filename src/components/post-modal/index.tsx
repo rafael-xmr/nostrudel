@@ -11,7 +11,7 @@ import {
 	useDisclosure,
 	Input,
 	Switch,
-	ModalProps,
+	type ModalProps,
 	FormLabel,
 	FormControl,
 	FormHelperText,
@@ -27,19 +27,15 @@ import {
 	Text,
 } from "@chakra-ui/react";
 import { useForm } from "react-hook-form";
-import { UnsignedEvent } from "nostr-tools";
+import type { UnsignedEvent } from "nostr-tools";
 import { useAsync, useThrottle } from "react-use";
-import {
-	useActiveAccount,
-	useEventFactory,
-	useObservable,
-} from "applesauce-react/hooks";
-import { Emoji } from "applesauce-core/helpers";
+import { useEventFactory, useObservable } from "applesauce-react/hooks";
+import type { Emoji } from "applesauce-core/helpers";
 
 import { ChevronDownIcon, ChevronUpIcon } from "../icons";
 import { PublishLogEntryDetails } from "../../views/task-manager/publish-log/entry-details";
 import { TrustProvider } from "../../providers/local/trust-provider";
-import MagicTextArea, { RefType } from "../magic-textarea";
+import MagicTextArea, { type RefType } from "../magic-textarea";
 import { useContextEmojis } from "../../providers/global/emoji-provider";
 import useCacheForm from "../../hooks/use-cache-form";
 import useTextAreaUploadFile, {
@@ -49,7 +45,7 @@ import MinePOW from "../pow/mine-pow";
 import useAppSettings from "../../hooks/use-user-app-settings";
 import { ErrorBoundary } from "../error-boundary";
 import {
-	PublishLogEntry,
+	type PublishLogEntry,
 	usePublishEvent,
 } from "../../providers/global/publish-provider";
 import { TextNoteContents } from "../note/timeline-note/text-note-contents";
@@ -77,7 +73,6 @@ export default function PostModal({
 	initContent = "",
 }: Omit<ModalProps, "children"> & PostModalProps) {
 	const publish = usePublishEvent();
-	const account = useActiveAccount()!;
 	const { noteDifficulty } = useAppSettings();
 	const addClientTag = useObservable(localSettings.addClientTag);
 	const promptAddClientTag = useLocalStorageDisclosure(
@@ -121,7 +116,7 @@ export default function PostModal({
 
 	const getDraft = async (values = getValues()) => {
 		// build draft using factory
-		let draft = await factory.note(values.content, {
+		const draft = await factory.note(values.content, {
 			emojis: emojis.filter((e) => !!e.url) as Emoji[],
 			contentWarning: values.nsfw ? values.nsfwReason || values.nsfw : false,
 		});
@@ -144,11 +139,12 @@ export default function PostModal({
 	const { onPaste } = useTextAreaUploadFile(insertText);
 
 	const publishPost = async (unsigned?: UnsignedEvent) => {
-		unsigned = unsigned || draft || (await getDraft());
+		const toPublish = unsigned || draft || (await getDraft());
 
-		const pub = await publish("Post", unsigned);
+		const pub = await publish("Post", toPublish);
 		if (pub) setPublishEntry(pub);
 	};
+
 	const submit = handleSubmit(async (values) => {
 		if (values.difficulty > 0) {
 			setMiningTarget(values.difficulty);
