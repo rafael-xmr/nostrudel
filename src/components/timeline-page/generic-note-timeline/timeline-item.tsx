@@ -1,4 +1,4 @@
-import { ReactNode, Suspense, lazy, memo } from "react";
+import { type ReactNode, Suspense, lazy, memo } from "react";
 import { kinds } from "nostr-tools";
 import { Box, Spinner } from "@chakra-ui/react";
 
@@ -6,7 +6,7 @@ import { ErrorBoundary } from "../../error-boundary";
 import ReplyNote from "./reply-note";
 import ShareEvent from "./share-event";
 import { isReply } from "../../../helpers/nostr/event";
-import { NostrEvent } from "../../../types/nostr-event";
+import type { NostrEvent } from "../../../types/nostr-event";
 import { FLARE_VIDEO_KIND } from "../../../helpers/nostr/video";
 import { TimelineNote } from "../../note/timeline-note";
 import useEventIntersectionRef from "../../../hooks/use-event-intersection-ref";
@@ -47,9 +47,9 @@ function TimelineItem({
 		case kinds.LiveEvent:
 			content = <StreamNote stream={event} />;
 			break;
-		case kinds.RecommendRelay:
-			content = <RelayRecommendation event={event} />;
-			break;
+		// case kinds.RecommendRelay:
+		// 	content = <RelayRecommendation event={event} />;
+		// 	break;
 		case kinds.BadgeAward:
 			content = <BadgeAwardCard award={event} />;
 			break;

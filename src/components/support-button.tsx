@@ -1,6 +1,5 @@
 import {
 	Button,
-	type IconButtonProps,
 	Modal,
 	ModalCloseButton,
 	ModalContent,
@@ -21,11 +20,9 @@ import { useBreakpointValue } from "~/providers/global/breakpoint-provider";
 import { useEffect, useRef, useState } from "react";
 import { useAsync } from "react-use";
 import { useActiveAccount } from "applesauce-react/hooks";
-import { CheckCircleIcon, CheckIcon } from "@chakra-ui/icons";
+import { CheckCircleIcon } from "@chakra-ui/icons";
 
-export default function SupportButton({
-	...props
-}: Omit<IconButtonProps, "aria-label">) {
+export default function SupportButton() {
 	const { isOpen, onOpen, onClose } = useDisclosure();
 	const account = useActiveAccount();
 
@@ -155,7 +152,9 @@ export default function SupportButton({
 												(paymentDetailsRef.current ? (
 													<>
 														<ZapModalContents
+															// @ts-ignore
 															address={paymentDetailsRef.current.address}
+															// @ts-ignore
 															amount={paymentDetailsRef.current.amount}
 														/>
 														<ModalHeader px="0" pb="0" pt="4">
