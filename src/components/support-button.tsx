@@ -110,7 +110,7 @@ export default function SupportButton() {
 						<Tabs onChange={(index) => setTabIndex(index)}>
 							<TabList>
 								<Tab>Donation</Tab>
-								<Tab>Pay for Relay</Tab>
+								{account && <Tab>Pay for Relay</Tab>}
 							</TabList>
 
 							<TabPanels>

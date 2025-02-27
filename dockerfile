@@ -10,8 +10,14 @@ WORKDIR /app
 
 COPY ./package*.json .
 COPY ./pnpm-lock.yaml .
+
 ADD ./applesauce /applesauce
 
+WORKDIR /applesauce
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
+RUN pnpm build
+
+WORKDIR /app
 FROM base AS prod-deps
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --prod --frozen-lockfile
 
