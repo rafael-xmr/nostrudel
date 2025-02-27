@@ -14,13 +14,12 @@ import InputStep from "./input-step";
 import UserLink from "../user/user-link";
 import useUserXMRMetadata from "../../hooks/use-user-xmr-metadata";
 import { useBreakpointValue } from "../../providers/global/breakpoint-provider";
-import { getXMR } from "../../helpers/monero";
 
 export type ZapModalContentsProps = {
 	description?: string;
 	address?: string;
 	pubkey?: string;
-  amount?: number;
+	amount?: number;
 	event?: NostrEvent;
 	relays?: string[];
 	initialComment?: string;
@@ -39,7 +38,7 @@ export function ZapModalContents({
 	description,
 	event,
 	address: addressParam,
-  amount: defaultAmount,
+	amount: defaultAmount,
 	pubkey,
 	initialComment,
 	initialAmount,
@@ -52,13 +51,16 @@ export function ZapModalContents({
 		const { address: userAddress } = useUserXMRMetadata(
 			event?.pubkey || pubkey!,
 		);
-		const contentAddress = event && getXMR(event.content);
-		address = addressParam || contentAddress || userAddress;
+		address = addressParam || userAddress;
 	}
 
 	return (
 		<ModalBody p="4">
-			{description && <ModalHeader px={0} pt={0} pb={4}>{description}</ModalHeader>}
+			{description && (
+				<ModalHeader px={0} pt={0} pb={4}>
+					{description}
+				</ModalHeader>
+			)}
 
 			<InputStep
 				address={address}
@@ -66,7 +68,7 @@ export function ZapModalContents({
 				event={event}
 				initialComment={initialComment}
 				initialAmount={initialAmount}
-        defaultAmount={defaultAmount}
+				defaultAmount={defaultAmount}
 				showEmbed={showEmbed}
 				embedProps={embedProps}
 			/>

@@ -76,11 +76,12 @@ server {
     location / {
         root /usr/share/nginx/html;
         index index.html index.htm;
+        try_files \$uri /index.html;
     }
 
     # Gzip settings
     gzip on;
-    gzip_disable "msie6";
+    gzip_disable \"msie6\";
     gzip_vary on;
     gzip_proxied any;
     gzip_comp_level 6;

@@ -12,7 +12,7 @@ const SearchRelayPicker = forwardRef<
 
   return (
     <Select ref={ref} w="auto" value={value} onChange={onChange} {...props}>
-      {showLocal && localSearchSupported && <option value="">Local Relay</option>}
+      {/* showLocal && localSearchSupported && <option value="">Local Relay</option> */}
       {searchRelays.map((url) => (
         <option key={url} value={url}>
           {url}

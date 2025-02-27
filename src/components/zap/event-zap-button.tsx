@@ -2,7 +2,6 @@ import { type ButtonProps, IconButton, useDisclosure } from "@chakra-ui/react";
 
 import ZapModal from "../event-zap-modal";
 import useUserXMRMetadata from "../../hooks/use-user-xmr-metadata";
-import { useReadRelays } from "../../hooks/use-client-relays";
 
 import type { NostrEvent } from "nostr-tools";
 import Monero from "../icons/monero";
