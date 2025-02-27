@@ -35,6 +35,7 @@ export type InputStepProps = {
 	event?: NostrEvent;
 	initialComment?: string;
 	initialAmount?: number;
+	defaultAmount?: number;
 	allowComment?: boolean;
 	showEmbed?: boolean;
 	embedProps?: EmbedProps;
@@ -45,6 +46,7 @@ export default function InputStep({
 	event,
 	initialComment,
 	initialAmount,
+	defaultAmount,
 	showEmbed = true,
 	embedProps,
 	address,
@@ -63,6 +65,7 @@ export default function InputStep({
 		mode: "onBlur",
 		defaultValues: {
 			amount:
+				defaultAmount ??
 				initialAmount ??
 				(Number.parseFloat(customZapAmounts.split(",")[0]) || 100),
 			comment: initialComment ?? "",
@@ -94,32 +97,38 @@ export default function InputStep({
 				onPaid={() => {}}
 			/>
 
-			<CustomZapAmountOptions
-				onSelect={(amount) => setValue("amount", amount, { shouldDirty: true })}
-			/>
+			{defaultAmount ? null : (
+				<>
+					<CustomZapAmountOptions
+						onSelect={(amount) =>
+							setValue("amount", amount, { shouldDirty: true })
+						}
+					/>
 
-			<Flex gap="2">
-				<Input
-					type="number"
-					placeholder="Custom amount"
-					isInvalid={!!errors.amount}
-					step={0.0001}
-					min={minTip}
-					flex={1}
-					{...register("amount", {
-						valueAsNumber: true,
-						min: 0.0001,
-						onBlur: () => {
-							const amount = watch("amount");
-							if (Number.isNaN(amount)) {
-								setValue("amount", 0);
-							} else {
-								setValue("amount", amount);
-							}
-						},
-					})}
-				/>
-			</Flex>
+					<Flex gap="2">
+						<Input
+							type="number"
+							placeholder="Custom amount"
+							isInvalid={!!errors.amount}
+							step={0.0001}
+							min={minTip}
+							flex={1}
+							{...register("amount", {
+								valueAsNumber: true,
+								min: 0.0001,
+								onBlur: () => {
+									const amount = watch("amount");
+									if (Number.isNaN(amount)) {
+										setValue("amount", 0);
+									} else {
+										setValue("amount", amount);
+									}
+								},
+							})}
+						/>
+					</Flex>
+				</>
+			)}
 		</Flex>
 	);
 }

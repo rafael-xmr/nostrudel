@@ -1,27 +1,31 @@
-import { Box, BoxProps } from "@chakra-ui/react";
+import { Box, type BoxProps } from "@chakra-ui/react";
 import { useRenderedContent } from "applesauce-react/hooks";
 import { nostrMentions } from "applesauce-content/text";
 
 import useUserProfile from "../../hooks/use-user-profile";
 import { renderGenericUrl } from "../content/links";
 import { components } from "../content";
+import { moneroAddressLinks } from "../content/transform/monero-notation";
 
-const transformers = [nostrMentions];
+const transformers = [nostrMentions, moneroAddressLinks];
 const linkRenderers = [renderGenericUrl];
 
 const ProfileAboutContentSymbol = Symbol.for("profile-about-content");
 
-export default function UserAboutContent({ pubkey, ...props }: { pubkey: string } & Omit<BoxProps, "children">) {
-  const profile = useUserProfile(pubkey);
-  const content = useRenderedContent(profile?.about, components, {
-    transformers,
-    linkRenderers,
-    cacheKey: ProfileAboutContentSymbol,
-  });
+export default function UserAboutContent({
+	pubkey,
+	...props
+}: { pubkey: string } & Omit<BoxProps, "children">) {
+	const profile = useUserProfile(pubkey);
+	const content = useRenderedContent(profile?.about, components, {
+		transformers,
+		linkRenderers,
+		cacheKey: ProfileAboutContentSymbol,
+	});
 
-  return (
-    <Box whiteSpace="pre-line" p={2} {...props}>
-      {content}
-    </Box>
-  );
+	return (
+		<Box whiteSpace="pre-line" p={2} {...props}>
+			{content}
+		</Box>
+	);
 }

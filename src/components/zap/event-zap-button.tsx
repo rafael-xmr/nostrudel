@@ -24,19 +24,19 @@ export default function EventZapButton({
 	const { address: userAddress } = useUserXMRMetadata(event.pubkey);
 	const contentAddress = getXMR(event.content);
 	const address = userAddress || contentAddress;
+	const isUserTip = address === userAddress;
 	const { isOpen, onOpen, onClose } = useDisclosure();
-
-	const readRelays = useReadRelays();
 
 	// const total = totalZaps(zaps);
 	const canZap = !!address;
+	const title = isUserTip ? "Tip User" : "Tip Note";
 
 	return (
 		<>
 			<IconButton
 				icon={<Monero verticalAlign="sub" />}
-				aria-label="Zap Note"
-				title="Zap Note"
+				aria-label={title}
+				title={title}
 				{...props}
 				onClick={onOpen}
 				isDisabled={!canZap}

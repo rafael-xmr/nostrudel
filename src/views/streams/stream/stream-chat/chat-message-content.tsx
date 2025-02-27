@@ -2,29 +2,42 @@ import React from "react";
 import { useRenderedContent } from "applesauce-react/hooks";
 
 import {
-  renderGenericUrl,
-  renderImageUrl,
-  renderSoundCloudUrl,
-  renderStemstrUrl,
-  renderWavlakeUrl,
+	renderGenericUrl,
+	renderImageUrl,
+	renderSoundCloudUrl,
+	renderStemstrUrl,
+	renderWavlakeUrl,
 } from "../../../../components/content/links";
-import { NostrEvent } from "../../../../types/nostr-event";
+import type { NostrEvent } from "../../../../types/nostr-event";
 import { components } from "../../../../components/content";
 import { textNoteTransformers } from "applesauce-content/text";
 import { nipDefinitions } from "../../../../components/content/transform/nip-notation";
+import { moneroAddressLinks } from "~/components/content/transform/monero-notation";
 
-const StreamChatMessageContentSymbol = Symbol.for("stream-chat-message-content");
-const transformers = [...textNoteTransformers, nipDefinitions];
-const linkRenderers = [renderImageUrl, renderWavlakeUrl, renderStemstrUrl, renderSoundCloudUrl, renderGenericUrl];
+const StreamChatMessageContentSymbol = Symbol.for(
+	"stream-chat-message-content",
+);
+const transformers = [
+	...textNoteTransformers,
+	nipDefinitions,
+	moneroAddressLinks,
+];
+const linkRenderers = [
+	renderImageUrl,
+	renderWavlakeUrl,
+	renderStemstrUrl,
+	renderSoundCloudUrl,
+	renderGenericUrl,
+];
 
 const ChatMessageContent = React.memo(({ event }: { event: NostrEvent }) => {
-  const content = useRenderedContent(event, components, {
-    transformers,
-    linkRenderers,
-    cacheKey: StreamChatMessageContentSymbol,
-  });
+	const content = useRenderedContent(event, components, {
+		transformers,
+		linkRenderers,
+		cacheKey: StreamChatMessageContentSymbol,
+	});
 
-  return <>{content}</>;
+	return <>{content}</>;
 });
 
 export default ChatMessageContent;

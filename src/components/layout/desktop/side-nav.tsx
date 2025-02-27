@@ -4,16 +4,16 @@ import {
 	Flex,
 	type FlexProps,
 	IconButton,
-	Link,
 	Text,
 	Image,
-	Avatar,
 	Heading,
 	LinkOverlay,
-	Circle,
 } from "@chakra-ui/react";
 
-import { ChevronLeftIcon, ChevronRightIcon } from "../../icons";
+import {
+	ChevronLeftIcon,
+	ChevronRightIcon,
+} from "../../icons";
 import NavItems from "../components";
 import useRootPadding from "../../../hooks/use-root-padding";
 import AccountSwitcher from "../components/account-switcher";
@@ -21,6 +21,7 @@ import { CollapsedContext } from "../context";
 import RelayConnectionButton from "../components/connections-button";
 import PublishLogButton from "../components/publish-log-button";
 import RouterLink from "~/components/router-link";
+import SupportButton from "~/components/support-button";
 
 export default function DesktopSideNav({
 	...props
@@ -96,28 +97,9 @@ export default function DesktopSideNav({
 						</>
 					)}
 				</ButtonGroup>
-				<Text>
-					To support{" "}
-					<Link
-						href="monero:85kUEzPzBopaXUJ5dL19J6deh5md6YZDZLUUpv63wXdCiRo3pPwrAJHAKAsSo4BgKQBpcs5hSth23hEFr5mmNxRxMeDY1Ng"
-						isExternal
-						color="blue.500"
-						fontStyle="initial"
-					>
-						donate!!
-					</Link>{" "}
-					or{" "}
-					<Link
-						href="https://relay.mostard.org"
-						isExternal
-						color="blue.500"
-						fontStyle="initial"
-					>
-						join the relay!!
-					</Link>{" "}
-					(and add it to your list).
-				</Text>
-				<Image src="/qr_with_logo_black2.png" />
+
+				<SupportButton />
+
 				{/* TODO: monthly goal */}
 				<Text>Cheers!</Text>
 				<Image src="/monero_chan.webp" />

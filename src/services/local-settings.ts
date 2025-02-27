@@ -2,13 +2,13 @@ import { generateSecretKey } from "nostr-tools";
 import { bytesToHex, hexToBytes } from "@noble/hashes/utils";
 import { nanoid } from "nanoid";
 
-import { type RelayAuthMode } from "./authentication-signer";
+import type { RelayAuthMode } from "./authentication-signer";
 import { DEFAULT_SIGNAL_RELAYS } from "../const";
 import {
-  ArrayLocalStorageEntry,
-  BooleanLocalStorageEntry,
-  NullableNumberLocalStorageEntry,
-  NumberLocalStorageEntry,
+	ArrayLocalStorageEntry,
+	BooleanLocalStorageEntry,
+	NullableNumberLocalStorageEntry,
+	NumberLocalStorageEntry,
 } from "../classes/local-settings/types";
 import { LocalStorageEntry } from "../classes/local-settings/entry";
 
@@ -47,9 +47,6 @@ const webRtcRecentConnections = new LocalStorageEntry(
 	(value) => value.join(","),
 );
 
-// posting
-const addClientTag = new BooleanLocalStorageEntry("add-client-tag", false);
-
 // performance
 const verifyEventMethod = new LocalStorageEntry("verify-event-method", "wasm"); // wasm, internal, none
 const enableKeyboardShortcuts = new BooleanLocalStorageEntry(
@@ -61,12 +58,18 @@ const enableKeyboardShortcuts = new BooleanLocalStorageEntry(
 const debugApi = new BooleanLocalStorageEntry("debug-api", false);
 
 // relay authentication
-const defaultAuthenticationMode = new LocalStorageEntry<RelayAuthMode>("default-authentication-mode", "ask");
-const proactivelyAuthenticate = new BooleanLocalStorageEntry("proactively-authenticate", false);
-const relayAuthenticationMode = new ArrayLocalStorageEntry<{ relay: string; mode: RelayAuthMode }>(
-  "relay-authentication-mode",
-  [],
+const defaultAuthenticationMode = new LocalStorageEntry<RelayAuthMode>(
+	"default-authentication-mode",
+	"ask",
 );
+const proactivelyAuthenticate = new BooleanLocalStorageEntry(
+	"proactively-authenticate",
+	false,
+);
+const relayAuthenticationMode = new ArrayLocalStorageEntry<{
+	relay: string;
+	mode: RelayAuthMode;
+}>("relay-authentication-mode", []);
 
 // notifications
 const deviceId = new LocalStorageEntry("device-id", nanoid());
@@ -81,30 +84,29 @@ const cacheRelayURL = new LocalStorageEntry("cache-relay-url", "");
 const bakeryURL = new LocalStorageEntry<string>("bakery-url", "");
 
 const localSettings = {
-  readRelays,
-  writeRelays,
-  idbMaxEvents,
-  wasmPersistForDays,
-  webRtcLocalIdentity,
-  webRtcSignalingRelays,
-  webRtcRecentConnections,
-  addClientTag,
-  verifyEventMethod,
-  enableKeyboardShortcuts,
-  defaultAuthenticationMode,
-  proactivelyAuthenticate,
-  relayAuthenticationMode,
-  debugApi,
-  deviceId,
-  ntfyTopic,
-  ntfyServer,
-  bakeryURL,
-  cacheRelayURL,
+	readRelays,
+	writeRelays,
+	idbMaxEvents,
+	wasmPersistForDays,
+	webRtcLocalIdentity,
+	webRtcSignalingRelays,
+	webRtcRecentConnections,
+	verifyEventMethod,
+	enableKeyboardShortcuts,
+	defaultAuthenticationMode,
+	proactivelyAuthenticate,
+	relayAuthenticationMode,
+	debugApi,
+	deviceId,
+	ntfyTopic,
+	ntfyServer,
+	bakeryURL,
+	cacheRelayURL,
 };
 
 if (import.meta.env.DEV) {
-  // @ts-expect-error debug
-  window.localSettings = localSettings;
+	// @ts-expect-error debug
+	window.localSettings = localSettings;
 }
 
 export default localSettings;

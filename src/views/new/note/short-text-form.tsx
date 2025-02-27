@@ -15,34 +15,29 @@ import {
 	SliderTrack,
 	SliderFilledTrack,
 	SliderThumb,
-	Alert,
-	AlertIcon,
-	ButtonGroup,
-	Text,
-	FlexProps,
+	type FlexProps,
 } from "@chakra-ui/react";
 import { useForm } from "react-hook-form";
-import { UnsignedEvent } from "nostr-tools";
+import type { UnsignedEvent } from "nostr-tools";
 import { useAsync, useThrottle } from "react-use";
-import { useEventFactory, useObservable } from "applesauce-react/hooks";
+import { useEventFactory } from "applesauce-react/hooks";
 import {
-	Emoji,
+	type Emoji,
 	getEventPointerFromQTag,
 	processTags,
 } from "applesauce-core/helpers";
 
 import {
-	PublishLogEntry,
+	type PublishLogEntry,
 	useFinalizeDraft,
 	usePublishEvent,
 } from "../../../providers/global/publish-provider";
-import { useActiveAccount } from "applesauce-react/hooks";
 import useAppSettings from "../../../hooks/use-user-app-settings";
-import localSettings from "../../../services/local-settings";
-import useLocalStorageDisclosure from "../../../hooks/use-localstorage-disclosure";
 import { useContextEmojis } from "../../../providers/global/emoji-provider";
 import useCacheForm from "../../../hooks/use-cache-form";
-import MagicTextArea, { RefType } from "../../../components/magic-textarea";
+import MagicTextArea, {
+	type RefType,
+} from "../../../components/magic-textarea";
 import useTextAreaUploadFile, {
 	useTextAreaInsertTextWithForm,
 } from "../../../hooks/use-textarea-upload-file";
@@ -75,13 +70,7 @@ export default function ShortTextNoteForm({
 }: Omit<FlexProps, "children"> & ShortTextNoteFormProps) {
 	const publish = usePublishEvent();
 	const finalizeDraft = useFinalizeDraft();
-	const account = useActiveAccount()!;
 	const { noteDifficulty } = useAppSettings();
-	const addClientTag = useObservable(localSettings.addClientTag);
-	const promptAddClientTag = useLocalStorageDisclosure(
-		"prompt-add-client-tag",
-		true,
-	);
 	const [miningTarget, setMiningTarget] = useState(0);
 	const [published, setPublished] = useState<PublishLogEntry>();
 	const emojis = useContextEmojis();
@@ -119,7 +108,7 @@ export default function ShortTextNoteForm({
 
 	const getDraft = async (values = getValues()) => {
 		// build draft using factory
-		let draft = await factory.note(values.content, {
+		const draft = await factory.note(values.content, {
 			emojis: emojis.filter((e) => !!e.url) as Emoji[],
 			contentWarning: values.nsfw ? values.nsfwReason || values.nsfw : false,
 		});
@@ -143,10 +132,10 @@ export default function ShortTextNoteForm({
 	const { onPaste } = useTextAreaUploadFile(insertText);
 
 	const publishPost = async (unsigned?: UnsignedEvent) => {
-		unsigned = unsigned || draft || (await getDraft());
+		const toPublish = unsigned || draft || (await getDraft());
 
 		// mirror quoted events
-		const pointers = processTags(unsigned.tags, (t) =>
+		const pointers = processTags(toPublish.tags, (t) =>
 			t[0] === "q" ? getEventPointerFromQTag(t) : undefined,
 		);
 		const events = pointers
@@ -154,7 +143,7 @@ export default function ShortTextNoteForm({
 			.filter((t) => !!t);
 		for (const event of events) publish("Broadcast event", event);
 
-		const pub = await publish("Post", unsigned);
+		const pub = await publish("Post", toPublish);
 		if (pub) setPublished(pub);
 	};
 	const submit = handleSubmit(async (values) => {
@@ -319,36 +308,6 @@ export default function ShortTextNoteForm({
 					</Flex>
 				)}
 			</Flex>
-
-			{!addClientTag && promptAddClientTag.isOpen && (
-				<Alert
-					status="info"
-					whiteSpace="pre-wrap"
-					flexDirection={{ base: "column", lg: "row" }}
-				>
-					<AlertIcon hideBelow="lg" />
-					<Text>
-						Enable{" "}
-						<Link
-							isExternal
-							href="https://github.com/nostr-protocol/nips/blob/master/89.md#client-tag"
-						>
-							NIP-89
-						</Link>{" "}
-						client tags and let other users know what app you're using to write
-						notes
-					</Text>
-					<ButtonGroup ml="auto" size="sm" variant="ghost">
-						<Button onClick={promptAddClientTag.onClose}>Close</Button>
-						<Button
-							colorScheme="primary"
-							onClick={() => localSettings.addClientTag.next(true)}
-						>
-							Enable
-						</Button>
-					</ButtonGroup>
-				</Alert>
-			)}
 		</>
 	);
 }

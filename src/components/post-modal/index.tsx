@@ -21,15 +21,11 @@ import {
 	SliderFilledTrack,
 	SliderThumb,
 	ModalCloseButton,
-	Alert,
-	AlertIcon,
-	ButtonGroup,
-	Text,
 } from "@chakra-ui/react";
 import { useForm } from "react-hook-form";
 import type { UnsignedEvent } from "nostr-tools";
 import { useAsync, useThrottle } from "react-use";
-import { useEventFactory, useObservable } from "applesauce-react/hooks";
+import { useEventFactory } from "applesauce-react/hooks";
 import type { Emoji } from "applesauce-core/helpers";
 
 import { ChevronDownIcon, ChevronUpIcon } from "../icons";
@@ -49,8 +45,6 @@ import {
 	usePublishEvent,
 } from "../../providers/global/publish-provider";
 import { TextNoteContents } from "../note/timeline-note/text-note-contents";
-import localSettings from "../../services/local-settings";
-import useLocalStorageDisclosure from "../../hooks/use-localstorage-disclosure";
 import InsertGifButton from "../gif/insert-gif-button";
 import InsertImageButton from "../../views/new/note/insert-image-button";
 
@@ -74,11 +68,6 @@ export default function PostModal({
 }: Omit<ModalProps, "children"> & PostModalProps) {
 	const publish = usePublishEvent();
 	const { noteDifficulty } = useAppSettings();
-	const addClientTag = useObservable(localSettings.addClientTag);
-	const promptAddClientTag = useLocalStorageDisclosure(
-		"prompt-add-client-tag",
-		true,
-	);
 	const [miningTarget, setMiningTarget] = useState(0);
 	const [publishEntry, setPublishEntry] = useState<PublishLogEntry>();
 	const emojis = useContextEmojis();
@@ -305,36 +294,6 @@ export default function PostModal({
 						</Flex>
 					)}
 				</ModalBody>
-
-				{!addClientTag && promptAddClientTag.isOpen && (
-					<Alert
-						status="info"
-						whiteSpace="pre-wrap"
-						flexDirection={{ base: "column", lg: "row" }}
-					>
-						<AlertIcon hideBelow="lg" />
-						<Text>
-							Enable{" "}
-							<Link
-								isExternal
-								href="https://github.com/nostr-protocol/nips/blob/master/89.md#client-tag"
-							>
-								NIP-89
-							</Link>{" "}
-							client tags and let other users know what app you're using to
-							write notes
-						</Text>
-						<ButtonGroup ml="auto" size="sm" variant="ghost">
-							<Button onClick={promptAddClientTag.onClose}>Close</Button>
-							<Button
-								colorScheme="primary"
-								onClick={() => localSettings.addClientTag.next(true)}
-							>
-								Enable
-							</Button>
-						</ButtonGroup>
-					</Alert>
-				)}
 			</>
 		);
 	};

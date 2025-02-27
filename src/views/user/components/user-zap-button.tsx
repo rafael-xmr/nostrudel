@@ -20,8 +20,8 @@ export default function UserZapButton({
 		<>
 			<IconButton
 				onClick={onOpen}
-				aria-label="Send Tip"
-				title="Send Tip"
+				aria-label="Tip User"
+				title="Tip User"
 				icon={<Monero />}
 				{...props}
 			/>

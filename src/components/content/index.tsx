@@ -6,6 +6,7 @@ import Mention from "./components/mention";
 import { InlineEmoji } from "./components/ininle-emoji";
 import NipDefinition from "./components/nip";
 import { ImageGallery } from "./components/gallery";
+import MoneroDefinition from "./components/monero";
 
 export const components: ComponentMap = {
 	text: ({ node }) => <Text as="span">{node.value}</Text>,
@@ -18,4 +19,5 @@ export const components: ComponentMap = {
 	),
 	nip: NipDefinition,
 	gallery: ({ node }) => <ImageGallery images={node.links} />,
+	monero: MoneroDefinition,
 };

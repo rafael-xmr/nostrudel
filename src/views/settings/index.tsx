@@ -4,7 +4,7 @@ import {
 	AppearanceIcon,
 	DatabaseIcon,
 	GithubIcon,
-	MoneroIcon,
+	MoneroWhiteIcon,
 	NotesIcon,
 	PerformanceIcon,
 	RelayIcon,
@@ -108,7 +108,7 @@ export default function SettingsView() {
 			</SimpleNavItem>
 			<SimpleNavItem
 				to="/settings/monero"
-				leftIcon={<MoneroIcon boxSize={5} />}
+				leftIcon={<MoneroWhiteIcon boxSize={5} />}
 			>
 				Monero
 			</SimpleNavItem>

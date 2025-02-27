@@ -20,7 +20,7 @@ export default function MoneroSettings() {
 			<Flex direction="column" gap="4">
 				<FormControl>
 					<FormLabel htmlFor="customZapAmounts" mb="0">
-						Zap Amounts
+						Tipping Amounts
 					</FormLabel>
 					<Input
 						id="customZapAmounts"
@@ -40,7 +40,7 @@ export default function MoneroSettings() {
 						</FormErrorMessage>
 					)}
 					<FormHelperText>
-						<span>Comma separated list of custom zap amounts</span>
+						<span>Comma separated list of quick amounts for tipping other users</span>
 					</FormHelperText>
 				</FormControl>
 			</Flex>
