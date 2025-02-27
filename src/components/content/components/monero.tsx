@@ -9,7 +9,7 @@ export default function MoneroDefinition({
 	const { isOpen, onOpen, onClose } = useDisclosure();
 
 	return (
-		<Tooltip label={node.name} aria-label={node.name}>
+		<Tooltip label={node.name} aria-label={node.name} isDisabled={isOpen}>
 			<Flex gap="1" alignItems="center">
 				<MoneroIcon />
 				<Button

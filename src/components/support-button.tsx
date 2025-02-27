@@ -114,7 +114,7 @@ export default function SupportButton() {
 							</TabList>
 
 							<TabPanels>
-								<TabPanel>
+								<TabPanel padding="0">
 									{tabIndex === 0 && (
 										<ZapModalContents
 											pubkey="dbe0b6bc5f455a547da4b2644846aaf88f466543604130d8fa662625c1eade8f"

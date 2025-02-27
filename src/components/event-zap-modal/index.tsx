@@ -57,7 +57,7 @@ export function ZapModalContents({
 	}
 
 	return (
-		<ModalBody p={0}>
+		<ModalBody p="4">
 			{description && <ModalHeader px={0} pt={0} pb={4}>{description}</ModalHeader>}
 
 			<InputStep

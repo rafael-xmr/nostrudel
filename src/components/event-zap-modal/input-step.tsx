@@ -1,34 +1,105 @@
-import { Box, Button, Flex, Input, Text } from "@chakra-ui/react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { Flex, Input, Select, Checkbox } from "@chakra-ui/react";
 import { useForm } from "react-hook-form";
 
 import type { NostrEvent } from "../../types/nostr-event";
-import useUserXMRMetadata from "~/hooks/use-user-xmr-metadata";
 import { EmbedEvent, type EmbedProps } from "../embed-event";
 import useAppSettings from "../../hooks/use-user-app-settings";
 import CustomZapAmountOptions from "./zap-options";
-import UserAvatar from "../user/user-avatar";
-import UserLink from "../user/user-link";
-import Monero from "../icons/monero";
 import { InvoiceModalContent } from "../invoice-modal";
 
-function UserCard({ pubkey, percent }: { pubkey: string; percent?: number }) {
-	const { address } = useUserXMRMetadata(pubkey);
+const DEBOUNCE_TIME = 600;
 
-	return (
-		<Flex gap="2" alignItems="center" overflow="hidden">
-			<UserAvatar pubkey={pubkey} size="md" />
-			<Box overflow="hidden">
-				<UserLink pubkey={pubkey} fontWeight="bold" />
-				<Text isTruncated>{address}</Text>
-			</Box>
-			{percent && (
-				<Text fontWeight="bold" fontSize="lg" ml="auto">
-					{Math.round(percent * 10000) / 100}%
-				</Text>
-			)}
-		</Flex>
-	);
-}
+const CURRENCIES = {
+	eur: { s: "€" },
+	usd: { s: "$" },
+	btc: { s: "฿" },
+	aed: { s: "" },
+	ars: { s: "" },
+	aud: { s: "" },
+	bdt: { s: "" },
+	bhd: { s: "" },
+	brl: { s: "" },
+	bmd: { s: "" },
+	cad: { s: "" },
+	chf: { s: "" },
+	clp: { s: "" },
+	cny: { s: "" },
+	czk: { s: "" },
+	dkk: { s: "" },
+	gbp: { s: "" },
+	hkd: { s: "" },
+	huf: { s: "" },
+	idr: { s: "Rp" },
+	ils: { s: "" },
+	inr: { s: "" },
+	jpy: { s: "" },
+	krw: { s: "" },
+	kwd: { s: "" },
+	lkr: { s: "" },
+	mmk: { s: "" },
+	mxn: { s: "" },
+	myr: { s: "" },
+	ngn: { s: "" },
+	nok: { s: "" },
+	nzd: { s: "" },
+	php: { s: "" },
+	pkr: { s: "" },
+	pln: { s: "" },
+	rub: { s: "" },
+	sar: { s: "" },
+	sek: { s: "" },
+	sgd: { s: "" },
+	thb: { s: "" },
+	try: { s: "" },
+	twd: { s: "" },
+	uah: { s: "" },
+	vef: { s: "" },
+	vnd: { s: "" },
+	zar: { s: "" },
+	xdr: { s: "" },
+	xag: { s: "" },
+	xau: { s: "" },
+	sats: { s: "" },
+};
+
+const CACHE_TIME = 5 * 60 * 1000;
+const useMoneroPrice = (currency: string, isApiEnabled: boolean) => {
+	const [price, setPrice] = useState(null);
+	const cacheRef = useRef({});
+
+	useEffect(() => {
+		if (!isApiEnabled) return;
+
+		const fetchPrice = async () => {
+			const now = Date.now();
+			const cache = cacheRef.current;
+
+			if (cache[currency] && now - cache[currency].timestamp < CACHE_TIME) {
+				setPrice(cache[currency].price);
+			} else {
+				try {
+					const response = await fetch(
+						`https://api.coingecko.com/api/v3/simple/price?ids=monero&vs_currencies=${currency}`,
+					);
+					if (!response.ok) {
+						throw new Error(`HTTP error! status: ${response.status}`);
+					}
+					const data = await response.json();
+					const newPrice = data.monero[currency];
+					setPrice(newPrice);
+					cache[currency] = { price: newPrice, timestamp: now };
+				} catch (error) {
+					console.error("Error fetching price:", error);
+				}
+			}
+		};
+
+		fetchPrice();
+	}, [currency, isApiEnabled]);
+
+	return price;
+};
 
 export type InputStepProps = {
 	pubkey?: string;
@@ -52,48 +123,95 @@ export default function InputStep({
 	address,
 }: InputStepProps) {
 	const { customZapAmounts } = useAppSettings();
+	const [isApiEnabled, setIsApiEnabled] = useState(false);
 
 	const {
 		register,
 		watch,
 		setValue,
-		formState: { errors, isSubmitting },
+		formState: { errors },
 	} = useForm<{
-		amount: number;
 		comment: string;
+		xmrAmount: number;
+		fiatAmount: number;
+		currency: string;
 	}>({
 		mode: "onBlur",
 		defaultValues: {
-			amount:
+			xmrAmount:
 				defaultAmount ??
 				initialAmount ??
-				(Number.parseFloat(customZapAmounts.split(",")[0]) || 100),
+				(Number.parseFloat(customZapAmounts.split(",")[0]) || 0),
+			fiatAmount: 0,
+			currency: "usd",
 			comment: initialComment ?? "",
 		},
 	});
 
-	const minTip = 0.0005;
+	const selectedCurrency = watch("currency");
+	const price = useMoneroPrice(selectedCurrency, isApiEnabled);
 
-	// TODO
-	const showComment = false;
-	// const showComment = allowComment && splits.length > 0;
-	// const actionName = canZap ? "Zap" : "Tip";
+	const useDebouncedCallback = (
+		callback: (arg: number) => void,
+		delay: number,
+	) => {
+		const timeoutRef = useRef();
+		return useCallback(
+			(arg: number) => {
+				if (timeoutRef.current) clearTimeout(timeoutRef.current);
+				// @ts-ignore
+				timeoutRef.current = setTimeout(() => callback(arg), delay);
+			},
+			[callback, delay],
+		);
+	};
+
+	const updateFiat = useCallback(
+		(xmr: number) => {
+			if (isApiEnabled && price && !Number.isNaN(xmr)) {
+				const fiatAmount = (xmr * price).toFixed(2);
+				setValue("fiatAmount", Number(fiatAmount));
+			}
+		},
+		[isApiEnabled, price, setValue],
+	);
+	const debouncedUpdateFiat = useDebouncedCallback(updateFiat, DEBOUNCE_TIME);
+
+	const updateXmr = useCallback(
+		(fiat: number) => {
+			if (price && !Number.isNaN(fiat)) {
+				const xmrAmount = (fiat / price).toFixed(4);
+				setValue("xmrAmount", Number(xmrAmount));
+			}
+		},
+		[price, setValue],
+	);
+	const debouncedUpdateXmr = useDebouncedCallback(updateXmr, DEBOUNCE_TIME);
+
+	useEffect(() => {
+		if (!isApiEnabled) return;
+
+		const xmrAmount = watch("xmrAmount");
+		if (price && xmrAmount) {
+			const fiatAmount = Number((xmrAmount * price).toFixed(2));
+			setValue("fiatAmount", fiatAmount);
+		}
+	}, [price, watch, setValue, isApiEnabled]);
+
+	const xmrRegister = register("xmrAmount", {
+		valueAsNumber: true,
+	});
+	const fiatRegister = register("fiatAmount", {
+		valueAsNumber: true,
+	});
 
 	return (
 		<Flex gap="4" direction="column">
 			{showEmbed && event && <EmbedEvent event={event} {...embedProps} />}
 
-			{showComment && (
-				<Input
-					placeholder="Comment"
-					{...register("comment", { maxLength: 150 })}
-					autoComplete="off"
-				/>
-			)}
-
 			<InvoiceModalContent
 				address={address}
-				amount={watch("amount")}
+				amount={watch("xmrAmount")}
 				onPaid={() => {}}
 			/>
 
@@ -101,32 +219,60 @@ export default function InputStep({
 				<>
 					<CustomZapAmountOptions
 						onSelect={(amount) =>
-							setValue("amount", amount, { shouldDirty: true })
+							setValue("xmrAmount", amount, { shouldDirty: true })
 						}
 					/>
 
-					<Flex gap="2">
+					<Flex gap="2" alignItems="center">
+						XMR
 						<Input
 							type="number"
-							placeholder="Custom amount"
-							isInvalid={!!errors.amount}
+							placeholder="Custom amount XMR"
 							step={0.0001}
-							min={minTip}
-							flex={1}
-							{...register("amount", {
-								valueAsNumber: true,
-								min: 0.0001,
-								onBlur: () => {
-									const amount = watch("amount");
-									if (Number.isNaN(amount)) {
-										setValue("amount", 0);
-									} else {
-										setValue("amount", amount);
-									}
-								},
-							})}
+							isInvalid={!!errors.xmrAmount}
+							{...xmrRegister}
+							onChange={(e) => {
+								xmrRegister.onChange(e);
+								const xmr = Number(e.target.value);
+								debouncedUpdateFiat(xmr);
+							}}
 						/>
 					</Flex>
+
+					<Flex gap="2" alignItems="center">
+						<Checkbox
+							isChecked={isApiEnabled}
+							onChange={(e) => setIsApiEnabled(e.target.checked)}
+						>
+							Enable CoinGecko API for fiat currency rates
+						</Checkbox>
+					</Flex>
+
+					{isApiEnabled && (
+						<Flex gap="2" alignItems="center">
+							<Select flex={1} w="sm" {...register("currency")}>
+								{Object.keys(CURRENCIES).map((code) => (
+									<option key={code} value={code}>
+										{code.toUpperCase()}
+									</option>
+								))}
+							</Select>
+
+							<Input
+								flex={3}
+								type="number"
+								placeholder={`Custom amount ${selectedCurrency.toUpperCase()}`}
+								step={0.01}
+								isInvalid={!!errors.fiatAmount}
+								{...fiatRegister}
+								onChange={(e) => {
+									fiatRegister.onChange(e);
+									const fiat = Number(e.target.value);
+									debouncedUpdateXmr(fiat);
+								}}
+							/>
+						</Flex>
+					)}
 				</>
 			)}
 		</Flex>
