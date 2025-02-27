@@ -101,25 +101,25 @@ importers:
         version: 0.7.2
       applesauce-accounts:
         specifier: next
-        version: 0.0.0-next-20250221172959(typescript@5.7.3)
+        version: link:../applesauce/packages/accounts
       applesauce-content:
         specifier: next
-        version: 0.0.0-next-20250221172959(typescript@5.7.3)
+        version: link:../applesauce/packages/content
       applesauce-core:
         specifier: next
-        version: 0.0.0-next-20250221172959(typescript@5.7.3)
+        version: link:../applesauce/packages/core
       applesauce-factory:
         specifier: next
-        version: 0.0.0-next-20250221172959(typescript@5.7.3)
+        version: link:../applesauce/packages/factory
       applesauce-loaders:
         specifier: next
-        version: 0.0.0-next-20250221172959(typescript@5.7.3)
+        version: link:../applesauce/packages/loaders
       applesauce-react:
         specifier: next
-        version: 0.0.0-next-20250221172959(react-dom@19.0.0(react@19.0.0))(typescript@5.7.3)
+        version: link:../applesauce/packages/react
       applesauce-signers:
         specifier: next
-        version: 0.0.0-next-20250221172959(typescript@5.7.3)
+        version: link:../applesauce/packages/signers
       bech32:
         specifier: ^2.0.0
         version: 2.0.0
