@@ -4,9 +4,9 @@ import type { ComponentMap } from "applesauce-react/hooks";
 
 import Mention from "./components/mention";
 import { InlineEmoji } from "./components/ininle-emoji";
-import NipDefinition from "./components/nip";
 import { ImageGallery } from "./components/gallery";
 import MoneroDefinition from "./components/monero";
+import NipDefinition from "./components/nip";
 
 export const components: ComponentMap = {
 	text: ({ node }) => <Text as="span">{node.value}</Text>,

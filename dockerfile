@@ -4,7 +4,7 @@ FROM node:20-alpine AS base
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 ENV NODE_OPTIONS="--max_old_space_size=8192"
-RUN npm install -g pnpm
+RUN npm install -g pnpm@9.14.4
 
 WORKDIR /app
 
