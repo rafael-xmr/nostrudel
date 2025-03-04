@@ -38,7 +38,7 @@ export default function EventZapButton({
 				title={title}
 				{...props}
 				onClick={onOpen}
-				isDisabled={!canZap}
+				opacity={!canZap ? "0.4" : "1"}
 			/>
 
 			{isOpen && (
