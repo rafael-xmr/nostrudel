@@ -47,7 +47,7 @@ accounts.active$.pipe(skip(1)).subscribe((account) => {
   else localStorage.removeItem("active-account");
 });
 
-if (import.meta.env.DEV) {
+if (process.env.NEXT_PUBLIC_DEV) {
   // @ts-expect-error debug
   window.accounts = accounts;
 }

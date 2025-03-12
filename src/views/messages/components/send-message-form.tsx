@@ -92,7 +92,7 @@ export default function SendMessageForm({
             onChange={(e) => setValue("content", e.target.value, { shouldDirty: true, shouldTouch: true })}
             rows={2}
             isRequired
-            instanceRef={(inst) => (autocompleteRef.current = inst)}
+            // instanceRef={(inst) => (autocompleteRef.current = inst)}
             ref={textAreaRef}
             onPaste={onPaste}
             onKeyDown={(e) => {

@@ -75,7 +75,7 @@ export default function ChannelMessageForm({
             onChange={(e) => setValue("content", e.target.value, { shouldDirty: true })}
             rows={2}
             isRequired
-            instanceRef={(inst) => (componentRef.current = inst)}
+            // instanceRef={(inst) => (componentRef.current = inst)}
             ref={textAreaRef}
             onPaste={onPaste}
             onKeyDown={(e) => {

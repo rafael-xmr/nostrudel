@@ -1,16 +1,16 @@
 import { ReportArguments } from "@satellite-earth/core/types";
 import Report from "./report";
 
-import OverviewReport from "./overview.js";
-import ConversationsReport from "./conversations.js";
-import LogsReport from "./logs.js";
-import ServicesReport from "./services.js";
-import DMSearchReport from "./dm-search.js";
-import ScrapperStatusReport from "./scrapper-status.js";
-import ReceiverStatusReport from "./receiver-status.js";
-import NetworkStatusReport from "./network-status.js";
-import NotificationChannelsReport from "./notification-channels.js";
-import EventsSummaryReport from "./events-summary.js";
+import OverviewReport from "./overview";
+import ConversationsReport from "./conversations";
+import LogsReport from "./logs";
+import ServicesReport from "./services";
+import DMSearchReport from "./dm-search";
+import ScrapperStatusReport from "./scrapper-status";
+import ReceiverStatusReport from "./receiver-status";
+import NetworkStatusReport from "./network-status";
+import NotificationChannelsReport from "./notification-channels";
+import EventsSummaryReport from "./events-summary";
 
 export const ReportClasses: {
   [k in keyof ReportArguments]?: typeof Report<k>;

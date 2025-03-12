@@ -123,7 +123,7 @@ export default class WebRtcRelayClient extends AbstractRelay {
   }
 }
 
-if (import.meta.env.DEV) {
+if (process.env.NEXT_PUBLIC_DEV) {
   // @ts-expect-error
   window.WebRtcWebSocket = WebRtcWebSocket;
   // @ts-expect-error

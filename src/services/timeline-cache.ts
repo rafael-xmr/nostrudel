@@ -30,7 +30,7 @@ class TimelineCacheService {
 
 const timelineCacheService = new TimelineCacheService();
 
-if (import.meta.env.DEV) {
+if (process.env.NEXT_PUBLIC_DEV) {
   //@ts-ignore
   window.timelineCacheService = timelineCacheService;
 }

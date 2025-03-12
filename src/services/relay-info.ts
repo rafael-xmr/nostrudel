@@ -51,7 +51,7 @@ setInterval(() => {
 
 export const relayInfoService = { getInfo };
 
-if (import.meta.env.DEV) {
+if (process.env.NEXT_PUBLIC_DEV) {
   // @ts-ignore
   window.relayInfoService = relayInfoService;
   // @ts-ignore

@@ -10,7 +10,7 @@ eventStore.verifyEvent = (event) => {
   return isFromCache(event) || verifyEvent(event);
 };
 
-if (import.meta.env.DEV) {
+if (process.env.NEXT_PUBLIC_DEV) {
   // @ts-expect-error debug
   window.eventStore = eventStore;
   // @ts-expect-error debug

@@ -12,7 +12,7 @@ const replaceableEventLoader = new ReplaceableLoader(rxNostr, {
 
 replaceableEventLoader.subscribe((packet) => eventStore.add(packet.event, packet.from));
 
-if (import.meta.env.DEV) {
+if (process.env.NEXT_PUBLIC_DEV) {
   //@ts-expect-error debug
   window.replaceableEventLoader = replaceableEventLoader;
 }

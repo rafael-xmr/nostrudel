@@ -24,7 +24,7 @@ dayjs.extend(relativeTimePlugin);
 dayjs.extend(localizedFormat);
 
 // register nostr: protocol handler
-if (import.meta.env.PROD) {
+if (process.env.NEXT_PUBLIC_PROD) {
   try {
     navigator.registerProtocolHandler("web+nostr", new URL("/l/%s", location.origin).toString());
   } catch (e) {
@@ -47,10 +47,10 @@ createRoot(root).render(
 );
 
 // if web, register service worker
-import { CAP_IS_WEB } from "./env";
-import { registerServiceWorker } from "./services/worker";
-if (CAP_IS_WEB) {
-  logger("Loading service worker");
-  // const { registerServiceWorker } = await import("./services/worker");
-  registerServiceWorker();
-}
+// import { CAP_IS_WEB } from "./env";
+// import { registerServiceWorker } from "./services/worker";
+// if (CAP_IS_WEB) {
+//   logger("Loading service worker");
+//   // const { registerServiceWorker } = await import("./services/worker");
+//   registerServiceWorker();
+// }

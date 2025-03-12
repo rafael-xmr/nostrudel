@@ -46,8 +46,8 @@ function EmailForm() {
 export default function NotificationSettingsView() {
   return (
     <SimpleView title="Notifications" maxW="4xl" gap="4">
-      {(CAP_IS_WEB || import.meta.env.DEV) && <WebPushNotificationSettings />}
-      {(CAP_IS_NATIVE || import.meta.env.DEV) && <NtfyNotificationSettings />}
+      {(CAP_IS_WEB || process.env.NEXT_PUBLIC_DEV) && <WebPushNotificationSettings />}
+      {(CAP_IS_NATIVE || process.env.NEXT_PUBLIC_DEV) && <NtfyNotificationSettings />}
       <OtherSubscriptions />
     </SimpleView>
   );

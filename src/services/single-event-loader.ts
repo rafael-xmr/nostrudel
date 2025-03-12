@@ -9,7 +9,7 @@ const singleEventLoader = new SingleEventLoader(rxNostr, { cacheRequest });
 
 singleEventLoader.subscribe((packet) => eventStore.add(packet.event, packet.from));
 
-if (import.meta.env.DEV) {
+if (process.env.NEXT_PUBLIC_DEV) {
   //@ts-expect-error
   window.singleEventLoader = singleEventLoader;
 }

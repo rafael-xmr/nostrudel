@@ -45,8 +45,8 @@ async function createRelay(url: string) {
 
     if (url === ":memory:") {
       return new MemoryRelay();
-    } else if (url === "nostr-idb://wasm-worker" && WasmRelay.SUPPORTED) {
-      return new WasmRelay();
+    // } else if (url === "nostr-idb://wasm-worker" && WasmRelay.SUPPORTED) {
+    //   return new WasmRelay();
     } else if (url.startsWith("nostr-idb://")) {
       return createInternalRelay();
     } else if (isSafeRelayURL(url)) {
@@ -84,7 +84,7 @@ async function connectRelay(url: string) {
 }
 
 export const cacheRelay$ = new BehaviorSubject<
-  AbstractRelay | CacheRelay | WasmRelay | AbstractRelay | MemoryRelay | null
+  AbstractRelay | CacheRelay | AbstractRelay | MemoryRelay | null
 >(null);
 
 // create a new cache relay instance when the url changes
@@ -150,13 +150,13 @@ export function getCacheRelay() {
 setInterval(() => {
   const relay = getCacheRelay();
 
-  if (relay instanceof WasmRelay) {
-    const days = localSettings.wasmPersistForDays.value;
-    if (days) {
-      log(`Removing all events older than ${days} days in WASM relay`);
-      relay.worker?.delete(["REQ", "prune", { until: dayjs().subtract(days, "days").unix() }]);
-    }
-  }
+  // if (relay instanceof WasmRelay) {
+  //   const days = localSettings.wasmPersistForDays.value;
+  //   if (days) {
+  //     log(`Removing all events older than ${days} days in WASM relay`);
+  //     relay.worker?.delete(["REQ", "prune", { until: dayjs().subtract(days, "days").unix() }]);
+  //   }
+  // }
 }, 60_000);
 
 // watch for new events and send them to the cache relay

@@ -133,7 +133,7 @@ const webRtcRelaysService = new WebRtcRelaysService(broker, null);
 
 webRtcRelaysService.start();
 
-// if (import.meta.env.DEV) {
+// if (process.env.NEXT_PUBLIC_DEV) {
 // @ts-expect-error
 window.webRtcRelaysService = webRtcRelaysService;
 // }

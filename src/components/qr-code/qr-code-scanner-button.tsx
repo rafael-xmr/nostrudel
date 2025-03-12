@@ -82,7 +82,7 @@ export default function QRCodeScannerButton({ onData }: { onData: QrScannerModal
         if (result) onData(result);
       } catch (error) {
         log(error);
-        if (import.meta.env.DEV && error instanceof Error) toast({ status: "error", description: error.message });
+        if (process.env.NEXT_PUBLIC_DEV && error instanceof Error) toast({ status: "error", description: error.message });
 
         modal.onOpen();
       }

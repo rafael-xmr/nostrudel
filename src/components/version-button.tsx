@@ -6,7 +6,7 @@ import { CheckIcon, CopyToClipboardIcon } from "./icons";
 export default function VersionButton({ ...props }: Omit<ButtonProps, "children">) {
   const toast = useToast();
   const [copied, setCopied] = useState(false);
-  const version = [import.meta.env.VITE_APP_VERSION, import.meta.env.VITE_COMMIT_HASH].filter(Boolean).join("-");
+  const version = [process.env.NEXT_PUBLIC_VITE_APP_VERSION, process.env.NEXT_PUBLIC_VITE_COMMIT_HASH].filter(Boolean).join("-");
 
   if (!version) return null;
 

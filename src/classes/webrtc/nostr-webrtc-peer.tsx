@@ -296,7 +296,7 @@ export default class NostrWebRTCPeer extends EventEmitter<EventMap> {
   }
 }
 
-if (import.meta.env.DEV) {
+if (process.env.NEXT_PUBLIC_DEV) {
   // @ts-expect-error
   window.WebRTCPeer = NostrWebRTCPeer;
 }

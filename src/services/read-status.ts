@@ -106,7 +106,7 @@ const readStatusService = new ReadStatusService();
 
 setInterval(readStatusService.prune.bind(readStatusService), 30_000);
 
-if (import.meta.env.DEV) {
+if (process.env.NEXT_PUBLIC_DEV) {
   // @ts-expect-error debug
   window.readStatusService = readStatusService;
 }

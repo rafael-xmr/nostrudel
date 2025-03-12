@@ -23,7 +23,7 @@ class XmlFeedsService {
 
 export const xmlFeedsService = new XmlFeedsService();
 
-if (import.meta.env.DEV) {
+if (process.env.NEXT_PUBLIC_DEV) {
   // @ts-expect-error
   window.xmlFeedsService = xmlFeedsService;
 }

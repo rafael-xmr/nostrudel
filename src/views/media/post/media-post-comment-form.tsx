@@ -47,7 +47,7 @@ export default function MediaPostCommentForm({
     <>
       <Flex as="form" onSubmit={sendMessage} gap="2" {...props}>
         <MagicInput
-          instanceRef={(inst) => (textAreaRef.current = inst)}
+          // instanceRef={(inst) => (textAreaRef.current = inst)}
           placeholder="Comment"
           autoComplete="off"
           isRequired

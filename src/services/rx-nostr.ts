@@ -45,7 +45,7 @@ rxNostr.createAllMessageObservable().subscribe((packet) => {
   }
 });
 
-if (import.meta.env.DEV) {
+if (process.env.NEXT_PUBLIC_DEV) {
   // @ts-expect-error
   window.rxNostr = rxNostr;
 }

@@ -83,7 +83,7 @@ export default function ChatMessageForm({
 				<Flex as="form" onSubmit={sendMessage} gap="2" flex={1}>
 					<InsertGifButton onSelectURL={insertText} aria-label="Add gif" />
 					<MagicInput
-						instanceRef={(inst) => (textAreaRef.current = inst)}
+						// instanceRef={(inst) => (textAreaRef.current = inst)}
 						placeholder="Message"
 						autoComplete="off"
 						isRequired

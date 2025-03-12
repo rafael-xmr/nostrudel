@@ -94,7 +94,7 @@ controlApi$.subscribe((api) => {
   else reportManager$.next(null);
 });
 
-if (import.meta.env.DEV) {
+if (process.env.NEXT_PUBLIC_DEV) {
   // @ts-expect-error
   window.reportManager$ = reportManager$;
 }

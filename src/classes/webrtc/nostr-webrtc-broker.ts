@@ -151,7 +151,7 @@ export default class NostrWebRtcBroker extends EventEmitter<EventMap> {
   }
 }
 
-if (import.meta.env.DEV) {
+if (process.env.NEXT_PUBLIC_DEV) {
   // @ts-expect-error
   window.NostrWebRtcBroker = NostrWebRtcBroker;
 }

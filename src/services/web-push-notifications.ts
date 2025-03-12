@@ -1,13 +1,13 @@
-import { BehaviorSubject } from "rxjs";
+// import { BehaviorSubject } from "rxjs";
 
-import { serviceWorkerRegistration } from "./worker";
+// import { serviceWorkerRegistration } from "./worker";
 
-export const pushSubscription = new BehaviorSubject<PushSubscription | null>(null);
-serviceWorkerRegistration.subscribe(async (registration) => {
-  if (registration) {
-    pushSubscription.next(await registration.pushManager.getSubscription());
-  }
-});
+// export const pushSubscription = new BehaviorSubject<PushSubscription | null>(null);
+// serviceWorkerRegistration.subscribe(async (registration) => {
+//   if (registration) {
+//     pushSubscription.next(await registration.pushManager.getSubscription());
+//   }
+// });
 
 export async function enableNotifications() {
   // const controlApi = getControlApi();

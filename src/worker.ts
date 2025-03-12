@@ -19,7 +19,7 @@ precacheAndRoute(self.__WB_MANIFEST);
 cleanupOutdatedCaches();
 
 let allowlist: undefined | RegExp[] = undefined;
-if (import.meta.env.DEV) allowlist = [/^\/$/];
+if (process.env.NEXT_PUBLIC_DEV) allowlist = [/^\/$/];
 registerRoute(new NavigationRoute(createHandlerBoundToURL("index.html"), { allowlist }));
 
 // notifications

@@ -9,7 +9,7 @@ const userSetsLoader = new UserSetsLoader(rxNostr, { cacheRequest });
 
 userSetsLoader.subscribe((packet) => eventStore.add(packet.event, packet.from));
 
-if (import.meta.env.DEV) {
+if (process.env.NEXT_PUBLIC_DEV) {
   //@ts-expect-error
   window.userSetsLoader = userSetsLoader;
 }

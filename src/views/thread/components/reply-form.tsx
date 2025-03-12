@@ -173,7 +173,7 @@ export default function ReplyForm({
 				onChange={(e) =>
 					setValue("content", e.target.value, { shouldDirty: true })
 				}
-				instanceRef={(inst) => (textAreaRef.current = inst)}
+				// instanceRef={(inst) => (textAreaRef.current = inst)}
 				onPaste={onPaste}
 				onKeyDown={(e) => {
 					if ((e.ctrlKey || e.metaKey) && e.key === "Enter" && formRef.current)

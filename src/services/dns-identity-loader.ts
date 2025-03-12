@@ -16,7 +16,7 @@ export const dnsIdentityLoader = new DnsIdentityLoader({
 
 dnsIdentityLoader.fetch = fetchWithProxy;
 
-if (import.meta.env.DEV) {
+if (process.env.NEXT_PUBLIC_DEV) {
   // @ts-expect-error debug
   window.dnsIdentityLoader = dnsIdentityLoader;
 }

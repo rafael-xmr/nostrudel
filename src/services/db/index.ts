@@ -263,7 +263,7 @@ export async function deleteDatabase() {
 	window.location.reload();
 }
 
-if (import.meta.env.DEV) {
+if (process.env.NEXT_PUBLIC_DEV) {
 	// @ts-ignore
 	window.db = db;
 }

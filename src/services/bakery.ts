@@ -61,7 +61,7 @@ bakery$.subscribe((relay) => {
   else controlApi$.next(new BakeryControlApi(relay));
 });
 
-if (import.meta.env.DEV) {
+if (process.env.NEXT_PUBLIC_DEV) {
   // @ts-expect-error
   window.bakery$ = bakery$;
   // @ts-expect-error

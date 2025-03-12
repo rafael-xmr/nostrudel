@@ -94,7 +94,7 @@ export const NIP_89_CLIENT_APP: EventFactoryClient = {
 export const SUPPORT_PUBKEY =
 	"877308276be50ce9bafa7e5e374e4fcbf5e9859a21918f34baefd000746b7d35";
 
-export const TENOR_API_KEY = import.meta.env.VITE_TENOR_API_KEY as
+export const TENOR_API_KEY = process.env.NEXT_PUBLIC_VITE_TENOR_API_KEY as
 	| string
 	| undefined;
 
