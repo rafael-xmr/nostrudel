@@ -1,10 +1,11 @@
 import { createIcon } from "@chakra-ui/icons";
+import { Fragment } from "react";
 
 const MoneroBlack = createIcon({
 	displayName: "MoneroBlack",
 	viewBox: "0 0 48 48",
 	path: [
-		<>
+		<Fragment key="WB2PwxTQsB8lfLfbsFSI4">
 			<radialGradient
 				key="WB2PwxTQsB8lfLfbsFSI4a_3s5uJPNeoda4_gr1"
 				id="WB2PwxTQsB8lfLfbsFSI4a_3s5uJPNeoda4_gr1"
@@ -60,7 +61,7 @@ const MoneroBlack = createIcon({
 				fill="black"
 				d="M11,30V14.378c0-0.445,0.539-0.669,0.854-0.354L24,26.171l12.146-12.146	C36.461,13.71,37,13.933,37,14.378V30h6.285c0.568-1.86,0.878-3.832,0.878-5.878C44.163,13.01,35.153,4,24.041,4	S3.919,13.01,3.919,24.122c0,2.046,0.31,4.018,0.878,5.878H11z"
 			/>
-		</>,
+		</Fragment>,
 	],
 	defaultProps: { boxSize: 4 },
 });

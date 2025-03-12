@@ -1,5 +1,11 @@
 import type { Metadata, Viewport } from "next";
-import "../styles.css";
+import "../src/styles.css";
+
+import dynamic from "next/dynamic";
+
+const GlobalProviders = dynamic(() =>
+	import("../src/providers/global").then((mod) => mod.GlobalProviders),
+);
 
 export const metadata: Metadata = {
 	title: "moStard",
@@ -29,14 +35,11 @@ export default function RootLayout({
 					property="og:image"
 					content="https://github.com/rafael-xmr/nostrudel/blob/mostard/public/og_image.jpeg?raw=true"
 				/>
-
-				<script>
-					window.CACHE_RELAY_ENABLED = false; window.IMAGE_PROXY_PATH = "";
-					window.REQUEST_PROXY = ""; window.PROXY_FIRST = false;
-				</script>
 			</head>
 			<body>
-				<div id="root">{children}</div>
+				<div id="root">
+					<GlobalProviders>{children}</GlobalProviders>
+				</div>
 			</body>
 		</html>
 	);

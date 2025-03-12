@@ -104,31 +104,31 @@ importers:
         version: 0.7.2
       applesauce-accounts:
         specifier: next
-        version: 0.0.0-next-20250310200358(typescript@5.8.2)
+        version: link:../applesauce/packages/accounts
       applesauce-content:
         specifier: next
-        version: 0.0.0-next-20250310200358(typescript@5.8.2)
+        version: link:../applesauce/packages/content
       applesauce-core:
         specifier: next
-        version: 0.0.0-next-20250310200358(typescript@5.8.2)
+        version: link:../applesauce/packages/core
       applesauce-factory:
         specifier: next
-        version: 0.0.0-next-20250310200358(typescript@5.8.2)
+        version: link:../applesauce/packages/factory
       applesauce-loaders:
         specifier: next
-        version: 0.0.0-next-20250310200358(typescript@5.8.2)
+        version: link:../applesauce/packages/loaders
       applesauce-react:
         specifier: next
-        version: 0.0.0-next-20250310200358(react-dom@19.0.0(react@19.0.0))(typescript@5.8.2)
+        version: link:../applesauce/packages/react
       applesauce-relay:
         specifier: next
-        version: 0.0.0-next-20250310200358(typescript@5.8.2)
+        version: link:../applesauce/packages/relay
       applesauce-signers:
         specifier: next
-        version: 0.0.0-next-20250310200358(typescript@5.8.2)
+        version: link:../applesauce/packages/signers
       applesauce-wallet:
         specifier: next
-        version: 0.0.0-next-20250310200358(typescript@5.8.2)
+        version: link:../applesauce/packages/wallet
       bech32:
         specifier: ^2.0.0
         version: 2.0.0
@@ -216,6 +216,12 @@ importers:
       nanoid:
         specifier: ^5.1.3
         version: 5.1.3
+      next:
+        specifier: ^15.2.0
+        version: 15.2.2(@babel/core@7.26.9)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
+      next-pwa:
+        specifier: ^5.6.0
+        version: 5.6.0(@babel/core@7.26.9)(@types/babel__core@7.20.5)(next@15.2.2(@babel/core@7.26.9)(react-dom@19.0.0(react@19.0.0))(react@19.0.0))(webpack@5.98.0)
       ngeohash:
         specifier: ^0.6.3
         version: 0.6.3
@@ -1029,14 +1035,8 @@ packages:
     peerDependencies:
       '@capacitor/core': ^6.0.0
 
-  '@cashu/cashu-ts@2.0.0-rc1':
-    resolution: {integrity: sha512-39459l7x/fUMEgOsCdGLLl6rMekO4nbv+wEuavmyElh8hgN8t66wcb29AJvdFTb6K3lPACKF2rs/jAlPYrN7Ng==}
-
   '@cashu/cashu-ts@2.2.2':
     resolution: {integrity: sha512-s4DRaIZOh2MC0qi0G1Te4KfOzzw91EZiIVupssKDmaPSUbT1ggLonj5qyzB4OCpI7uZ4lDpnxh43xkRZyAqotw==}
-
-  '@cashu/crypto@0.2.7':
-    resolution: {integrity: sha512-1aaDfUjiHNXoJqg8nW+341TLWV9W28DsVNXJUKcHL0yAmwLs5+56SSnb8LLDJzPamLVoYL0U0bda91klAzptig==}
 
   '@cashu/crypto@0.3.4':
     resolution: {integrity: sha512-mfv1Pj4iL1PXzUj9NKIJbmncCLMqYfnEDqh/OPxAX0nNBt6BOnVJJLjLWFlQeYxlnEfWABSNkrqPje1t5zcyhA==}
@@ -1698,6 +1698,12 @@ packages:
   '@lezer/yaml@1.0.3':
     resolution: {integrity: sha512-GuBLekbw9jDBDhGur82nuwkxKQ+a3W5H0GfaAthDXcAu+XdpS43VlnxA9E9hllkpSP5ellRDKjLLj7Lu9Wr6xA==}
 
+  '@lightninglabs/lnc-core@0.3.2-alpha':
+    resolution: {integrity: sha512-H6tG+X9txCIdxTR+GPsbImzP2Juo+6Uvq/Ipaijd7xPISzgEU4J4GNE5PEHuIZqbnBo1RmpuXnFG6dmsl3PTzQ==}
+
+  '@lightninglabs/lnc-web@0.3.2-alpha':
+    resolution: {integrity: sha512-3aCBugBf0NzczpJqmHn03Oq2Ju9W5n0+nOdAe+Y/Zhf6YLXdqG1PTJ2J+7TXncpiogfPYDCw95tVQqSi4Zi/ZA==}
+
   '@manypkg/find-root@1.1.0':
     resolution: {integrity: sha512-mki5uBvhHzO8kYYix/WRy2WX8S3B5wdVSc9D6KcU5lQNglP2yt58/VfLuAK49glRXChosY8ap2oJ1qgma3GUVA==}
 
@@ -1707,53 +1713,53 @@ packages:
   '@marijn/find-cluster-break@1.0.2':
     resolution: {integrity: sha512-l0h88YhZFyKdXIFNfSWpyjStDjGHwZ/U7iobcK1cQQD8sejsONdQtTVU+1wVN1PBw40PiiHB1vA5S7VTfQiP9g==}
 
-  '@next/env@15.2.0':
-    resolution: {integrity: sha512-eMgJu1RBXxxqqnuRJQh5RozhskoNUDHBFybvi+Z+yK9qzKeG7dadhv/Vp1YooSZmCnegf7JxWuapV77necLZNA==}
+  '@next/env@15.2.2':
+    resolution: {integrity: sha512-yWgopCfA9XDR8ZH3taB5nRKtKJ1Q5fYsTOuYkzIIoS8TJ0UAUKAGF73JnGszbjk2ufAQDj6mDdgsJAFx5CLtYQ==}
 
-  '@next/swc-darwin-arm64@15.2.0':
-    resolution: {integrity: sha512-rlp22GZwNJjFCyL7h5wz9vtpBVuCt3ZYjFWpEPBGzG712/uL1bbSkS675rVAUCRZ4hjoTJ26Q7IKhr5DfJrHDA==}
+  '@next/swc-darwin-arm64@15.2.2':
+    resolution: {integrity: sha512-HNBRnz+bkZ+KfyOExpUxTMR0Ow8nkkcE6IlsdEa9W/rI7gefud19+Sn1xYKwB9pdCdxIP1lPru/ZfjfA+iT8pw==}
     engines: {node: '>= 10'}
     cpu: [arm64]
     os: [darwin]
 
-  '@next/swc-darwin-x64@15.2.0':
-    resolution: {integrity: sha512-DiU85EqSHogCz80+sgsx90/ecygfCSGl5P3b4XDRVZpgujBm5lp4ts7YaHru7eVTyZMjHInzKr+w0/7+qDrvMA==}
+  '@next/swc-darwin-x64@15.2.2':
+    resolution: {integrity: sha512-mJOUwp7al63tDpLpEFpKwwg5jwvtL1lhRW2fI1Aog0nYCPAhxbJsaZKdoVyPZCy8MYf/iQVNDuk/+i29iLCzIA==}
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [darwin]
 
-  '@next/swc-linux-arm64-gnu@15.2.0':
-    resolution: {integrity: sha512-VnpoMaGukiNWVxeqKHwi8MN47yKGyki5q+7ql/7p/3ifuU2341i/gDwGK1rivk0pVYbdv5D8z63uu9yMw0QhpQ==}
+  '@next/swc-linux-arm64-gnu@15.2.2':
+    resolution: {integrity: sha512-5ZZ0Zwy3SgMr7MfWtRE7cQWVssfOvxYfD9O7XHM7KM4nrf5EOeqwq67ZXDgo86LVmffgsu5tPO57EeFKRnrfSQ==}
     engines: {node: '>= 10'}
     cpu: [arm64]
     os: [linux]
 
-  '@next/swc-linux-arm64-musl@15.2.0':
-    resolution: {integrity: sha512-ka97/ssYE5nPH4Qs+8bd8RlYeNeUVBhcnsNUmFM6VWEob4jfN9FTr0NBhXVi1XEJpj3cMfgSRW+LdE3SUZbPrw==}
+  '@next/swc-linux-arm64-musl@15.2.2':
+    resolution: {integrity: sha512-cgKWBuFMLlJ4TWcFHl1KOaVVUAF8vy4qEvX5KsNd0Yj5mhu989QFCq1WjuaEbv/tO1ZpsQI6h/0YR8bLwEi+nA==}
     engines: {node: '>= 10'}
     cpu: [arm64]
     os: [linux]
 
-  '@next/swc-linux-x64-gnu@15.2.0':
-    resolution: {integrity: sha512-zY1JduE4B3q0k2ZCE+DAF/1efjTXUsKP+VXRtrt/rJCTgDlUyyryx7aOgYXNc1d8gobys/Lof9P9ze8IyRDn7Q==}
+  '@next/swc-linux-x64-gnu@15.2.2':
+    resolution: {integrity: sha512-c3kWSOSsVL8rcNBBfOq1+/j2PKs2nsMwJUV4icUxRgGBwUOfppeh7YhN5s79enBQFU+8xRgVatFkhHU1QW7yUA==}
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [linux]
 
-  '@next/swc-linux-x64-musl@15.2.0':
-    resolution: {integrity: sha512-QqvLZpurBD46RhaVaVBepkVQzh8xtlUN00RlG4Iq1sBheNugamUNPuZEH1r9X1YGQo1KqAe1iiShF0acva3jHQ==}
+  '@next/swc-linux-x64-musl@15.2.2':
+    resolution: {integrity: sha512-PXTW9PLTxdNlVYgPJ0equojcq1kNu5NtwcNjRjHAB+/sdoKZ+X8FBu70fdJFadkxFIGekQTyRvPMFF+SOJaQjw==}
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [linux]
 
-  '@next/swc-win32-arm64-msvc@15.2.0':
-    resolution: {integrity: sha512-ODZ0r9WMyylTHAN6pLtvUtQlGXBL9voljv6ujSlcsjOxhtXPI1Ag6AhZK0SE8hEpR1374WZZ5w33ChpJd5fsjw==}
+  '@next/swc-win32-arm64-msvc@15.2.2':
+    resolution: {integrity: sha512-nG644Es5llSGEcTaXhnGWR/aThM/hIaz0jx4MDg4gWC8GfTCp8eDBWZ77CVuv2ha/uL9Ce+nPTfYkSLG67/sHg==}
     engines: {node: '>= 10'}
     cpu: [arm64]
     os: [win32]
 
-  '@next/swc-win32-x64-msvc@15.2.0':
-    resolution: {integrity: sha512-8+4Z3Z7xa13NdUuUAcpVNA6o76lNPniBd9Xbo02bwXQXnZgFvEopwY2at5+z7yHl47X9qbZpvwatZ2BRo3EdZw==}
+  '@next/swc-win32-x64-msvc@15.2.2':
+    resolution: {integrity: sha512-52nWy65S/R6/kejz3jpvHAjZDPKIbEQu4x9jDBzmB9jJfuOy5rspjKu4u77+fI4M/WzLXrrQd57hlFGzz1ubcQ==}
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [win32]
@@ -2443,33 +2449,6 @@ packages:
     engines: {node: '>=8.0.0'}
     hasBin: true
 
-  applesauce-accounts@0.0.0-next-20250310200358:
-    resolution: {integrity: sha512-iwKH+TZuEvF7tdE1eDB7lsd9OCADqQ8OmFCzF+b5+3DOuZU0X2cAASR0bMHZZxms6VppOUlIGjMg56QVxRnNGw==}
-
-  applesauce-content@0.0.0-next-20250310200358:
-    resolution: {integrity: sha512-2y4uXM3DKrC4d2Fg1dbObzaE194WBoczMTe1taXRbCWGv2eZX+VoSMSTPyXFPjUjPLoFwKcArdVt4HpWh2b6EA==}
-
-  applesauce-core@0.0.0-next-20250310200358:
-    resolution: {integrity: sha512-7QzMuqR8H7Wb5+lboiCe7o3SD5N2BY4GpppVbDCKx+/Ois/YbiGYrCIknUZyxHHBGEFU6acRUwTCDs39F4SiXw==}
-
-  applesauce-factory@0.0.0-next-20250310200358:
-    resolution: {integrity: sha512-Gc/wdEfNwre5jSiYtVdhQjRdej0cvnD1uOLIdW+LN4RM5QM4Gh30zdgAn4PhVhtv7VJVmjeBZOpYzgRBYQYvMg==}
-
-  applesauce-loaders@0.0.0-next-20250310200358:
-    resolution: {integrity: sha512-dGeCCgq4fDea4xgJDhxS8Hd5jE9x/eCCzV91ycdptWfi+s1tJgpYFHnOwRJR7VDxTbsnprjkWC4f8R0zKhNplw==}
-
-  applesauce-react@0.0.0-next-20250310200358:
-    resolution: {integrity: sha512-LhlwpPnb8wpAFAfhDlCfVTxpFq5lQoefIUK/FuI+nFlOAuIIkYJ6TGy+y+o4m/bGtbL+KycINmLOM/eeNEjkdA==}
-
-  applesauce-relay@0.0.0-next-20250310200358:
-    resolution: {integrity: sha512-BeoYlg1454c8rx96WsW5jrJbm8+4eTzbDP7P7eoXbn2+IXIntK6y9Fi927p2EPeS3iPERZ8UEbqHpMp7DrL/DA==}
-
-  applesauce-signers@0.0.0-next-20250310200358:
-    resolution: {integrity: sha512-prO+u5NXYB9UgBS5JPAc5UZVKyShTGb5sYW4wbxz6HUHE1+Yx6wWTbFYVy1FJ6iNIyPa6WPBXUg7bem3u4xHgQ==}
-
-  applesauce-wallet@0.0.0-next-20250310200358:
-    resolution: {integrity: sha512-pFjn6AlBpyRdpYtkxNduBfRTkaW8h5bchVNGDgkvqCMbN5TS9D/odlvcNF30MeJX0SvriLPCcE54Ej0da++mMw==}
-
   arg@4.1.3:
     resolution: {integrity: sha512-58S9QDqG0Xx27YwPSt9fJxivjYl432YCwfDMfZ+71RAqUrZef7LrKQZ3LHLOwCS4FLNBplP533Zx895SeOCHvA==}
 
@@ -3021,6 +3000,9 @@ packages:
   cross-spawn@7.0.6:
     resolution: {integrity: sha512-uV2QOWP2nWzsy2aMp8aRibhi9dlzF5Hgh5SHaB9OiTGEyDTiJJyx0uy51QXdyWbtAHNua4XJzUKca3OzKUd3vA==}
     engines: {node: '>= 8'}
+
+  crypto-js@4.2.0:
+    resolution: {integrity: sha512-KALDyEYgpY+Rlob/iriUtjV6d5Eq+Y191A5g4UqLAi8CyGP9N1+FdVbkc1SxKc2r4YAYqG8JzO2KGL+AizD70Q==}
 
   crypto-random-string@2.0.0:
     resolution: {integrity: sha512-v1plID3y9r/lPhviJ1wrXpLeyUIGAZ2SHNYTEapm7/8A9nLPoyvVp3RK/EPFqn5kEznyWgYZNsRtYYIWbuG8KA==}
@@ -4293,9 +4275,6 @@ packages:
   lezer-json5@2.0.2:
     resolution: {integrity: sha512-NRmtBlKW/f8mA7xatKq8IUOq045t8GVHI4kZXrUtYYUdiVeGiO6zKGAV7/nUAnf5q+rYTY+SWX/gvQdFXMjNxQ==}
 
-  light-bolt11-decoder@3.2.0:
-    resolution: {integrity: sha512-3QEofgiBOP4Ehs9BI+RkZdXZNtSys0nsJ6fyGeSiAGCBsMwHGUDS/JQlY/sTnWs91A2Nh0S9XXfA8Sy9g6QpuQ==}
-
   lines-and-columns@1.2.4:
     resolution: {integrity: sha512-7ylylesZQ/PV29jhEDl3Ufjo6ZX7gCqJr5F7PKrqc93v7fzSymt1BpwEU8nAUXs8qzzvqhbjhK5QZg6Mt/HkBg==}
 
@@ -4738,8 +4717,8 @@ packages:
     peerDependencies:
       next: '>=9.0.0'
 
-  next@15.2.0:
-    resolution: {integrity: sha512-VaiM7sZYX8KIAHBrRGSFytKknkrexNfGb8GlG6e93JqueCspuGte8i4ybn8z4ww1x3f2uzY4YpTaBEW4/hvsoQ==}
+  next@15.2.2:
+    resolution: {integrity: sha512-dgp8Kcx5XZRjMw2KNwBtUzhngRaURPioxoNIVl5BOyJbhi9CUgEtKDO7fx5wh8Z8vOVX1nYZ9meawJoRrlASYA==}
     engines: {node: ^18.18.0 || ^19.8.0 || >= 20.0.0}
     hasBin: true
     peerDependencies:
@@ -4823,6 +4802,14 @@ packages:
       typescript:
         optional: true
 
+  nostr-tools@2.9.4:
+    resolution: {integrity: sha512-Powumwkp+EWbdK1T8IsEX4daTLQhtWJvitfZ6OP2BdU1jJZvNlUp3SQB541UYw4uc9jgLbxZW6EZSdZoSfIygQ==}
+    peerDependencies:
+      typescript: '>=5.0.0'
+    peerDependenciesMeta:
+      typescript:
+        optional: true
+
   nostr-typedef@0.11.0:
     resolution: {integrity: sha512-grXIdS0dnfi3fUQNJFRNKjQZaFl3sYUpQ+U67XRtAFpl/ZAwFWkboJpryv72PS7pQ/Gkd0Q2uEoX8wm9H2uaQg==}
 
@@ -4856,13 +4843,6 @@ packages:
   object.assign@4.1.7:
     resolution: {integrity: sha512-nK28WOo+QIjBkDduTINE4JkF/UJJKyf2EJxvJKfblDpyg0Q+pkOHNTL0Qwy6NP6FhE/EnzV73BxxqcJaXY9anw==}
     engines: {node: '>= 0.4'}
-
-  observable-hooks@4.2.4:
-    resolution: {integrity: sha512-FdTQgyw1h5bG/QHCBIqctdBSnv9VARJCEilgpV6L2qlw1yeLqFIwPm4U15dMtl5kDmNN0hSt+Nl6iYbLFwEcQA==}
-    peerDependencies:
-      react: '>=16.8.0'
-      react-dom: '>=16.8.0'
-      rxjs: '>=6.0.0'
 
   on-finished@2.4.1:
     resolution: {integrity: sha512-oVlzkg3ENAhCk2zdv7IJwd/QUD4z2RxRwpkcGY8psCVcCYZNq4wYnVWALHM+brtuJjePWiYF/ClmuDr8Ch5+kg==}
@@ -5125,6 +5105,9 @@ packages:
       You or someone you depend on is using Q, the JavaScript Promise library that gave JavaScript developers strong feelings about promises. They can almost certainly migrate to the native JavaScript promise now. Thank you literally everyone for joining me in this bet against the odds. Be excellent to each other.
 
       (For a CapTP with native promises, see @endo/eventual-send and @endo/captp)
+
+  qrcode-generator@1.4.4:
+    resolution: {integrity: sha512-HM7yY8O2ilqhmULxGMpcHSF1EhJJ9yBj8gvDEuZ6M+KGJ0YY2hKpnXvRD+hZPLrDVck3ExIGhmPtSdcjC+guuw==}
 
   qs@6.13.0:
     resolution: {integrity: sha512-+38qI9SOr8tfZ4QmJNplMUxqjbe7LKvvZgWdExBOmd+egZTtjLB67Gu0HRX3u/XOq7UU2Nx6nsjvS16Z9uwfpg==}
@@ -5391,10 +5374,6 @@ packages:
       react: ^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
       react-dom: ^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
 
-  react@18.3.1:
-    resolution: {integrity: sha512-wS+hAgJShR0KhEvPJArfuPVN1+Hz1t0Y6n5jLrGQbkb4urgPE/0Rve+1kMB1v/oWgHgm4WIcV+i7F2pTVj+2iQ==}
-    engines: {node: '>=0.10.0'}
-
   react@19.0.0:
     resolution: {integrity: sha512-V8AVnmPIICiWpGfm6GLzCR/W5FXLchHop40W4nXBmdlEceh16rCN8O8LNWm5bh5XUX91fh7KpA+W0TgMKmgTpQ==}
     engines: {node: '>=0.10.0'}
@@ -5491,9 +5470,6 @@ packages:
 
   remark-wiki-link@2.0.1:
     resolution: {integrity: sha512-F8Eut1E7GWfFm4ZDTI6/4ejeZEHZgnVk6E933Yqd/ssYsc4AyI32aGakxwsGcEzbbE7dkWi1EfLlGAdGgOZOsA==}
-
-  remark@15.0.1:
-    resolution: {integrity: sha512-Eht5w30ruCXgFmxVUSlNWQ9iiimq07URKeFS3hNc8cUWy1llX4KDWfyEDZRycMc+znsN9Ux5/tJ/BFdgdOwA3A==}
 
   remove-accents@0.5.0:
     resolution: {integrity: sha512-8g3/Otx1eJaVD12e31UbJj1YzdtVvzH85HV7t+9MJYk/u3XmkOUJ5Ys9wQrf9PCPK8+xn4ymzqYCiZl6QWKn+A==}
@@ -5985,8 +5961,8 @@ packages:
     resolution: {integrity: sha512-wK0Ri4fOGjv/XPy8SBHZChl8CM7uMc5VML7SqiQ0zG7+J5Vr+RMQDoHa2CNT6KHUnTGIXH34UDMkPzAUyapBZg==}
     engines: {node: '>=8'}
 
-  terser-webpack-plugin@5.3.12:
-    resolution: {integrity: sha512-jDLYqo7oF8tJIttjXO6jBY5Hk8p3A8W4ttih7cCEq64fQFWmgJ4VqAQjKr7WwIDlmXKEc6QeoRb5ecjZ+2afcg==}
+  terser-webpack-plugin@5.3.14:
+    resolution: {integrity: sha512-vkZjpUjb6OMS7dhV+tILUW6BhpDR7P2L/aQSAv+Uwk+m8KATX9EccViHTJR2qDtACKPIYndLGCyl3FMo+r2LMw==}
     engines: {node: '>= 10.13.0'}
     peerDependencies:
       '@swc/core': '*'
@@ -6296,6 +6272,11 @@ packages:
     peerDependenciesMeta:
       '@types/react':
         optional: true
+
+  use-sync-external-store@1.4.0:
+    resolution: {integrity: sha512-9WXSPC5fMv61vaupRkCKCxsPxBocVnwakBEkMIHHpkTTg6icbJtg6jzgtLDm4bl3cSHAca52rYWih0k4K3PfHw==}
+    peerDependencies:
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
 
   util-deprecate@1.0.2:
     resolution: {integrity: sha512-EPD5q1uXyFxJpCrLnCc1nHnq3gOa6DZBocAIiI2TaSCA7VCJ1UJDMagCzIkXNsUYfD1daK//LTEQ8xiIbrHtcw==}
@@ -6704,6 +6685,21 @@ packages:
   yn@3.1.1:
     resolution: {integrity: sha512-Ux4ygGWsu2c7isFWe8Yu1YluJmqVhxqK2cLXNQA5AcC3QfbGNpM7fu0Y8b/z16pXLnFxZYvWhd3fhBY9DLmC6Q==}
     engines: {node: '>=6'}
+
+  zustand@4.5.6:
+    resolution: {integrity: sha512-ibr/n1hBzLLj5Y+yUcU7dYw8p6WnIVzdJbnX+1YpaScvZVF2ziugqHs+LAmHw4lWO9c/zRj+K1ncgWDQuthEdQ==}
+    engines: {node: '>=12.7.0'}
+    peerDependencies:
+      '@types/react': ^18.2.22
+      immer: '>=9.0.6'
+      react: '>=16.8'
+    peerDependenciesMeta:
+      '@types/react':
+        optional: true
+      immer:
+        optional: true
+      react:
+        optional: true
 
   zwitch@1.0.5:
     resolution: {integrity: sha512-V50KMwwzqJV0NpZIZFwfOD5/lyny3WlSzRiXgA0G7VUnRlqttta1L6UQIHzd6EuBY/cHGfwTIck7w1yH6Q5zUw==}
@@ -7496,27 +7492,11 @@ snapshots:
     dependencies:
       '@capacitor/core': 6.2.0
 
-  '@cashu/cashu-ts@2.0.0-rc1':
-    dependencies:
-      '@cashu/crypto': 0.2.7
-      '@noble/curves': 1.8.1
-      '@noble/hashes': 1.7.1
-      '@scure/bip32': 1.6.2
-      buffer: 6.0.3
-
   '@cashu/cashu-ts@2.2.2':
     dependencies:
       '@cashu/crypto': 0.3.4
       '@noble/curves': 1.8.1
       '@noble/hashes': 1.7.1
-      buffer: 6.0.3
-
-  '@cashu/crypto@0.2.7':
-    dependencies:
-      '@noble/curves': 1.8.1
-      '@noble/hashes': 1.7.1
-      '@scure/bip32': 1.6.2
-      '@scure/bip39': 1.5.4
       buffer: 6.0.3
 
   '@cashu/crypto@0.3.4':
@@ -8416,6 +8396,13 @@ snapshots:
       '@lezer/lr': 1.4.2
     optional: true
 
+  '@lightninglabs/lnc-core@0.3.2-alpha': {}
+
+  '@lightninglabs/lnc-web@0.3.2-alpha':
+    dependencies:
+      '@lightninglabs/lnc-core': 0.3.2-alpha
+      crypto-js: 4.2.0
+
   '@manypkg/find-root@1.1.0':
     dependencies:
       '@babel/runtime': 7.26.9
@@ -8434,30 +8421,30 @@ snapshots:
 
   '@marijn/find-cluster-break@1.0.2': {}
 
-  '@next/env@15.2.0': {}
+  '@next/env@15.2.2': {}
 
-  '@next/swc-darwin-arm64@15.2.0':
+  '@next/swc-darwin-arm64@15.2.2':
     optional: true
 
-  '@next/swc-darwin-x64@15.2.0':
+  '@next/swc-darwin-x64@15.2.2':
     optional: true
 
-  '@next/swc-linux-arm64-gnu@15.2.0':
+  '@next/swc-linux-arm64-gnu@15.2.2':
     optional: true
 
-  '@next/swc-linux-arm64-musl@15.2.0':
+  '@next/swc-linux-arm64-musl@15.2.2':
     optional: true
 
-  '@next/swc-linux-x64-gnu@15.2.0':
+  '@next/swc-linux-x64-gnu@15.2.2':
     optional: true
 
-  '@next/swc-linux-x64-musl@15.2.0':
+  '@next/swc-linux-x64-musl@15.2.2':
     optional: true
 
-  '@next/swc-win32-arm64-msvc@15.2.0':
+  '@next/swc-win32-arm64-msvc@15.2.2':
     optional: true
 
-  '@next/swc-win32-x64-msvc@15.2.0':
+  '@next/swc-win32-x64-msvc@15.2.2':
     optional: true
 
   '@noble/ciphers@0.5.3': {}
@@ -8875,7 +8862,7 @@ snapshots:
   '@types/glob@7.2.0':
     dependencies:
       '@types/minimatch': 5.1.2
-      '@types/node': 22.13.2
+      '@types/node': 22.13.10
 
   '@types/hash-sum@1.0.2': {}
 
@@ -8954,7 +8941,7 @@ snapshots:
 
   '@types/resolve@1.17.1':
     dependencies:
-      '@types/node': 22.13.2
+      '@types/node': 22.13.10
 
   '@types/resolve@1.20.2': {}
 
@@ -9221,119 +9208,6 @@ snapshots:
   ansi-to-html@0.7.2:
     dependencies:
       entities: 2.2.0
-
-  applesauce-accounts@0.0.0-next-20250310200358(typescript@5.8.2):
-    dependencies:
-      '@noble/hashes': 1.7.1
-      applesauce-signers: 0.0.0-next-20250310200358(typescript@5.8.2)
-      nanoid: 5.1.3
-      nostr-tools: 2.10.4(typescript@5.8.2)
-      rxjs: 7.8.2
-    transitivePeerDependencies:
-      - supports-color
-      - typescript
-
-  applesauce-content@0.0.0-next-20250310200358(typescript@5.8.2):
-    dependencies:
-      '@cashu/cashu-ts': 2.0.0-rc1
-      '@types/hast': 3.0.4
-      '@types/mdast': 4.0.4
-      '@types/unist': 3.0.3
-      applesauce-core: 0.0.0-next-20250310200358(typescript@5.8.2)
-      mdast-util-find-and-replace: 3.0.2
-      nostr-tools: 2.10.4(typescript@5.8.2)
-      remark: 15.0.1
-      remark-parse: 11.0.0
-      unified: 11.0.5
-      unist-util-visit-parents: 6.0.1
-    transitivePeerDependencies:
-      - supports-color
-      - typescript
-
-  applesauce-core@0.0.0-next-20250310200358(typescript@5.8.2):
-    dependencies:
-      '@noble/hashes': 1.7.1
-      '@scure/base': 1.2.4
-      debug: 4.4.0
-      fast-deep-equal: 3.1.3
-      hash-sum: 2.0.0
-      light-bolt11-decoder: 3.2.0
-      nanoid: 5.1.3
-      nostr-tools: 2.10.4(typescript@5.8.2)
-      rxjs: 7.8.2
-    transitivePeerDependencies:
-      - supports-color
-      - typescript
-
-  applesauce-factory@0.0.0-next-20250310200358(typescript@5.8.2):
-    dependencies:
-      applesauce-content: 0.0.0-next-20250310200358(typescript@5.8.2)
-      applesauce-core: 0.0.0-next-20250310200358(typescript@5.8.2)
-      nanoid: 5.1.3
-      nostr-tools: 2.10.4(typescript@5.8.2)
-    transitivePeerDependencies:
-      - supports-color
-      - typescript
-
-  applesauce-loaders@0.0.0-next-20250310200358(typescript@5.8.2):
-    dependencies:
-      applesauce-core: 0.0.0-next-20250310200358(typescript@5.8.2)
-      nanoid: 5.1.3
-      nostr-tools: 2.10.4(typescript@5.8.2)
-      rx-nostr: 3.5.0
-      rxjs: 7.8.2
-    transitivePeerDependencies:
-      - supports-color
-      - typescript
-
-  applesauce-react@0.0.0-next-20250310200358(react-dom@19.0.0(react@19.0.0))(typescript@5.8.2):
-    dependencies:
-      applesauce-accounts: 0.0.0-next-20250310200358(typescript@5.8.2)
-      applesauce-content: 0.0.0-next-20250310200358(typescript@5.8.2)
-      applesauce-core: 0.0.0-next-20250310200358(typescript@5.8.2)
-      applesauce-factory: 0.0.0-next-20250310200358(typescript@5.8.2)
-      nostr-tools: 2.10.4(typescript@5.8.2)
-      observable-hooks: 4.2.4(react-dom@19.0.0(react@19.0.0))(react@18.3.1)(rxjs@7.8.2)
-      react: 18.3.1
-      rxjs: 7.8.2
-    transitivePeerDependencies:
-      - react-dom
-      - supports-color
-      - typescript
-
-  applesauce-relay@0.0.0-next-20250310200358(typescript@5.8.2):
-    dependencies:
-      applesauce-core: 0.0.0-next-20250310200358(typescript@5.8.2)
-      nanoid: 5.1.3
-      nostr-tools: 2.10.4(typescript@5.8.2)
-      rxjs: 7.8.2
-    transitivePeerDependencies:
-      - supports-color
-      - typescript
-
-  applesauce-signers@0.0.0-next-20250310200358(typescript@5.8.2):
-    dependencies:
-      '@noble/hashes': 1.7.1
-      '@noble/secp256k1': 1.7.1
-      '@scure/base': 1.2.4
-      applesauce-core: 0.0.0-next-20250310200358(typescript@5.8.2)
-      debug: 4.4.0
-      nanoid: 5.1.3
-      nostr-tools: 2.10.4(typescript@5.8.2)
-    transitivePeerDependencies:
-      - supports-color
-      - typescript
-
-  applesauce-wallet@0.0.0-next-20250310200358(typescript@5.8.2):
-    dependencies:
-      '@noble/hashes': 1.7.1
-      applesauce-core: 0.0.0-next-20250310200358(typescript@5.8.2)
-      applesauce-factory: 0.0.0-next-20250310200358(typescript@5.8.2)
-      nostr-tools: 2.10.4(typescript@5.8.2)
-      rxjs: 7.8.2
-    transitivePeerDependencies:
-      - supports-color
-      - typescript
 
   arg@4.1.3: {}
 
@@ -9981,6 +9855,8 @@ snapshots:
       path-key: 3.1.1
       shebang-command: 2.0.0
       which: 2.0.2
+
+  crypto-js@4.2.0: {}
 
   crypto-random-string@2.0.0: {}
 
@@ -11237,13 +11113,13 @@ snapshots:
 
   jest-worker@26.6.2:
     dependencies:
-      '@types/node': 22.13.2
+      '@types/node': 22.13.10
       merge-stream: 2.0.0
       supports-color: 7.2.0
 
   jest-worker@27.5.1:
     dependencies:
-      '@types/node': 22.13.2
+      '@types/node': 22.13.10
       merge-stream: 2.0.0
       supports-color: 8.1.1
 
@@ -11322,10 +11198,6 @@ snapshots:
     dependencies:
       '@lezer/lr': 1.4.2
     optional: true
-
-  light-bolt11-decoder@3.2.0:
-    dependencies:
-      '@scure/base': 1.1.1
 
   lines-and-columns@1.2.4: {}
 
@@ -11974,13 +11846,13 @@ snapshots:
 
   neo-async@2.6.2: {}
 
-  next-pwa@5.6.0(@babel/core@7.26.9)(@types/babel__core@7.20.5)(next@15.2.0(@babel/core@7.26.9)(react-dom@19.0.0(react@19.0.0))(react@19.0.0))(webpack@5.98.0):
+  next-pwa@5.6.0(@babel/core@7.26.9)(@types/babel__core@7.20.5)(next@15.2.2(@babel/core@7.26.9)(react-dom@19.0.0(react@19.0.0))(react@19.0.0))(webpack@5.98.0):
     dependencies:
       babel-loader: 8.4.1(@babel/core@7.26.9)(webpack@5.98.0)
       clean-webpack-plugin: 4.0.0(webpack@5.98.0)
       globby: 11.1.0
-      next: 15.2.0(@babel/core@7.26.9)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
-      terser-webpack-plugin: 5.3.12(webpack@5.98.0)
+      next: 15.2.2(@babel/core@7.26.9)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
+      terser-webpack-plugin: 5.3.14(webpack@5.98.0)
       workbox-webpack-plugin: 6.6.0(@types/babel__core@7.20.5)(webpack@5.98.0)
       workbox-window: 6.6.0
     transitivePeerDependencies:
@@ -11992,26 +11864,26 @@ snapshots:
       - uglify-js
       - webpack
 
-  next@15.2.0(@babel/core@7.26.9)(react-dom@19.0.0(react@19.0.0))(react@19.0.0):
+  next@15.2.2(@babel/core@7.26.9)(react-dom@19.0.0(react@19.0.0))(react@19.0.0):
     dependencies:
-      '@next/env': 15.2.0
+      '@next/env': 15.2.2
       '@swc/counter': 0.1.3
       '@swc/helpers': 0.5.15
       busboy: 1.6.0
-      caniuse-lite: 1.0.30001700
+      caniuse-lite: 1.0.30001703
       postcss: 8.4.31
       react: 19.0.0
       react-dom: 19.0.0(react@19.0.0)
       styled-jsx: 5.1.6(@babel/core@7.26.9)(react@19.0.0)
     optionalDependencies:
-      '@next/swc-darwin-arm64': 15.2.0
-      '@next/swc-darwin-x64': 15.2.0
-      '@next/swc-linux-arm64-gnu': 15.2.0
-      '@next/swc-linux-arm64-musl': 15.2.0
-      '@next/swc-linux-x64-gnu': 15.2.0
-      '@next/swc-linux-x64-musl': 15.2.0
-      '@next/swc-win32-arm64-msvc': 15.2.0
-      '@next/swc-win32-x64-msvc': 15.2.0
+      '@next/swc-darwin-arm64': 15.2.2
+      '@next/swc-darwin-x64': 15.2.2
+      '@next/swc-linux-arm64-gnu': 15.2.2
+      '@next/swc-linux-arm64-musl': 15.2.2
+      '@next/swc-linux-x64-gnu': 15.2.2
+      '@next/swc-linux-x64-musl': 15.2.2
+      '@next/swc-win32-arm64-msvc': 15.2.2
+      '@next/swc-win32-x64-msvc': 15.2.2
       sharp: 0.33.5
     transitivePeerDependencies:
       - '@babel/core'
@@ -12132,12 +12004,6 @@ snapshots:
       es-object-atoms: 1.1.1
       has-symbols: 1.1.0
       object-keys: 1.1.1
-
-  observable-hooks@4.2.4(react-dom@19.0.0(react@19.0.0))(react@18.3.1)(rxjs@7.8.2):
-    dependencies:
-      react: 18.3.1
-      react-dom: 19.0.0(react@19.0.0)
-      rxjs: 7.8.2
 
   on-finished@2.4.1:
     dependencies:
@@ -12316,7 +12182,7 @@ snapshots:
 
   postcss@8.4.31:
     dependencies:
-      nanoid: 3.3.8
+      nanoid: 3.3.9
       picocolors: 1.1.1
       source-map-js: 1.2.1
 
@@ -12389,6 +12255,8 @@ snapshots:
   pvutils@1.1.3: {}
 
   q@1.5.1: {}
+
+  qrcode-generator@1.4.4: {}
 
   qs@6.13.0:
     dependencies:
@@ -12693,10 +12561,6 @@ snapshots:
       react: 19.0.0
       react-dom: 19.0.0(react@19.0.0)
 
-  react@18.3.1:
-    dependencies:
-      loose-envify: 1.4.0
-
   react@19.0.0: {}
 
   read-pkg-up@3.0.0:
@@ -12854,15 +12718,6 @@ snapshots:
       '@babel/runtime': 7.26.9
       mdast-util-wiki-link: 0.1.2
       micromark-extension-wiki-link: 0.0.4
-
-  remark@15.0.1:
-    dependencies:
-      '@types/mdast': 4.0.4
-      remark-parse: 11.0.0
-      remark-stringify: 11.0.0
-      unified: 11.0.5
-    transitivePeerDependencies:
-      - supports-color
 
   remove-accents@0.5.0: {}
 
@@ -13466,7 +13321,7 @@ snapshots:
 
   term-size@2.2.1: {}
 
-  terser-webpack-plugin@5.3.12(webpack@5.98.0):
+  terser-webpack-plugin@5.3.14(webpack@5.98.0):
     dependencies:
       '@jridgewell/trace-mapping': 0.3.25
       jest-worker: 27.5.1
@@ -13764,6 +13619,10 @@ snapshots:
     optionalDependencies:
       '@types/react': 18.3.18
 
+  use-sync-external-store@1.4.0(react@19.0.0):
+    dependencies:
+      react: 19.0.0
+
   util-deprecate@1.0.2: {}
 
   util@0.12.5:
@@ -13876,7 +13735,7 @@ snapshots:
       '@webassemblyjs/ast': 1.14.1
       '@webassemblyjs/wasm-edit': 1.14.1
       '@webassemblyjs/wasm-parser': 1.14.1
-      acorn: 8.14.0
+      acorn: 8.14.1
       browserslist: 4.24.4
       chrome-trace-event: 1.0.4
       enhanced-resolve: 5.18.1
@@ -13891,7 +13750,7 @@ snapshots:
       neo-async: 2.6.2
       schema-utils: 4.3.0
       tapable: 2.2.1
-      terser-webpack-plugin: 5.3.12(webpack@5.98.0)
+      terser-webpack-plugin: 5.3.14(webpack@5.98.0)
       watchpack: 2.4.2
       webpack-sources: 3.2.3
     transitivePeerDependencies:
@@ -14327,6 +14186,13 @@ snapshots:
       react-dom: 19.0.0(react@19.0.0)
 
   yn@3.1.1: {}
+
+  zustand@4.5.6(@types/react@18.3.18)(react@19.0.0):
+    dependencies:
+      use-sync-external-store: 1.4.0(react@19.0.0)
+    optionalDependencies:
+      '@types/react': 18.3.18
+      react: 19.0.0
 
   zwitch@1.0.5: {}
 

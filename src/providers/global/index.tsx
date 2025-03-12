@@ -1,4 +1,6 @@
-import React, { useMemo } from "react";
+"use client";
+
+import type { ReactNode } from "react";
 import { ChakraProvider, localStorageManager } from "@chakra-ui/react";
 import {
 	AccountsProvider,
@@ -7,7 +9,6 @@ import {
 
 import { SigningProvider } from "./signing-provider";
 import buildTheme from "../../theme";
-import useAppSettings from "../../hooks/use-user-app-settings";
 import { UserEmojiProvider } from "./emoji-provider";
 import BreakpointProvider from "./breakpoint-provider";
 import PublishProvider from "./publish-provider";
@@ -16,21 +17,19 @@ import { queryStore } from "../../services/event-store";
 import EventFactoryProvider from "./event-factory-provider";
 import accounts from "../../services/accounts";
 
-function ThemeProviders({ children }: { children: React.ReactNode }) {
-	const { theme: themeName } = useAppSettings();
-	const theme = useMemo(() => buildTheme(themeName), [themeName]);
-
+function ThemeProviders({ children }: { children: ReactNode }) {
 	return (
-		<ChakraProvider theme={theme} colorModeManager={localStorageManager}>
+		<ChakraProvider
+			theme={buildTheme("default")}
+			colorModeManager={localStorageManager}
+		>
 			<BreakpointProvider>{children}</BreakpointProvider>
 		</ChakraProvider>
 	);
 }
 
 // Top level providers, should be render as close to the root as possible
-export const GlobalProviders = ({
-	children,
-}: { children: React.ReactNode }) => {
+export const GlobalProviders = ({ children }: { children: ReactNode }) => {
 	return (
 		<QueryStoreProvider queryStore={queryStore}>
 			<AccountsProvider manager={accounts}>

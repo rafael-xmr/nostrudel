@@ -22,9 +22,9 @@ export default class WasmRelay implements SimpleRelay {
     if (this.connected || this.worker) return;
 
     console.time("Starting Wasm Worker");
-    const { default: worker } = await import("./worker");
-    this.worker = worker;
-    this.connected = true;
+    // const { default: worker } = await import("./worker");
+    // this.worker = worker;
+    // this.connected = true;
     console.timeEnd("Starting Wasm Worker");
   }
   async close() {

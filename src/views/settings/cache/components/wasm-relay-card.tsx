@@ -25,8 +25,8 @@ export default function WasmRelayCard() {
     } else {
       // import and delete database
       console.log("Importing worker to wipe database");
-      const { default: worker } = await import("../../../../services/wasm-relay/worker");
-      await worker.wipe();
+      // const { default: worker } = await import("../../../../services/wasm-relay/worker");
+      // await worker.wipe();
     }
   };
 

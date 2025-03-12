@@ -5,3 +5,5 @@ exe/bin
 build
 .next
 .env
+public/sw.js
+public/sw.js.map
