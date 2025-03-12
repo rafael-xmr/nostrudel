@@ -6,8 +6,6 @@ import {
 	Code,
 	Flex,
 	Heading,
-	Link,
-	Text,
 	useToast,
 } from "@chakra-ui/react";
 import { useObservable } from "applesauce-react/hooks";
@@ -88,7 +86,7 @@ function WebPushNotificationStatus() {
 export default function WebPushNotificationSettings() {
 	const controlApi = useObservable(controlApi$);
 	useEffect(() => {
-		controlApi?.send(["CONTROL", "NOTIFICATIONS", "GET-VAPID-KEY"]);
+		// controlApi?.send(["CONTROL", "NOTIFICATIONS", "GET-VAPID-KEY"]);
 	}, [controlApi]);
 
 	return (

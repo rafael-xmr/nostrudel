@@ -8,12 +8,10 @@ import {
 	Image,
 	Heading,
 	LinkOverlay,
+	Link,
 } from "@chakra-ui/react";
 
-import {
-	ChevronLeftIcon,
-	ChevronRightIcon,
-} from "../../icons";
+import { ChevronLeftIcon, ChevronRightIcon, GithubIcon } from "../../icons";
 import NavItems from "../components";
 import useRootPadding from "../../../hooks/use-root-padding";
 import AccountSwitcher from "../components/account-switcher";
@@ -102,7 +100,31 @@ export default function DesktopSideNav({
 
 				{/* TODO: monthly goal */}
 				<Text>Cheers!</Text>
+
 				<Image src="/monero_chan.webp" />
+
+				<Flex alignItems="center">
+					<Link
+						href="https://github.com/rafael-xmr/nostrudel/tree/mostard"
+						target="_blank"
+						rel="noreferrer"
+					>
+						FOSS <GithubIcon boxSize={5} mx={1} />
+					</Link>
+					{/* TODO: commit version */}
+					{/* {version && ( */}
+					{/* 	<div> */}
+					{/* 		running{" "} */}
+					{/* 		<a */}
+					{/* 			href={} */}
+					{/* 			target="_blank" */}
+					{/* 			rel="noreferrer" */}
+					{/* 		> */}
+					{/* 			{version} */}
+					{/* 		</a> */}
+					{/* 	</div> */}
+					{/* )} */}
+				</Flex>
 			</Flex>
 		</CollapsedContext.Provider>
 	);

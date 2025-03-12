@@ -1,5 +1,12 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Flex, Input, Select, Checkbox } from "@chakra-ui/react";
+import {
+	Flex,
+	Input,
+	Select,
+	Checkbox,
+	ModalHeader,
+	Text,
+} from "@chakra-ui/react";
 import { useForm } from "react-hook-form";
 
 import type { NostrEvent } from "../../types/nostr-event";
@@ -7,6 +14,7 @@ import { EmbedEvent, type EmbedProps } from "../embed-event";
 import useAppSettings from "../../hooks/use-user-app-settings";
 import CustomZapAmountOptions from "./zap-options";
 import { InvoiceModalContent } from "../invoice-modal";
+import { WarningIcon } from "@chakra-ui/icons";
 
 const DEBOUNCE_TIME = 600;
 
@@ -204,6 +212,26 @@ export default function InputStep({
 	const fiatRegister = register("fiatAmount", {
 		valueAsNumber: true,
 	});
+
+	if (!address) {
+		return (
+			<Flex gap="4" direction="column">
+				{showEmbed && event && <EmbedEvent event={event} {...embedProps} />}
+
+				<ModalHeader px="0" pb="0" pt="4">
+					Tried to send a tip, but couldn't find a Monero address in your
+					friend's profile!
+				</ModalHeader>
+				<Text>
+					You might want to ask your friend to add one. Or send a message to
+					request the address.
+				</Text>
+          {/* TODO: send message from here */}
+
+				<WarningIcon boxSize={"max"} px="40" py="20" />
+			</Flex>
+		);
+	}
 
 	return (
 		<Flex gap="4" direction="column">

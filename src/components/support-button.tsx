@@ -126,7 +126,7 @@ export default function SupportButton() {
 										<ZapModalContents
 											pubkey="dbe0b6bc5f455a547da4b2644846aaf88f466543604130d8fa662625c1eade8f"
 											address="85kUEzPzBopaXUJ5dL19J6deh5md6YZDZLUUpv63wXdCiRo3pPwrAJHAKAsSo4BgKQBpcs5hSth23hEFr5mmNxRxMeDY1Ng"
-											description="Every little bit helps. Thank you for considering supporting this project! 🙏"
+											description="If you are enjoying this app, consider supporting the developer! Every little bit helps. Thanks!"
 										/>
 									)}
 								</TabPanel>
