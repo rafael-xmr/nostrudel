@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
+import { localStorageWrapper } from "~/utils/localStorage";
 
 export default function useRecentIds(key: string, maxLength?: number) {
-  const value = localStorage.getItem("recent-" + key);
+  const value = localStorageWrapper.getItem("recent-" + key);
   const recent = value ? (JSON.parse(value) as string[]) : [];
 
   const [_, update] = useState(0);
@@ -16,10 +17,10 @@ export default function useRecentIds(key: string, maxLength?: number) {
 
   const setRecent = useCallback((recent: string[] | ((recent: string[]) => string[])) => {
     if (typeof recent === "function") {
-      const value = localStorage.getItem("recent-" + key);
+      const value = localStorageWrapper.getItem("recent-" + key);
       const newArr = recent(value ? (JSON.parse(value) as string[]) : []);
-      localStorage.setItem("recent-" + key, JSON.stringify(newArr));
-    } else localStorage.setItem("recent-" + key, JSON.stringify(recent));
+      localStorageWrapper.setItem("recent-" + key, JSON.stringify(newArr));
+    } else localStorageWrapper.setItem("recent-" + key, JSON.stringify(recent));
   }, []);
 
   const useThing = useCallback(

@@ -12,6 +12,7 @@ import "../../src/services/debug-api";
 import dayjs from "dayjs";
 import relativeTimePlugin from "dayjs/plugin/relativeTime";
 import localizedFormat from "dayjs/plugin/localizedFormat";
+import { localStorageWrapper } from "~/utils/localStorage";
 
 dayjs.extend(relativeTimePlugin);
 dayjs.extend(localizedFormat);
@@ -27,9 +28,9 @@ export function ClientOnly() {
 	useEffect(() => {
 		// Set up unload event listener
 		const handleUnload = () => {
-			const config = localStorage.getItem("bc:config");
+			const config = localStorageWrapper.getItem("bc:config");
 			if (config && JSON.parse(config).connectorType === "extension.generic") {
-				localStorage.removeItem("bc:config");
+				localStorageWrapper.removeItem("bc:config");
 			}
 		};
 		window.addEventListener("unload", handleUnload);

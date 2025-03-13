@@ -19,15 +19,16 @@ import { unixNow } from "applesauce-core/helpers";
 import accounts from "./accounts";
 import { PAYWALL_NIP05 } from "../env";
 import { logger } from "../helpers/debug";
+import { localStorageWrapper } from "~/utils/localStorage";
 
 const log = logger.extend("paywall");
 
 export const hidePaywall = new BehaviorSubject(
-  localStorage.getItem("paywall-dismiss") ? parseInt(localStorage.getItem("paywall-dismiss")!) : null,
+  localStorageWrapper.getItem("paywall-dismiss") ? parseInt(localStorageWrapper.getItem("paywall-dismiss")!) : null,
 );
 
 hidePaywall.subscribe((ts) => {
-  if (ts) localStorage.setItem("paywall-dismiss", String(ts));
+  if (ts) localStorageWrapper.setItem("paywall-dismiss", String(ts));
 });
 
 let paywall: Observable<boolean>;

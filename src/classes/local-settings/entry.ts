@@ -1,4 +1,5 @@
 import { BehaviorSubject } from "rxjs";
+import { localStorageWrapper } from "~/utils/localStorage";
 
 export class NullableLocalStorageEntry<
 	T = string,
@@ -14,8 +15,8 @@ export class NullableLocalStorageEntry<
 		encode?: (value: T) => string | null,
 	) {
 		let value = initValue;
-		if (localStorage.hasOwnProperty(key)) {
-			const raw = localStorage.getItem(key);
+		if (localStorageWrapper.hasOwn(key)) {
+			const raw = localStorageWrapper.getItem(key);
 
 			if (decode) value = decode(raw);
 			else value = raw as T | null;
@@ -29,13 +30,13 @@ export class NullableLocalStorageEntry<
 
 	next(value: T | null) {
 		if (value === null) {
-			localStorage.removeItem(this.key);
+			localStorageWrapper.removeItem(this.key);
 
 			super.next(value);
 		} else {
 			const encoded = this.encode ? this.encode(value) : String(value);
-			if (encoded !== null) localStorage.setItem(this.key, encoded);
-			else localStorage.removeItem(this.key);
+			if (encoded !== null) localStorageWrapper.setItem(this.key, encoded);
+			else localStorageWrapper.removeItem(this.key);
 
 			super.next(value);
 		}
@@ -62,8 +63,8 @@ export class LocalStorageEntry<T = string> extends BehaviorSubject<T> {
 		setDefault = false,
 	) {
 		let value = fallback;
-		if (localStorage.hasOwnProperty(key)) {
-			const raw = localStorage.getItem(key);
+		if (localStorageWrapper.hasOwn(key)) {
+			const raw = localStorageWrapper.getItem(key);
 
 			if (decode && raw) value = decode(raw);
 			else if (raw) value = raw as T;
@@ -71,7 +72,7 @@ export class LocalStorageEntry<T = string> extends BehaviorSubject<T> {
 			const encoded = encode ? encode(fallback) : String(fallback);
 			if (!encoded)
 				throw new Error("encode can not return null when setDefault is set");
-			localStorage.setItem(key, encoded);
+			localStorageWrapper.setItem(key, encoded);
 		}
 
 		super(value);
@@ -85,16 +86,16 @@ export class LocalStorageEntry<T = string> extends BehaviorSubject<T> {
 
 	next(value: T) {
 		const encoded = this.encode ? this.encode(value) : String(value);
-		if (encoded !== null) localStorage.setItem(this.key, encoded);
+		if (encoded !== null) localStorageWrapper.setItem(this.key, encoded);
 		else if (this.setDefault && encoded)
-			localStorage.setItem(this.key, encoded);
-		else localStorage.removeItem(this.key);
+			localStorageWrapper.setItem(this.key, encoded);
+		else localStorageWrapper.removeItem(this.key);
 
 		super.next(value);
 	}
 
 	clear() {
-		localStorage.removeItem(this.key);
+		localStorageWrapper.removeItem(this.key);
 		super.next(this.fallback);
 	}
 }

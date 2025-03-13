@@ -10,9 +10,9 @@ import "./services/debug-api";
 // When the app closes, remove the bitcoin-connect config if its set to extension
 // This prevents it from prompting the user to authorize or unlock their extension when the app is opened
 window.addEventListener("unload", () => {
-  const config = localStorage.getItem("bc:config");
+  const config = localStorageWrapper.getItem("bc:config");
   if (config && JSON.parse(config).connectorType === "extension.generic") {
-    localStorage.removeItem("bc:config");
+    localStorageWrapper.removeItem("bc:config");
   }
 });
 
@@ -37,6 +37,7 @@ if (process.env.NEXT_PUBLIC_PROD) {
 import { createRoot } from "react-dom/client";
 import { logger } from "./helpers/debug";
 import { App } from "./app";
+import { localStorageWrapper } from "./utils/localStorage";
 
 logger("Rendering app");
 const root = document.getElementById("root")!;

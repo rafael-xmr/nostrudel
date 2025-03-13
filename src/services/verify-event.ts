@@ -11,59 +11,64 @@ let verifyEventMethod: typeof internalVerifyEvent;
 let alwaysVerifyMethod: typeof internalVerifyEvent;
 
 function loadWithTimeout() {
-  return new Promise<typeof internalVerifyEvent>((res, rej) => {
-    const timeout = setTimeout(() => {
-      log("Timeout");
-      rej(new Error("Timeout"));
-    }, 5_000);
+	return new Promise<typeof internalVerifyEvent>((res, rej) => {
+		const timeout = setTimeout(() => {
+			log("Timeout");
+			rej(new Error("Timeout"));
+		}, 5_000);
 
-    return import("nostr-wasm").then(({ initNostrWasm }) => {
-      log("Initializing WebAssembly");
+		return import("nostr-wasm").then(({ initNostrWasm }) => {
+			log("Initializing WebAssembly");
 
-      return initNostrWasm().then((nw) => {
-        clearTimeout(timeout);
-        setNostrWasm(nw);
-        res(wasmVerifyEvent);
-        return wasmVerifyEvent;
-      });
-    });
-  });
+			return initNostrWasm().then((nw) => {
+				clearTimeout(timeout);
+				setNostrWasm(nw);
+				res(wasmVerifyEvent);
+				return wasmVerifyEvent;
+			});
+		});
+	});
 }
 
 export default function verifyEvent(event: NostrEvent) {
-  return verifyEventMethod(event);
+	return verifyEventMethod(event);
 }
 export function alwaysVerify(event: NostrEvent) {
-  return alwaysVerifyMethod(event);
+	return alwaysVerifyMethod(event);
 }
 
 async function updateVerifyMethod() {
-  try {
-    switch (localSettings.verifyEventMethod.value) {
-      case "wasm":
-        if (!("WebAssembly" in window)) throw new Error("WebAssembly not supported");
-        log("Loading WebAssembly module");
-        verifyEventMethod = alwaysVerifyMethod = await loadWithTimeout();
-        log("Loaded");
-        break;
-      case "none":
-        log("Using fake verify event method");
-        verifyEventMethod = fakeVerifyEvent;
-        alwaysVerifyMethod = internalVerifyEvent;
-        break;
-      case "internal":
-      default:
-        log("Using internal nostr-tools");
-        verifyEventMethod = alwaysVerifyMethod = internalVerifyEvent;
-        break;
-    }
-  } catch (error) {
-    console.error("Failed to initialize event verification method, disabling");
-    console.log(error);
+	try {
+		switch (localSettings.verifyEventMethod.value) {
+			case "wasm":
+				if (typeof window !== "undefined") {
+					if (!("WebAssembly" in window))
+						throw new Error("WebAssembly not supported");
+				}
+				log("Loading WebAssembly module");
+				verifyEventMethod = alwaysVerifyMethod = await loadWithTimeout();
+				log("Loaded");
+				break;
+			case "none":
+				log("Using fake verify event method");
+				verifyEventMethod = fakeVerifyEvent;
+				alwaysVerifyMethod = internalVerifyEvent;
+				break;
+			case "internal":
+			default:
+				log("Using internal nostr-tools");
+				verifyEventMethod = alwaysVerifyMethod = internalVerifyEvent;
+				break;
+		}
+	} catch (error) {
+		console.error("Failed to initialize event verification method, disabling");
+		console.log(error);
 
-    localSettings.verifyEventMethod.next("none");
-    verifyEventMethod = alwaysVerifyMethod = internalVerifyEvent;
-  }
+		localSettings.verifyEventMethod.next("none");
+		verifyEventMethod = alwaysVerifyMethod = internalVerifyEvent;
+	}
 }
 
-localSettings.verifyEventMethod.pipe(distinctUntilChanged()).subscribe(updateVerifyMethod);
+localSettings.verifyEventMethod
+	.pipe(distinctUntilChanged())
+	.subscribe(updateVerifyMethod);

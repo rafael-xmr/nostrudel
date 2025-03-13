@@ -40,13 +40,22 @@ export async function checkNostrRelayTray() {
 const log = logger.extend("cache-relay");
 
 log("Creating nostr-idb database");
-export const localDatabase = await openDB();
+export let localDatabase: any | null = null;
+
+async function getLocalDatabase() {
+	if (localDatabase) return localDatabase;
+
+	localDatabase = await openDB();
+
+	return localDatabase;
+}
 
 // Setup relay
 function createInternalRelay() {
-	return new CacheRelay(localDatabase, {
-		maxEvents: localSettings.idbMaxEvents.value,
-	});
+	if (localDatabase)
+		return new CacheRelay(localDatabase, {
+			maxEvents: localSettings.idbMaxEvents.value,
+		});
 }
 
 // create a cache relay instance
@@ -67,7 +76,7 @@ async function createRelay(url: string) {
 		if (isSafeRelayURL(url)) {
 			return new AbstractRelay(url, { verifyEvent: fakeVerifyEvent });
 		}
-	} else if (window.CACHE_RELAY_ENABLED) {
+	} else if (typeof window !== "undefined" && window.CACHE_RELAY_ENABLED) {
 		const protocol = location.protocol === "https:" ? "wss:" : "ws:";
 		return new AbstractRelay(
 			new URL(`${protocol}${location.host}/local-relay`).toString(),

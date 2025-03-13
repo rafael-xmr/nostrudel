@@ -13,17 +13,18 @@ import useClientSideMuteFilter from "../../hooks/use-client-side-mute-filter";
 import NoteFilterTypeButtons from "../../components/note-filter-type-buttons";
 import KindSelectionProvider, { useKindSelectionContext } from "../../providers/local/kind-selection-provider";
 import { useReadRelays } from "../../hooks/use-client-relays";
+import { localStorageWrapper } from "~/utils/localStorage";
 
 const defaultKinds = [kinds.ShortTextNote, kinds.Repost, kinds.GenericRepost];
 
 function HomePage() {
-  const showReplies = useDisclosure({ defaultIsOpen: localStorage.getItem("show-replies") === "true" });
-  const showReposts = useDisclosure({ defaultIsOpen: localStorage.getItem("show-reposts") !== "false" });
+  const showReplies = useDisclosure({ defaultIsOpen: localStorageWrapper.getItem("show-replies") === "true" });
+  const showReposts = useDisclosure({ defaultIsOpen: localStorageWrapper.getItem("show-reposts") !== "false" });
 
   // save toggles to localStorage when changed
   useEffect(() => {
-    localStorage.setItem("show-replies", String(showReplies.isOpen));
-    localStorage.setItem("show-reposts", String(showReposts.isOpen));
+    localStorageWrapper.setItem("show-replies", String(showReplies.isOpen));
+    localStorageWrapper.setItem("show-reposts", String(showReposts.isOpen));
   }, [showReplies.isOpen, showReposts.isOpen]);
 
   const timelinePageEventFilter = useTimelinePageEventFilter();

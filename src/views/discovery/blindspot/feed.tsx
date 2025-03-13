@@ -20,6 +20,7 @@ import BackButton from "../../../components/router/back-button";
 import UserLink from "../../../components/user/user-link";
 import useClientSideMuteFilter from "../../../hooks/use-client-side-mute-filter";
 import { isReply, isRepost } from "../../../helpers/nostr/event";
+import { localStorageWrapper } from "~/utils/localStorage";
 
 function BlindspotFeedPage({ pubkey }: { pubkey: string }) {
   const account = useActiveAccount()!;
@@ -36,8 +37,8 @@ function BlindspotFeedPage({ pubkey }: { pubkey: string }) {
     return Array.from(other).filter((p) => !mine.has(p) && p !== account.pubkey);
   }, [contacts, otherContacts, account.pubkey]);
 
-  const showReplies = useDisclosure({ defaultIsOpen: localStorage.getItem("show-replies") === "true" });
-  const showReposts = useDisclosure({ defaultIsOpen: localStorage.getItem("show-reposts") !== "false" });
+  const showReplies = useDisclosure({ defaultIsOpen: localStorageWrapper.getItem("show-replies") === "true" });
+  const showReposts = useDisclosure({ defaultIsOpen: localStorageWrapper.getItem("show-reposts") !== "false" });
 
   const timelinePageEventFilter = useTimelinePageEventFilter();
   const muteFilter = useClientSideMuteFilter();

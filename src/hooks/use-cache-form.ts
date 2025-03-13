@@ -3,6 +3,7 @@ import { FieldValues, UseFormGetValues, UseFormReset, UseFormStateReturn } from 
 import { useBeforeUnload } from "react-router-dom";
 
 import { logger } from "../helpers/debug";
+import { localStorageWrapper } from "~/utils/localStorage";
 
 export default function useCacheForm<TFieldValues extends FieldValues = FieldValues>(
   key: string | null,
@@ -28,10 +29,10 @@ export default function useCacheForm<TFieldValues extends FieldValues = FieldVal
 
     // restore form on key change or mount
     try {
-      const cached = localStorage.getItem(storageKey);
+      const cached = localStorageWrapper.getItem(storageKey);
 
       // remove the item and keep it in memory
-      localStorage.removeItem(storageKey);
+      localStorageWrapper.removeItem(storageKey);
 
       if (cached) {
         const values = JSON.parse(cached) as TFieldValues;
@@ -48,11 +49,11 @@ export default function useCacheForm<TFieldValues extends FieldValues = FieldVal
     return () => {
       if (isSubmitted.current || isSubmitting.current) {
         log("Removing because submitted");
-        localStorage.removeItem(storageKey);
+        localStorageWrapper.removeItem(storageKey);
       } else if (isDirty.current) {
         const values = getValues();
         log("Saving form", values);
-        localStorage.setItem(storageKey, JSON.stringify(values));
+        localStorageWrapper.setItem(storageKey, JSON.stringify(values));
       }
     };
   }, [storageKey, log, opts?.clearOnKeyChange]);
@@ -62,11 +63,11 @@ export default function useCacheForm<TFieldValues extends FieldValues = FieldVal
 
     if (isSubmitted.current || isSubmitting.current) {
       log("Removing because submitted");
-      localStorage.removeItem(storageKey);
+      localStorageWrapper.removeItem(storageKey);
     } else if (isDirty.current) {
       const values = getValues();
       log("Saving form", values);
-      localStorage.setItem(storageKey, JSON.stringify(values));
+      localStorageWrapper.setItem(storageKey, JSON.stringify(values));
     }
   }, [log, getValues, storageKey]);
 
@@ -75,6 +76,6 @@ export default function useCacheForm<TFieldValues extends FieldValues = FieldVal
   return useCallback(() => {
     if (!storageKey) return;
 
-    localStorage.removeItem(storageKey);
+    localStorageWrapper.removeItem(storageKey);
   }, [storageKey]);
 }
