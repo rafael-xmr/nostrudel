@@ -5,6 +5,8 @@ import { ChakraProvider, localStorageManager } from "@chakra-ui/react";
 import {
 	AccountsProvider,
 	QueryStoreProvider,
+	ActionsProvider,
+	FactoryProvider,
 } from "applesauce-react/providers";
 
 import { SigningProvider } from "./signing-provider";
@@ -14,8 +16,9 @@ import BreakpointProvider from "./breakpoint-provider";
 import PublishProvider from "./publish-provider";
 import WebOfTrustProvider from "./web-of-trust-provider";
 import { queryStore } from "../../services/event-store";
-import EventFactoryProvider from "./event-factory-provider";
 import accounts from "../../services/accounts";
+import actions from "../../services/actions";
+import factory from "../../services/event-factory";
 
 function ThemeProviders({ children }: { children: ReactNode }) {
 	return (
@@ -29,21 +32,25 @@ function ThemeProviders({ children }: { children: ReactNode }) {
 }
 
 // Top level providers, should be render as close to the root as possible
-export const GlobalProviders = ({ children }: { children: ReactNode }) => {
+export const GlobalProviders = ({
+	children,
+}: { children: React.ReactNode }) => {
 	return (
 		<QueryStoreProvider queryStore={queryStore}>
 			<AccountsProvider manager={accounts}>
-				<ThemeProviders>
-					<SigningProvider>
-						<PublishProvider>
-							<UserEmojiProvider>
-								<EventFactoryProvider>
-									<WebOfTrustProvider>{children}</WebOfTrustProvider>
-								</EventFactoryProvider>
-							</UserEmojiProvider>
-						</PublishProvider>
-					</SigningProvider>
-				</ThemeProviders>
+				<ActionsProvider actionHub={actions}>
+					<FactoryProvider factory={factory}>
+						<ThemeProviders>
+							<SigningProvider>
+								<PublishProvider>
+									<UserEmojiProvider>
+										<WebOfTrustProvider>{children}</WebOfTrustProvider>
+									</UserEmojiProvider>
+								</PublishProvider>
+							</SigningProvider>
+						</ThemeProviders>
+					</FactoryProvider>
+				</ActionsProvider>
 			</AccountsProvider>
 		</QueryStoreProvider>
 	);
