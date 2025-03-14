@@ -194,7 +194,7 @@ function useAutocompleteTriggers() {
 		};
 	}, [emojis, directory, webOfTrust]);
 
-	return [];
+	return triggers;
 }
 
 // @ts-ignore

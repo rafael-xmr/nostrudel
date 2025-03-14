@@ -112,6 +112,7 @@
     "react-qr-barcode-scanner": "^2.0.0",
     "react-router": "^6.30.0",
     "react-router-dom": "^6.30.0",
+    "react-scan": "^0.2.14",
     "react-simplemde-editor": "^5.2.0",
     "react-singleton-hook": "^4.0.1",
     "react-use": "^17.6.0",

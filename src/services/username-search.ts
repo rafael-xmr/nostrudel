@@ -56,7 +56,7 @@ const updates = eventStore.filters([{ kinds: [kinds.Metadata] }]).pipe(
 	}),
 );
 
-export const userSearchDirectory = from(cache).pipe(
+export const userSearchDirectory = from(cache ?? []).pipe(
 	mergeWith(updates),
 	scan((dir, updates) => {
 		if (!Object.keys(updates).length) return dir;

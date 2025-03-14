@@ -9,6 +9,8 @@ const GlobalProviders = dynamic(() =>
 	import("../src/providers/global").then((mod) => mod.GlobalProviders),
 );
 
+const ReactScan = dynamic(() => import("./scan").then((mod) => mod.ReactScan));
+
 export const metadata: Metadata = {
 	title: "moStard",
 	description: "A simple nostr web client focused on exploring nostr",
@@ -41,6 +43,7 @@ export default function RootLayout({
 			</head>
 			<body>
 				<div id="root">
+					<ReactScan />
 					<GlobalProviders>{children}</GlobalProviders>
 				</div>
 			</body>
