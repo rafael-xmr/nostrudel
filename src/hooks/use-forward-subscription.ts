@@ -4,7 +4,6 @@ import { useEffect, useMemo } from "react";
 import { createRxForwardReq } from "rx-nostr";
 import hash from "hash-sum";
 
-import rxNostr from "../services/rx-nostr";
 import { useEventStore } from "applesauce-react/hooks/use-event-store";
 
 export default function useForwardSubscription(relays?: string[], filters?: Filter | Filter[]) {
@@ -13,7 +12,7 @@ export default function useForwardSubscription(relays?: string[], filters?: Filt
   const rxReq = useMemo(() => createRxForwardReq(id), [id]);
 
   // attach to rxNostr
-  const observable = useMemo(() => rxNostr.use(rxReq, { on: { relays } }), [rxReq, relays?.join(",")]);
+  const observable = useMemo(() => window.rxNostr.use(rxReq, { on: { relays } }), [rxReq, relays?.join(",")]);
 
   // subscribe
   // NOTE: have to subscribe before emitting filter

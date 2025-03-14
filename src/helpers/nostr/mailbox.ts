@@ -73,7 +73,6 @@ export function createRTagsFromRelaySets(readRelays: Iterable<string>, writeRela
   const relays: Record<string, number> = {};
   for (const r of readRelays) relays[r] = (relays[r] ?? 0) | RelayMode.READ;
   for (const r of writeRelays) relays[r] = (relays[r] ?? 0) | RelayMode.WRITE;
-  console.log(relays);
 
   return Object.entries(relays).map(([url, mode]) => createRelayTag(url, mode));
 }

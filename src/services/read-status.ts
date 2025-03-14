@@ -3,7 +3,7 @@ import _throttle from "lodash.throttle";
 import { BehaviorSubject } from "rxjs";
 
 import SuperMap from "../classes/super-map";
-import db from "./db";
+import getDB from "./db";
 import { logger } from "../helpers/debug";
 
 class ReadStatusService {
@@ -48,7 +48,7 @@ class ReadStatusService {
 	async read() {
 		if (this.readQueue.size === 0) return;
 
-		const trans = db?.transaction("read");
+		const trans = (await getDB())?.transaction("read");
 		if (!trans) return;
 
 		this.log(`Loading ${this.readQueue.size} from database`);
@@ -72,7 +72,7 @@ class ReadStatusService {
 	async write() {
 		if (this.writeQueue.size === 0) return;
 
-		const trans = db?.transaction("read", "readwrite");
+		const trans = (await getDB())?.transaction("read", "readwrite");
 		if (!trans) return;
 
 		let count = 0;
@@ -96,7 +96,7 @@ class ReadStatusService {
 	}
 
 	async prune() {
-		const expired = await db?.getAllKeysFromIndex(
+		const expired = await (await getDB())?.getAllKeysFromIndex(
 			"read",
 			"ttl",
 			IDBKeyRange.upperBound(dayjs().unix()),
@@ -105,7 +105,7 @@ class ReadStatusService {
 		if (!expired) return;
 		if (expired.length === 0) return;
 
-		const tx = db?.transaction("read", "readwrite");
+		const tx = (await getDB())?.transaction("read", "readwrite");
 		if (!tx) return;
 
 		await Promise.all(expired.map((key) => tx.store.delete(key)));
@@ -119,7 +119,7 @@ const readStatusService = new ReadStatusService();
 
 setInterval(readStatusService.prune.bind(readStatusService), 30_000);
 
-if (process.env.NEXT_PUBLIC_DEV) {
+if (typeof window !== "undefined") {
 	// @ts-expect-error debug
 	window.readStatusService = readStatusService;
 }

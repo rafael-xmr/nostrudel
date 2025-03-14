@@ -245,6 +245,10 @@ async function getDB() {
 		});
 	}
 
+	if (typeof window !== "undefined") {
+		window.db = db;
+	}
+
 	return db;
 }
 
@@ -279,9 +283,9 @@ export async function deleteDatabase() {
 	window.location.reload();
 }
 
-if (process.env.NEXT_PUBLIC_DEV) {
+if (typeof window !== "undefined") {
 	// @ts-ignore
 	window.db = db;
 }
 
-export default db;
+export default getDB;

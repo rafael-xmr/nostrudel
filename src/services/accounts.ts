@@ -6,7 +6,7 @@ import {
 } from "applesauce-accounts/accounts";
 import { skip } from "rxjs";
 
-import db from "./db";
+import getDB from "./db";
 import { CAP_IS_NATIVE } from "../env";
 import { logger } from "../helpers/debug";
 import AndroidSignerAccount from "../classes/accounts/android-signer-account";
@@ -15,50 +15,59 @@ import { localStorageWrapper } from "~/utils/localStorage";
 
 // Setup nostr connect signer
 NostrConnectAccount.createConnectionMethods = createNostrConnectConnection;
+let topLevelAccounts: AccountManager | null = null;
 
-const log = logger.extend("Accounts");
+export default async function getAccounts() {
+	if (topLevelAccounts) return topLevelAccounts;
 
-const accounts = new AccountManager();
-registerCommonAccountTypes(accounts);
-accounts.registerType(AmberClipboardAccount);
+	const accounts = new AccountManager();
+	const log = logger.extend("Accounts");
 
-// add android signer if native
-if (CAP_IS_NATIVE) accounts.registerType(AndroidSignerAccount);
+	registerCommonAccountTypes(accounts);
+	accounts.registerType(AmberClipboardAccount);
 
-// load all accounts
-log("Loading accounts...");
-if (db) {
-	accounts.fromJSON(await db.getAll("accounts"), true);
-}
+	// add android signer if native
+	if (CAP_IS_NATIVE) accounts.registerType(AndroidSignerAccount);
 
-// save accounts to database when they change
-accounts.accounts$.pipe(skip(1)).subscribe(async () => {
-	const json = accounts.toJSON();
-	for (const account of json) await db?.put("accounts", account);
+	// load all accounts
+	log("Loading accounts...");
+	const db = await getDB();
+	if (!db) return topLevelAccounts;
 
-	// remove old accounts
-	const existing = await db?.getAll("accounts");
-	if (!existing) return;
+	const existing = await db.getAll("accounts");
+	accounts.fromJSON(existing, true);
 
-	for (const { id } of existing) {
-		if (!accounts.getAccount(id)) await db?.delete("accounts", id);
+	// save accounts to database when they change
+	accounts.accounts$.pipe(skip(1)).subscribe(async () => {
+		const json = accounts.toJSON();
+		for (const account of json) db.put("accounts", account);
+
+		// remove old accounts
+		const existing = await db.getAll("accounts");
+		if (!existing) return;
+
+		for (const { id } of existing) {
+			if (!accounts.getAccount(id)) await db.delete("accounts", id);
+		}
+	});
+
+	// load last active account
+	const lastPubkey = localStorageWrapper.getItem("active-account");
+	const lastAccount = lastPubkey && accounts.getAccountForPubkey(lastPubkey);
+	if (lastAccount) accounts.setActive(lastAccount);
+
+	// save last active to localstorage
+	accounts.active$.pipe(skip(1)).subscribe((account) => {
+		if (account) localStorageWrapper.setItem("active-account", account.pubkey);
+		else localStorageWrapper.removeItem("active-account");
+	});
+
+	if (typeof window !== "undefined") {
+		// @ts-expect-error debug
+		window.accounts = accounts;
 	}
-});
 
-// load last active account
-const lastPubkey = localStorageWrapper.getItem("active-account");
-const lastAccount = lastPubkey && accounts.getAccountForPubkey(lastPubkey);
-if (lastAccount) accounts.setActive(lastAccount);
+	topLevelAccounts = accounts;
 
-// save last active to localstorage
-accounts.active$.pipe(skip(1)).subscribe((account) => {
-	if (account) localStorageWrapper.setItem("active-account", account.pubkey);
-	else localStorageWrapper.removeItem("active-account");
-});
-
-if (process.env.NEXT_PUBLIC_DEV) {
-	// @ts-expect-error debug
-	window.accounts = accounts;
+	return accounts;
 }
-
-export default accounts;

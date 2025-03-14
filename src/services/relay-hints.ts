@@ -75,15 +75,11 @@ export function getEventPointerRelayHint(
 /** Returns a single relay hint for an event */
 export function getEventRelayHint(id: string): string | undefined {
 	const event = eventStore.getEvent(id);
-  console.info("event && getEventRelayHints(event, 1)[0]");
-  console.info(event && getEventRelayHints(event, 1)[0]);
 	return event && getEventRelayHints(event, 1)[0];
 }
 
 /** Returns a relay hint for a single pubkey */
 export function getPubkeyRelayHint(pubkey: string): string | undefined {
-  console.info("getAuthorHints(pubkey)[0]");
-  console.info(getAuthorHints(pubkey)[0]);
 	return getAuthorHints(pubkey)[0];
 }
 

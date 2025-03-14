@@ -155,8 +155,6 @@ export default class NostrWebRTCPeer extends EventEmitter<EventMap> {
           if (!this.offerEvent) return;
           if (!event.tags.some((t) => t[0] === "e" && t[1] === this.offerEvent?.id)) return;
 
-          console.log(event);
-
           switch (event.kind) {
             case RTCDescriptionEventKind:
               await this.handleAnswer(event);
@@ -296,7 +294,7 @@ export default class NostrWebRTCPeer extends EventEmitter<EventMap> {
   }
 }
 
-if (process.env.NEXT_PUBLIC_DEV) {
+if (typeof window !== "undefined") {
   // @ts-expect-error
   window.WebRTCPeer = NostrWebRTCPeer;
 }

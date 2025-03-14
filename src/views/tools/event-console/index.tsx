@@ -37,7 +37,6 @@ import useCacheRelay from "../../../hooks/use-cache-relay";
 import SimpleView from "../../../components/layout/presets/simple-view";
 import { cacheRequest } from "../../../services/cache-relay";
 import { eventStore } from "../../../services/event-store";
-import rxNostr from "../../../services/rx-nostr";
 
 const EventTimeline = memo(({ events }: { events: NostrEvent[] }) => {
   return (
@@ -114,7 +113,7 @@ export default function EventConsoleView() {
 
         // query remote relay
         const req = createRxForwardReq();
-        const sub = rxNostr.use(req, { on: { relays: [relay] } }).subscribe(handleEventPacket);
+        const sub = window.rxNostr.use(req, { on: { relays: [relay] } }).subscribe(handleEventPacket);
         req.emit([filter]);
         setSub(sub);
       } else {

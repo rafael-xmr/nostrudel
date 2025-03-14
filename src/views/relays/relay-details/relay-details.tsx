@@ -25,7 +25,6 @@ import EventKindsTable from "../../../components/charts/event-kinds-table";
 import { unixNow } from "applesauce-core/helpers";
 import { eventStore } from "../../../services/event-store";
 import { RelayTimelineLoader } from "applesauce-loaders";
-import rxNostr from "../../../services/rx-nostr";
 import { useObservable } from "applesauce-react/hooks";
 
 ChartJS.register(
@@ -101,7 +100,7 @@ export default function RelayDetailsTab({ relay }: { relay: string }) {
   const last = useRef(unixNow());
   const events = useRef(new Map());
 
-  const loader = useMemo(() => new RelayTimelineLoader(rxNostr, relay, [{}], { limit: 500 }), [relay]);
+  const loader = useMemo(() => new RelayTimelineLoader(window.rxNostr, relay, [{}], { limit: 500 }), [relay]);
 
   // start the loader
   useEffect(() => {

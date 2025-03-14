@@ -1,18 +1,13 @@
-import rxNostr from "./rx-nostr";
-import accounts from "./accounts";
 import channelMetadataService from "./channel-metadata-loader";
 import { eventStore, queryStore } from "./event-store";
 import localSettings from "./local-settings";
 import readStatusService from "./read-status";
 import relayInfoService from "./relay-info";
-import replaceableEventLoader from "./replaceable-loader";
 import timelineCacheService from "./timeline-cache";
 import { userSearchDirectory } from "./username-search";
-import singleEventLoader from "./single-event-loader";
-import userSetsLoader from "./user-sets-loader";
 
 const noStrudel = {
-	rxNostr,
+	rxNostr: window.rxNostr,
 
 	/**
 	 * Internal applesauce EventStore
@@ -26,12 +21,12 @@ const noStrudel = {
 	queryStore,
 
 	/** Account management */
-	accounts,
+	accounts: window.accounts,
 
 	// other internal services
-	replaceableEventLoader,
-	singleEventLoader,
-	userSetsLoader,
+	replaceableEventLoader: window.replaceableEventLoader,
+	singleEventLoader: window.singleEventLoader,
+	userSetsLoader: window.userSetsLoader,
 	userSearchDirectory,
 	readStatusService,
 	relayInfoService,

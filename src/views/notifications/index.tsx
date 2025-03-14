@@ -1,4 +1,4 @@
-import { memo, ReactNode, useCallback, useMemo } from "react";
+import { memo, type ReactNode, useCallback, useMemo } from "react";
 import { Button, Divider, Flex, Text } from "@chakra-ui/react";
 import dayjs, { type Dayjs } from "dayjs";
 import { getEventUID } from "nostr-idb";
@@ -31,7 +31,7 @@ import { truncateId } from "../../helpers/string";
 import { useReadRelays } from "../../hooks/use-client-relays";
 import useUserMailboxes from "../../hooks/use-user-mailboxes";
 import notifications$, {
-	CategorizedEvent,
+	type CategorizedEvent,
 	NotificationType,
 	NotificationTypeSymbol,
 } from "../../services/notifications";
@@ -42,7 +42,7 @@ function TimeMarker({ date, ids }: { date: Dayjs; ids: string[] }) {
 	}, [ids]);
 
 	return (
-		<Flex gap="4" p="2" key={date.unix() + "-marker"} alignItems="center">
+		<Flex gap="4" p="2" key={`${date.unix()}-marker`} alignItems="center">
 			<Divider />
 			<Text whiteSpace="pre">{date.fromNow()}</Text>
 			<Divider />

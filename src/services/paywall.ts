@@ -16,7 +16,6 @@ import {
 import { DomainIdentityJson } from "applesauce-loaders/helpers/dns-identity";
 import { unixNow } from "applesauce-core/helpers";
 
-import accounts from "./accounts";
 import { PAYWALL_NIP05 } from "../env";
 import { logger } from "../helpers/debug";
 import { localStorageWrapper } from "~/utils/localStorage";
@@ -33,7 +32,7 @@ hidePaywall.subscribe((ts) => {
 
 let paywall: Observable<boolean>;
 if (PAYWALL_NIP05) {
-  const accountPaid = accounts.active$.pipe(
+  const accountPaid = window.accounts.active$.pipe(
     // ignore empty accounts
     filter((a) => !!a),
     // fetch the identity document

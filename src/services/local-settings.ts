@@ -104,7 +104,7 @@ const localSettings = {
 	cacheRelayURL,
 };
 
-if (process.env.NEXT_PUBLIC_DEV) {
+if (typeof window !== "undefined") {
 	// @ts-expect-error debug
 	window.localSettings = localSettings;
 }

@@ -23,7 +23,7 @@ class XmlFeedsService {
 
 export const xmlFeedsService = new XmlFeedsService();
 
-if (process.env.NEXT_PUBLIC_DEV) {
+if (typeof window !== "undefined") {
   // @ts-expect-error
   window.xmlFeedsService = xmlFeedsService;
 }

@@ -2,16 +2,27 @@ import _throttle from "lodash.throttle";
 import { SingleEventLoader } from "applesauce-loaders";
 
 import { eventStore } from "./event-store";
-import rxNostr from "./rx-nostr";
 import { cacheRequest } from "./cache-relay";
 
-const singleEventLoader = new SingleEventLoader(rxNostr, { cacheRequest });
+let topLevelSingleEventLoader: SingleEventLoader | null = null;
 
-singleEventLoader.subscribe((packet) => eventStore.add(packet.event, packet.from));
+export default async function getSingleEventLoader() {
+	if (topLevelSingleEventLoader) return topLevelSingleEventLoader;
 
-if (process.env.NEXT_PUBLIC_DEV) {
-  //@ts-expect-error
-  window.singleEventLoader = singleEventLoader;
+	const singleEventLoader = new SingleEventLoader(window.rxNostr, {
+		cacheRequest,
+	});
+
+	singleEventLoader.subscribe((packet) =>
+		eventStore.add(packet.event, packet.from),
+	);
+
+	if (typeof window !== "undefined") {
+		//@ts-expect-error
+		window.singleEventLoader = singleEventLoader;
+	}
+
+	topLevelSingleEventLoader = singleEventLoader;
+
+	return singleEventLoader;
 }
-
-export default singleEventLoader;

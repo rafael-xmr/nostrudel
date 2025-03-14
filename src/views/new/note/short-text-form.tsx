@@ -199,7 +199,9 @@ export default function ShortTextNoteForm({
 					}
 					rows={8}
 					isRequired
-					// instanceRef={(inst) => (textAreaRef.current = inst)}
+					instanceRef={(inst) => {
+						textAreaRef.current = inst;
+					}}
 					onPaste={onPaste}
 					onKeyDown={(e) => {
 						if ((e.ctrlKey || e.metaKey) && e.key === "Enter") submit();

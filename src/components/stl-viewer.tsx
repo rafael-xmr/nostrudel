@@ -92,8 +92,6 @@ function createSTLWorld(canvas: HTMLCanvasElement) {
     // update floor
     grid.position.set(0, ((bb.min.z - bb.max.z) / 2) * objectScale, 0);
     floor.position.set(0, ((bb.min.z - bb.max.z) / 2) * objectScale, 0);
-
-    console.log(object);
   }
 
   function resize() {

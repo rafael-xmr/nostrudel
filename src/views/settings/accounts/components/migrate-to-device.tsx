@@ -4,7 +4,6 @@ import { useState } from "react";
 
 import useAsyncErrorHandler from "../../../../hooks/use-async-error-handler";
 import { useAccountManager, useActiveAccount } from "applesauce-react/hooks";
-import accountService from "../../../../services/accounts";
 import { SerialPortAccount } from "applesauce-accounts/accounts";
 
 export default function MigrateAccountToDevice() {

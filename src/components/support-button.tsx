@@ -69,8 +69,6 @@ export default function SupportButton() {
 				);
 				const body = await res.json();
 
-				console.log(body);
-
 				if (body?.status === "ok") {
 					paymentOkRef.current = true;
 					clearInterval(interval);

@@ -23,10 +23,8 @@ import { getContentPointers } from "applesauce-factory/helpers";
 import { kinds, nip18, nip25, NostrEvent } from "nostr-tools";
 
 import localSettings from "./local-settings";
-import singleEventLoader from "./single-event-loader";
 import { eventStore, queryStore } from "./event-store";
 import { TORRENT_COMMENT_KIND } from "../helpers/nostr/torrents";
-import accounts from "./accounts";
 import { getThreadReferences, isReply, isRepost } from "../helpers/nostr/event";
 import { getPubkeysMentionedInContent } from "../helpers/nostr/post";
 
@@ -143,7 +141,7 @@ async function handleTextNote(event: NostrEvent) {
 		getEventPointerFromQTag,
 	);
 	for (const pointer of quotes) {
-		singleEventLoader.next({
+		window.singleEventLoader.next({
 			id: pointer.id,
 			relays: [...localSettings.readRelays.value, ...(pointer.relays ?? [])],
 		});
@@ -156,7 +154,7 @@ async function handleTextNote(event: NostrEvent) {
 		getEventPointerFromETag,
 	);
 	for (const pointer of pointers) {
-		singleEventLoader.next({
+		window.singleEventLoader.next({
 			id: pointer.id,
 			relays: [...localSettings.readRelays.value, ...(pointer.relays ?? [])],
 		});
@@ -170,7 +168,7 @@ async function handleShare(event: NostrEvent) {
 		getEventPointerFromETag,
 	);
 	for (const pointer of pointers) {
-		singleEventLoader.next({
+		window.singleEventLoader.next({
 			id: pointer.id,
 			relays: [...localSettings.readRelays.value, ...(pointer.relays ?? [])],
 		});
@@ -178,7 +176,7 @@ async function handleShare(event: NostrEvent) {
 }
 
 const notifications$: Observable<CategorizedEvent[]> = combineLatest([
-	accounts.active$,
+	window.accounts.active$,
 ]).pipe(
 	switchMap(([account]) => {
 		if (!account) return [];

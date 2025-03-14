@@ -4,7 +4,6 @@ import { useStoreQuery } from "applesauce-react/hooks";
 import { ReplaceableSetQuery } from "applesauce-core/queries";
 
 import { useReadRelays } from "./use-client-relays";
-import replaceableEventLoader from "../services/replaceable-loader";
 import {
 	type CustomAddressPointer,
 	parseCoordinate,
@@ -38,7 +37,7 @@ export default function useReplaceableEvents(
 		if (!pointers) return;
 
 		for (const pointer of pointers) {
-			replaceableEventLoader.next({
+			window.replaceableEventLoader?.next({
 				relays: [...relaysDep.split("|"), ...(pointer.relays ?? [])],
 				kind: pointer.kind,
 				pubkey: pointer.pubkey,

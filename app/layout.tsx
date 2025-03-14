@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "../src/styles.css";
+import "yet-another-react-lightbox/styles.css";
+import "yet-another-react-lightbox/plugins/counter.css";
 
 import dynamic from "next/dynamic";
 
@@ -35,6 +37,7 @@ export default function RootLayout({
 					property="og:image"
 					content="https://github.com/rafael-xmr/nostrudel/blob/mostard/public/og_image.jpeg?raw=true"
 				/>
+				<script src="https://unpkg.com/react-scan/dist/auto.global.js" />
 			</head>
 			<body>
 				<div id="root">

@@ -39,7 +39,7 @@ class EventCountService {
 
 const eventCountService = new EventCountService();
 
-if (process.env.NEXT_PUBLIC_DEV) {
+if (typeof window !== "undefined") {
   // @ts-expect-error debug
   window.eventCountService = eventCountService;
 }

@@ -13,7 +13,6 @@ import RelayStatusDetails from "./components/relay-details";
 import { SelectedContext } from "./selected-context";
 import CountyPicker from "../../../components/county-picker";
 import { useBreakpointValue } from "../../../providers/global/breakpoint-provider";
-import rxNostr from "../../../services/rx-nostr";
 import SimpleView from "../../../components/layout/presets/simple-view";
 
 export default function RelayDiscoveryView() {
@@ -33,7 +32,7 @@ export default function RelayDiscoveryView() {
   useEffect(() => {
     const req = createRxForwardReq();
 
-    const sub = rxNostr.use(req, { on: { relays: [discoveryRelay] } }).subscribe((packet) => {
+    const sub = window.rxNostr.use(req, { on: { relays: [discoveryRelay] } }).subscribe((packet) => {
       if (getReplaceableIdentifier(packet.event)) {
         setEvents((arr) => ({ ...arr, [getEventUID(packet.event)]: packet.event }));
       }

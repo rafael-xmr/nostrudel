@@ -2,16 +2,25 @@ import _throttle from "lodash.throttle";
 import { UserSetsLoader } from "applesauce-loaders";
 
 import { eventStore } from "./event-store";
-import rxNostr from "./rx-nostr";
 import { cacheRequest } from "./cache-relay";
 
-const userSetsLoader = new UserSetsLoader(rxNostr, { cacheRequest });
+let topLevelUserSetsLoader: UserSetsLoader | null = null;
 
-userSetsLoader.subscribe((packet) => eventStore.add(packet.event, packet.from));
+export default async function getUserSetsLoader() {
+	if (topLevelUserSetsLoader) return topLevelUserSetsLoader;
 
-if (process.env.NEXT_PUBLIC_DEV) {
-  //@ts-expect-error
-  window.userSetsLoader = userSetsLoader;
+	const userSetsLoader = new UserSetsLoader(window.rxNostr, { cacheRequest });
+
+	userSetsLoader.subscribe((packet) =>
+		eventStore.add(packet.event, packet.from),
+	);
+
+	if (typeof window !== "undefined") {
+		//@ts-expect-error
+		window.userSetsLoader = userSetsLoader;
+	}
+
+	topLevelUserSetsLoader = userSetsLoader;
+
+	return userSetsLoader;
 }
-
-export default userSetsLoader;

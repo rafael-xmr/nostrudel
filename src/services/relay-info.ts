@@ -1,32 +1,34 @@
 import { Nip11Registry } from "rx-nostr";
 
-import db from "./db";
+import getDB from "./db";
 import { logger } from "../helpers/debug";
 
 const log = logger.extend("Nip11Registry");
 
-db?.transaction("relayInfo", "readonly")
-	.objectStore("relayInfo")
-	.openCursor()
-	.then(async (cursor) => {
-		let loaded = 0;
+getDB().then((db) => {
+	db?.transaction("relayInfo", "readonly")
+		.objectStore("relayInfo")
+		.openCursor()
+		.then(async (cursor) => {
+			let loaded = 0;
 
-		while (cursor) {
-			try {
-				Nip11Registry.set(cursor.key as string, cursor.value);
-				loaded++;
-			} catch (error) {}
-			cursor = await cursor.continue();
-		}
+			while (cursor) {
+				try {
+					Nip11Registry.set(cursor.key as string, cursor.value);
+					loaded++;
+				} catch (error) {}
+				cursor = await cursor.continue();
+			}
 
-		log(`Loaded ${loaded} relay info`);
-	});
+			log(`Loaded ${loaded} relay info`);
+		});
+});
 
 async function saveInfo() {
 	log("Saving relay info");
 	const cache = Reflect.get(Nip11Registry, "cache") as Map<string, any>;
 
-	const tx = db?.transaction("relayInfo", "readwrite");
+	const tx = (await getDB())?.transaction("relayInfo", "readwrite");
 	if (!tx) return;
 
 	await Promise.all(
@@ -42,7 +44,7 @@ async function getInfo(relay: string, alwaysFetch = false) {
 
 	if (!info || alwaysFetch) {
 		info = await Nip11Registry.fetch(relay);
-		db?.put("relayInfo", info, relay);
+		(await getDB())?.put("relayInfo", info, relay);
 	}
 	return info;
 }
@@ -53,7 +55,7 @@ setInterval(() => {
 
 export const relayInfoService = { getInfo };
 
-if (process.env.NEXT_PUBLIC_DEV) {
+if (typeof window !== "undefined") {
 	// @ts-ignore
 	window.relayInfoService = relayInfoService;
 	// @ts-ignore

@@ -6,7 +6,6 @@ import { connections$, notices$ } from "../../../services/rx-nostr";
 import RelayConnectionsTab from "./tabs/connections";
 import RelayAuthenticationTab from "./tabs/authentication";
 import NoticesTab from "./tabs/notices";
-import authenticationSigner from "../../../services/authentication-signer";
 
 const TABS = ["relays", "auth", "notices"];
 
@@ -18,7 +17,7 @@ export default function TaskManagerRelays() {
 
   const connections = useObservable(connections$);
   const connected = Object.values(connections).reduce((t, s) => (s === "connected" ? t + 1 : t), 0);
-  const pending = useObservable(authenticationSigner.relayState$);
+  const pending = useObservable(window.authenticationSigner.relayState$);
 
   return (
     <Tabs position="relative" variant="unstyled" index={tabIndex} onChange={(i) => setTab(TABS[i])} isLazy>

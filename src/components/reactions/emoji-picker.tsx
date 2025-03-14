@@ -29,6 +29,5 @@ export default function EmojiPicker({
 	custom?: { id: string; name: string; emojis: NativeEmoji[] }[];
 	categories?: string[];
 }) {
-	console.info(props);
 	return <Picker data={data} theme={"dark"} {...props} />;
 }

@@ -1,11 +1,11 @@
-import db from "./db";
+import getDB from "./db";
 import _throttle from "lodash.throttle";
 import { DnsIdentityLoader } from "applesauce-loaders/loaders/dns-identity-loader";
 import { fetchWithProxy } from "../helpers/request";
 
 export const dnsIdentityLoader = new DnsIdentityLoader({
 	save: async (identities) => {
-		const tx = db?.transaction("identities", "readwrite");
+		const tx = (await getDB())?.transaction("identities", "readwrite");
 		if (!tx) return;
 
 		for (const [address, identity] of Object.entries(identities)) {
@@ -13,12 +13,12 @@ export const dnsIdentityLoader = new DnsIdentityLoader({
 		}
 		await tx.done;
 	},
-	load: async (address) => db?.get("identities", address),
+	load: async (address) => (await getDB())?.get("identities", address),
 });
 
 dnsIdentityLoader.fetch = fetchWithProxy;
 
-if (process.env.NEXT_PUBLIC_DEV) {
+if (typeof window !== "undefined") {
 	// @ts-expect-error debug
 	window.dnsIdentityLoader = dnsIdentityLoader;
 }

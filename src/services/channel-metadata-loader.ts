@@ -2,10 +2,9 @@ import { kinds } from "nostr-tools";
 
 import { cacheRequest } from "./cache-relay";
 import { TagValueLoader } from "applesauce-loaders";
-import rxNostr from "./rx-nostr";
 import { eventStore } from "./event-store";
 
-const channelMetadataLoader = new TagValueLoader(rxNostr, "e", {
+const channelMetadataLoader = new TagValueLoader(window.rxNostr, "e", {
   name: "channel-metadata",
   kinds: [kinds.ChannelMetadata],
   cacheRequest,

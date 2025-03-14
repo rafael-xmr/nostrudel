@@ -1,6 +1,15 @@
-import { Box, Flex, FlexProps, IconButton, Spacer } from "@chakra-ui/react";
-import { NostrEvent } from "nostr-tools";
-import { getMediaAttachments, MediaAttachment } from "applesauce-core/helpers/file-metadata";
+import {
+	Box,
+	Flex,
+	type FlexProps,
+	IconButton,
+	Spacer,
+} from "@chakra-ui/react";
+import type { NostrEvent } from "nostr-tools";
+import {
+	getMediaAttachments,
+	type MediaAttachment,
+} from "applesauce-core/helpers/file-metadata";
 import { Carousel, useCarousel } from "nuka-carousel";
 import styled from "@emotion/styled";
 
@@ -9,72 +18,92 @@ import { isImageURL, isVideoURL } from "applesauce-core/helpers";
 import { ChevronLeftIcon, ChevronRightIcon } from "../icons";
 
 function CustomArrows() {
-  const { currentPage, totalPages, wrapMode, goBack, goForward } = useCarousel();
+	const { currentPage, totalPages, wrapMode, goBack, goForward } =
+		useCarousel();
 
-  const allowWrap = wrapMode === "wrap";
-  const enablePrevNavButton = allowWrap || currentPage > 0;
-  const enableNextNavButton = allowWrap || currentPage < totalPages - 1;
+	const allowWrap = wrapMode === "wrap";
+	const enablePrevNavButton = allowWrap || currentPage > 0;
+	const enableNextNavButton = allowWrap || currentPage < totalPages - 1;
 
-  return (
-    <Flex justifyContent="space-between" position="absolute" top="50%" right="0" left="0">
-      <IconButton
-        icon={<ChevronLeftIcon boxSize={8} />}
-        onClick={goBack}
-        aria-label="previous image"
-        variant="ghost"
-        h="24"
-        w="12"
-        isDisabled={!enablePrevNavButton}
-      >
-        PREV
-      </IconButton>
-      <IconButton
-        icon={<ChevronRightIcon boxSize={8} />}
-        onClick={goForward}
-        aria-label="next image"
-        variant="ghost"
-        h="24"
-        w="12"
-        isDisabled={!enableNextNavButton}
-      >
-        NEXT
-      </IconButton>
-    </Flex>
-  );
+	return (
+		<Flex
+			justifyContent="space-between"
+			position="absolute"
+			top="50%"
+			right="0"
+			left="0"
+		>
+			<IconButton
+				icon={<ChevronLeftIcon boxSize={8} />}
+				onClick={goBack}
+				aria-label="previous image"
+				variant="ghost"
+				h="24"
+				w="12"
+				isDisabled={!enablePrevNavButton}
+			>
+				PREV
+			</IconButton>
+			<IconButton
+				icon={<ChevronRightIcon boxSize={8} />}
+				onClick={goForward}
+				aria-label="next image"
+				variant="ghost"
+				h="24"
+				w="12"
+				isDisabled={!enableNextNavButton}
+			>
+				NEXT
+			</IconButton>
+		</Flex>
+	);
 }
 
 function cls(...classes: string[]) {
-  return classes.filter(Boolean).join(" ");
+	return classes.filter(Boolean).join(" ");
 }
 function PageIndicators() {
-  const { totalPages, currentPage, goToPage } = useCarousel();
+	const { totalPages, currentPage, goToPage } = useCarousel();
 
-  const className = (index: number) =>
-    cls("nuka-page-indicator", currentPage === index ? "nuka-page-indicator-active" : "");
+	const className = (index: number) =>
+		cls(
+			"nuka-page-indicator",
+			currentPage === index ? "nuka-page-indicator-active" : "",
+		);
 
-  return (
-    <div className="nuka-page-container" data-testid="pageIndicatorContainer">
-      {[...Array(totalPages)].map((_, index) => (
-        <button key={index} onClick={() => goToPage(index)} className={className(index)}>
-          <span className="nuka-hidden">{index + 1}</span>
-        </button>
-      ))}
-    </div>
-  );
+	return (
+		<div className="nuka-page-container" data-testid="pageIndicatorContainer">
+			{[...Array(totalPages)].map((_, index) => (
+				<button
+					key={index}
+					onClick={() => goToPage(index)}
+					className={className(index)}
+				>
+					<span className="nuka-hidden">{index + 1}</span>
+				</button>
+			))}
+		</div>
+	);
 }
 
 function MediaAttachmentSlide({ media }: { media: MediaAttachment }) {
-  if (media.type?.startsWith("video/") || isVideoURL(media.url)) {
-    return <TrustVideo src={media.url} poster={media.image} aria-description={media.alt} />;
-  } else if (media.type?.startsWith("image/") || isImageURL(media.url)) {
-    return <TrustImage src={media.url} alt={media.alt} maxH="full" />;
-  }
+	if (media.type?.startsWith("video/") || isVideoURL(media.url)) {
+		return (
+			<TrustVideo
+				src={media.url}
+				poster={media.image}
+				aria-description={media.alt}
+			/>
+		);
+	} else if (media.type?.startsWith("image/") || isImageURL(media.url)) {
+		return <TrustImage src={media.url} alt={media.alt} maxH="full" />;
+	}
 
-  return (
-    <Box aspectRatio={1} minW="lg">
-      Unknown media type {media.type ?? "Unknown"}
-    </Box>
-  );
+	return (
+		<Box aspectRatio={1} minW="lg">
+			Unknown media type {media.type ?? "Unknown"}
+		</Box>
+	);
 }
 
 const CustomCarousel = styled(Carousel)`
@@ -100,39 +129,49 @@ const CustomCarousel = styled(Carousel)`
 `;
 
 export default function MediaPostSlides({
-  post,
-  showZaps = true,
-  ...props
+	post,
+	showZaps = true,
+	...props
 }: { post: NostrEvent; showZaps?: boolean } & Omit<FlexProps, "children">) {
-  const attachments = getMediaAttachments(post);
+	const attachments = getMediaAttachments(post);
 
-  if (attachments.length === 1)
-    return (
-      <Flex gap="2" direction="column" {...props}>
-        <Flex justifyContent="center" overflow="hidden" flexGrow={1} alignItems="flex-start">
-          <MediaAttachmentSlide media={attachments[0]} />
-        </Flex>
-      </Flex>
-    );
+	if (attachments.length === 1)
+		return (
+			<Flex gap="2" direction="column" {...props}>
+				<Flex
+					justifyContent="center"
+					overflow="hidden"
+					flexGrow={1}
+					alignItems="flex-start"
+				>
+					<MediaAttachmentSlide media={attachments[0]} />
+				</Flex>
+			</Flex>
+		);
 
-  return (
-    <Flex gap="2" direction="column" {...props}>
-      <CustomCarousel
-        scrollDistance="screen"
-        showDots
-        arrows={<CustomArrows />}
-        showArrows
-        dots={
-          <Flex gap="2" justifyContent="space-between" alignItems="center" px="2">
-            <Spacer />
-            <PageIndicators />
-          </Flex>
-        }
-      >
-        {attachments.map((media) => (
-          <MediaAttachmentSlide key={media.sha256 || media.url} media={media} />
-        ))}
-      </CustomCarousel>
-    </Flex>
-  );
+	return (
+		<Flex gap="2" direction="column" {...props}>
+			<CustomCarousel
+				scrollDistance="screen"
+				showDots
+				arrows={<CustomArrows />}
+				showArrows
+				dots={
+					<Flex
+						gap="2"
+						justifyContent="space-between"
+						alignItems="center"
+						px="2"
+					>
+						<Spacer />
+						<PageIndicators />
+					</Flex>
+				}
+			>
+				{attachments.map((media) => (
+					<MediaAttachmentSlide key={media.sha256 || media.url} media={media} />
+				))}
+			</CustomCarousel>
+		</Flex>
+	);
 }

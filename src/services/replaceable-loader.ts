@@ -1,20 +1,33 @@
 import { ReplaceableLoader } from "applesauce-loaders/loaders";
 
 import { eventStore } from "./event-store";
-import rxNostr from "./rx-nostr";
 import { COMMON_CONTACT_RELAYS } from "../const";
 import { cacheRequest } from "./cache-relay";
 
-const replaceableEventLoader = new ReplaceableLoader(rxNostr, {
-  cacheRequest,
-  lookupRelays: COMMON_CONTACT_RELAYS,
-});
+let topLevelReplaceableEventLoader: ReplaceableLoader | null = null;
 
-replaceableEventLoader.subscribe((packet) => eventStore.add(packet.event, packet.from));
+export async function getReplaceableEventLoader() {
+	if (topLevelReplaceableEventLoader) return topLevelReplaceableEventLoader;
 
-if (process.env.NEXT_PUBLIC_DEV) {
-  //@ts-expect-error debug
-  window.replaceableEventLoader = replaceableEventLoader;
+	if (typeof window === "undefined") return topLevelReplaceableEventLoader;
+
+	const replaceableEventLoader = new ReplaceableLoader(window.rxNostr, {
+		cacheRequest,
+		lookupRelays: COMMON_CONTACT_RELAYS,
+	});
+
+	replaceableEventLoader.subscribe((packet) =>
+		eventStore.add(packet.event, packet.from),
+	);
+
+	if (typeof window !== "undefined") {
+		//@ts-expect-error debug
+		window.replaceableEventLoader = replaceableEventLoader;
+	}
+
+	topLevelReplaceableEventLoader = replaceableEventLoader;
+
+	return replaceableEventLoader;
 }
 
-export default replaceableEventLoader;
+export default topLevelReplaceableEventLoader;

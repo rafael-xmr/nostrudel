@@ -37,8 +37,6 @@ export default function RelayMap({
 
 	// center map when selected changes
 	useEffect(() => {
-    console.info(!map || selected.value === prev.current);
-    console.info(map, selected.value, prev.current);
 		if (!map || selected.value === prev.current) return;
 
 		const selectedEvent = eventsRef.current.find(

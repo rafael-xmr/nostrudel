@@ -4,7 +4,6 @@ import { createDefer, Deferred } from "applesauce-core/promise";
 
 import signingService from "./signing";
 import { logger } from "../helpers/debug";
-import accounts from "./accounts";
 
 type EncryptionType = "nip04" | "nip44";
 
@@ -43,7 +42,7 @@ class DecryptionCache {
   }
 
   private async decryptContainer(container: DecryptionContainer) {
-    const account = accounts.active;
+    const account = window.accounts.active;
     if (!account) throw new Error("Missing account");
 
     switch (container.type) {
@@ -118,7 +117,7 @@ class DecryptionCache {
 
 const decryptionCacheService = new DecryptionCache();
 
-if (process.env.NEXT_PUBLIC_DEV) {
+if (typeof window !== "undefined") {
   // @ts-expect-error debug
   window.decryptionCacheService = decryptionCacheService;
 }

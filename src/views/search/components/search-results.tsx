@@ -9,7 +9,6 @@ import NoteSearchResults from "./note-results";
 import ArticleSearchResults from "./article-results";
 import { eventStore } from "../../../services/event-store";
 import { createRxOneshotReq, EventPacket } from "rx-nostr";
-import rxNostr from "../../../services/rx-nostr";
 import { cacheRequest } from "../../../services/cache-relay";
 
 export function createSearchAction(relays?: string[]): (filters: Filter[]) => Observable<EventPacket> {
@@ -31,7 +30,7 @@ export function createSearchAction(relays?: string[]): (filters: Filter[]) => Ob
 
     // search remote
     const req = createRxOneshotReq({ filters });
-    return rxNostr.use(req, { on: { relays } });
+    return window.rxNostr.use(req, { on: { relays } });
   };
 }
 

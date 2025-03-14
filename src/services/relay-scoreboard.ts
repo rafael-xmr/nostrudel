@@ -1,6 +1,6 @@
 import dayjs from "dayjs";
 import SuperMap from "../classes/super-map";
-import db from "./db";
+import getDB from "./db";
 
 function clamp(v: number, min: number, max: number) {
 	return Math.min(Math.max(v, min), max);
@@ -241,7 +241,7 @@ class RelayScoreboardService {
 	}
 
 	async loadStats() {
-		const stats = await db?.getAll("relayScoreboardStats");
+		const stats = await (await getDB())?.getAll("relayScoreboardStats");
 		if (!stats) return;
 
 		for (const relayStats of stats) {
@@ -257,7 +257,10 @@ class RelayScoreboardService {
 	}
 
 	async saveStats() {
-		const transaction = db?.transaction("relayScoreboardStats", "readwrite");
+		const transaction = (await getDB())?.transaction(
+			"relayScoreboardStats",
+			"readwrite",
+		);
 		if (transaction) {
 			const relays = this.getRelays();
 			for (const relay of relays) {
@@ -287,7 +290,7 @@ setInterval(() => {
 	relayScoreboardService.saveStats();
 }, 1000 * 30);
 
-if (process.env.NEXT_PUBLIC_DEV) {
+if (typeof window !== "undefined") {
 	// @ts-expect-error debug
 	window.relayScoreboardService = relayScoreboardService;
 }

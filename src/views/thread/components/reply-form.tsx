@@ -8,7 +8,6 @@ import {
 	FormHelperText,
 	FormLabel,
 	Input,
-	ModalBody,
 	Slider,
 	SliderFilledTrack,
 	SliderThumb,
@@ -136,9 +135,10 @@ export default function ReplyForm({
 
 	const formRef = useRef<HTMLFormElement | null>(null);
 
-	// throttle preview
-	const throttleValues = useThrottle(getValues(), 500);
-	const { value: preview } = useAsync(() => getDraft(), [throttleValues]);
+	const { value: preview } = useAsync(
+		async () => await getDraft(),
+		[getValues().content],
+	);
 
 	const showAdvanced = advanced.isOpen || formState.dirtyFields.nsfw;
 
@@ -173,7 +173,9 @@ export default function ReplyForm({
 				onChange={(e) =>
 					setValue("content", e.target.value, { shouldDirty: true })
 				}
-				// instanceRef={(inst) => (textAreaRef.current = inst)}
+				instanceRef={(inst) => {
+					textAreaRef.current = inst;
+				}}
 				onPaste={onPaste}
 				onKeyDown={(e) => {
 					if ((e.ctrlKey || e.metaKey) && e.key === "Enter" && formRef.current)
