@@ -24,6 +24,5 @@ class XmlFeedsService {
 export const xmlFeedsService = new XmlFeedsService();
 
 if (typeof window !== "undefined") {
-  // @ts-expect-error
   window.xmlFeedsService = xmlFeedsService;
 }

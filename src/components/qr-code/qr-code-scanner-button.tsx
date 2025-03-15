@@ -1,88 +1,53 @@
-import { Suspense, lazy, useCallback } from "react";
-import { IconButton, IconButtonProps, useDisclosure, useToast } from "@chakra-ui/react";
+import { Suspense, lazy, useState } from "react";
+import {
+  Button,
+  IconButton,
+  IconButtonProps,
+  Modal,
+  ModalBody,
+  ModalContent,
+  ModalFooter,
+  ModalOverlay,
+  useDisclosure,
+  useToast,
+} from "@chakra-ui/react";
 
-import { type QrScannerModalProps } from "./qr-scanner-modal";
 import { CAP_IS_NATIVE } from "../../env";
 import { logger } from "../../helpers/debug";
 import { QrCodeIcon } from "../icons";
+import { installNativeScanner, scanSingle } from "./native-scanner";
 
-const QrScannerModal = lazy(() => import("./qr-scanner-modal"));
+const BarcodeScannerComponent = lazy(() => import("react-qr-barcode-scanner"));
 const log = logger.extend("QRCodeScanner");
 
-async function scanWithNative() {
-  const { BarcodeScanner, BarcodeFormat, GoogleBarcodeScannerModuleInstallState } = await import(
-    "@capacitor-mlkit/barcode-scanning"
-  );
-  const { available } = await BarcodeScanner.isGoogleBarcodeScannerModuleAvailable();
-  if (!available) {
-    await BarcodeScanner.installGoogleBarcodeScannerModule();
-    await new Promise<void>(async (res, rej) => {
-      const sub = await BarcodeScanner.addListener("googleBarcodeScannerModuleInstallProgress", (event) => {
-        log("Installing google barcode scanner", event.progress);
-        switch (event.state) {
-          case GoogleBarcodeScannerModuleInstallState.COMPLETED:
-            sub.remove();
-            res();
-            break;
-          case GoogleBarcodeScannerModuleInstallState.PENDING:
-            log("Pending download");
-            break;
-          case GoogleBarcodeScannerModuleInstallState.DOWNLOADING:
-            log("Downloading");
-            break;
-          case GoogleBarcodeScannerModuleInstallState.DOWNLOAD_PAUSED:
-            log("Download paused");
-            break;
-          case GoogleBarcodeScannerModuleInstallState.INSTALLING:
-            log("Installing");
-            break;
-          case GoogleBarcodeScannerModuleInstallState.FAILED:
-            sub.remove();
-            rej(new Error("Failed to install"));
-            break;
-          case GoogleBarcodeScannerModuleInstallState.CANCELED:
-            sub.remove();
-            rej(new Error("Canceled install"));
-            break;
-        }
-      });
-    });
-  }
-
-  const { supported } = await BarcodeScanner.isSupported();
-  if (!supported) throw new Error("Unsupported");
-  const { camera } = await BarcodeScanner.requestPermissions();
-  const granted = camera === "granted" || camera === "limited";
-
-  if (!granted) throw new Error("Camera access denied");
-
-  try {
-    const { barcodes } = await BarcodeScanner.scan({
-      formats: [BarcodeFormat.QrCode],
-    });
-
-    const barcode = barcodes[0];
-    if (!barcode) return null;
-
-    return barcode.rawValue;
-  } catch (error) {
-    // user closed scanner
-    return null;
-  }
-}
-
 export default function QRCodeScannerButton({
-  onData,
+  onResult,
   ...props
-}: { onData: QrScannerModalProps["onData"] } & Omit<IconButtonProps, "icon" | "aria-label">) {
+}: { onResult: (data: string) => void } & Omit<IconButtonProps, "icon" | "aria-label">) {
   const toast = useToast();
   const modal = useDisclosure();
 
-  const handleClick = useCallback(async () => {
+  const [stopStream, setStopStream] = useState(false);
+  const closeModal = (result?: string) => {
+    // Stop the QR Reader stream (fixes issue where the browser freezes when closing the modal) and then dismiss the modal one tick later
+    setStopStream(true);
+    setTimeout(() => {
+      modal.onClose();
+      if (result) onResult(result);
+    }, 0);
+  };
+
+  const handleClick = async () => {
     if (CAP_IS_NATIVE) {
       try {
-        const result = await scanWithNative();
-        if (result) onData(result);
+        await installNativeScanner();
+
+        try {
+          const result = await scanSingle();
+          onResult(result.barcodes[0].rawValue);
+        } catch (error) {
+          // user cancel
+        }
       } catch (error) {
         log(error);
         if (process.env.NEXT_PUBLIC_DEV && error instanceof Error) toast({ status: "error", description: error.message });
@@ -90,14 +55,30 @@ export default function QRCodeScannerButton({
         modal.onOpen();
       }
     } else modal.onOpen();
-  }, [modal.onOpen]);
+  };
 
   return (
     <>
       <IconButton onClick={handleClick} icon={<QrCodeIcon boxSize={6} />} aria-label="Qr Scanner" {...props} />
       {modal.isOpen && (
         <Suspense fallback={null}>
-          <QrScannerModal isOpen={modal.isOpen} onClose={modal.onClose} onData={onData} />
+          <Modal isOpen={modal.isOpen} onClose={closeModal}>
+            <ModalOverlay />
+            <ModalContent>
+              <ModalBody p="2">
+                <BarcodeScannerComponent
+                  stopStream={stopStream}
+                  onUpdate={(_err, result) => {
+                    if (result && result.getText()) closeModal(result.getText());
+                  }}
+                />
+              </ModalBody>
+
+              <ModalFooter px="2" pb="2" pt="0" alignItems="center" gap="2">
+                <Button onClick={() => closeModal()}>Cancel</Button>
+              </ModalFooter>
+            </ModalContent>
+          </Modal>
         </Suspense>
       )}
     </>

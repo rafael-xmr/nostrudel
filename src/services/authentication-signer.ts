@@ -230,7 +230,6 @@ export default async function getAuthenticationSigner() {
 	topLevelAuthenticationSigner = authenticationSigner;
 
 	if (typeof window !== "undefined") {
-		// @ts-expect-error
 		window.authenticationSigner = authenticationSigner;
 	}
 

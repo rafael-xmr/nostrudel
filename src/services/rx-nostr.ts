@@ -27,7 +27,6 @@ export async function getRxNostr() {
 		verifier: noopVerifier,
 		// don't verify the events at the rx-nostr level
 		skipVerify: true,
-		// @ts-expect-error
 		authenticator: { signer: window.authenticationSigner },
 		connectionStrategy: "lazy-keep",
 		disconnectTimeout: 120_000,
@@ -52,7 +51,6 @@ export async function getRxNostr() {
 
 	rxNostr.createConnectionStateObservable().subscribe((packet) => {
 		// pass to authentication signer so it can cleanup
-		// @ts-expect-error
 		window.authenticationSigner.handleRelayConnectionState(packet);
 
 		const url = new URL(packet.from).toString();
@@ -76,7 +74,6 @@ export async function getRxNostr() {
 	topLevelRxNostr = rxNostr;
 
 	if (typeof window !== "undefined") {
-		// @ts-expect-error
 		window.rxNostr = rxNostr;
 	}
 

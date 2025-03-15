@@ -131,14 +131,13 @@ export default function ReplyForm({
 			const unsigned = await getDraft(values);
 			await publishReply(unsigned);
 		}
+
+		reset();
 	});
 
 	const formRef = useRef<HTMLFormElement | null>(null);
 
-	const { value: preview } = useAsync(
-		async () => await getDraft(),
-		[getValues().content],
-	);
+	const { value: preview } = useAsync(() => getDraft(), [getValues().content]);
 
 	const showAdvanced = advanced.isOpen || formState.dirtyFields.nsfw;
 

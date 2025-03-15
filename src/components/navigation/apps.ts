@@ -29,6 +29,7 @@ import Users03 from "../icons/users-03";
 import FileAttachment01 from "../icons/file-attachment-01";
 import PuzzlePiece01 from "../icons/puzzle-piece-01";
 import Users02 from "../icons/users-02";
+import Wallet02 from "../icons/wallet-02";
 
 export type App = {
 	icon?: ComponentWithAs<"svg", IconProps>;

@@ -291,7 +291,6 @@ setInterval(() => {
 }, 1000 * 30);
 
 if (typeof window !== "undefined") {
-	// @ts-expect-error debug
 	window.relayScoreboardService = relayScoreboardService;
 }
 

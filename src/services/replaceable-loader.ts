@@ -21,7 +21,6 @@ export async function getReplaceableEventLoader() {
 	);
 
 	if (typeof window !== "undefined") {
-		//@ts-expect-error debug
 		window.replaceableEventLoader = replaceableEventLoader;
 	}
 

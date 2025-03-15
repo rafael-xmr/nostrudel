@@ -18,7 +18,6 @@ export default async function getSingleEventLoader() {
 	);
 
 	if (typeof window !== "undefined") {
-		//@ts-expect-error
 		window.singleEventLoader = singleEventLoader;
 	}
 

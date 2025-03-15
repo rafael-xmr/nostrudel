@@ -11,8 +11,6 @@ eventStore.verifyEvent = (event) => {
 };
 
 if (typeof window !== "undefined") {
-  // @ts-expect-error debug
   window.eventStore = eventStore;
-  // @ts-expect-error debug
   window.queryStore = queryStore;
 }

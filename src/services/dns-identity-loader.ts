@@ -19,7 +19,6 @@ export const dnsIdentityLoader = new DnsIdentityLoader({
 dnsIdentityLoader.fetch = fetchWithProxy;
 
 if (typeof window !== "undefined") {
-	// @ts-expect-error debug
 	window.dnsIdentityLoader = dnsIdentityLoader;
 }
 

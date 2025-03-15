@@ -120,7 +120,6 @@ const readStatusService = new ReadStatusService();
 setInterval(readStatusService.prune.bind(readStatusService), 30_000);
 
 if (typeof window !== "undefined") {
-	// @ts-expect-error debug
 	window.readStatusService = readStatusService;
 }
 

@@ -118,7 +118,6 @@ class DecryptionCache {
 const decryptionCacheService = new DecryptionCache();
 
 if (typeof window !== "undefined") {
-  // @ts-expect-error debug
   window.decryptionCacheService = decryptionCacheService;
 }
 

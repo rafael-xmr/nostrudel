@@ -146,7 +146,6 @@ const webRtcRelaysService = new WebRtcRelaysService(broker, null);
 webRtcRelaysService.start();
 
 if (typeof window !== "undefined") {
-	// @ts-expect-error
 	window.webRtcRelaysService = webRtcRelaysService;
 }
 

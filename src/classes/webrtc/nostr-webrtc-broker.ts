@@ -152,6 +152,5 @@ export default class NostrWebRtcBroker extends EventEmitter<EventMap> {
 }
 
 if (typeof window !== "undefined") {
-  // @ts-expect-error
   window.NostrWebRtcBroker = NostrWebRtcBroker;
 }

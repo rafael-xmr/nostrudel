@@ -105,7 +105,6 @@ const localSettings = {
 };
 
 if (typeof window !== "undefined") {
-	// @ts-expect-error debug
 	window.localSettings = localSettings;
 }
 

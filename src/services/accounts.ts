@@ -63,7 +63,6 @@ export default async function getAccounts() {
 	});
 
 	if (typeof window !== "undefined") {
-		// @ts-expect-error debug
 		window.accounts = accounts;
 	}
 

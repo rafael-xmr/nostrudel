@@ -74,8 +74,6 @@ controlApi$.pipe(switchMap((api) => api.config)).subscribe((config) => {
 });
 
 if (process.env.NEXT_PUBLIC_DEV) {
-	// @ts-expect-error
 	window.bakery$ = bakery$;
-	// @ts-expect-error
 	window.controlApi$ = controlApi$;
 }

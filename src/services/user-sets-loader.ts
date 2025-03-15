@@ -16,7 +16,6 @@ export default async function getUserSetsLoader() {
 	);
 
 	if (typeof window !== "undefined") {
-		//@ts-expect-error
 		window.userSetsLoader = userSetsLoader;
 	}
 

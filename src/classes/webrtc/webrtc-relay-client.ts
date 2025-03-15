@@ -124,8 +124,6 @@ export default class WebRtcRelayClient extends AbstractRelay {
 }
 
 if (typeof window !== "undefined") {
-  // @ts-expect-error
   window.WebRtcWebSocket = WebRtcWebSocket;
-  // @ts-expect-error
   window.WebRtcRelayClient = WebRtcRelayClient;
 }

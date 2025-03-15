@@ -295,6 +295,5 @@ export default class NostrWebRTCPeer extends EventEmitter<EventMap> {
 }
 
 if (typeof window !== "undefined") {
-  // @ts-expect-error
   window.WebRTCPeer = NostrWebRTCPeer;
 }

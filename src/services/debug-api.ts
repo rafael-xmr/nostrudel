@@ -37,6 +37,5 @@ const noStrudel = {
 
 localSettings.debugApi.subscribe((enabled) => {
 	if (enabled) Reflect.set(window, "noStrudel", noStrudel);
-	// @ts-expect-error debug
 	if (typeof window !== "undefined") delete window.noStrudel;
 });

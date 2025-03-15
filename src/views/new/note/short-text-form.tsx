@@ -119,9 +119,7 @@ export default function ShortTextNoteForm({
 		return unsigned;
 	};
 
-	// throttle update the draft every 500ms
-	const throttleValues = useThrottle(getValues(), 500);
-	const { value: preview } = useAsync(() => getDraft(), [throttleValues]);
+	const { value: preview } = useAsync(() => getDraft(), [getValues().content]);
 
 	const textAreaRef = useRef<RefType | null>(null);
 	const insertText = useTextAreaInsertTextWithForm(
@@ -152,6 +150,8 @@ export default function ShortTextNoteForm({
 		} else {
 			publishPost(await getDraft(values));
 		}
+
+		reset();
 	});
 
 	const canSubmit = getValues().content.length > 0;
@@ -183,7 +183,6 @@ export default function ShortTextNoteForm({
 		formState.dirtyFields.difficulty ||
 		formState.dirtyFields.nsfw;
 
-	// TODO: wrap this in a form
 	return (
 		<>
 			<Flex direction="column" gap="2">
