@@ -10,7 +10,7 @@ import { useToast } from "@chakra-ui/react";
 import type { EventTemplate, NostrEvent, UnsignedEvent } from "nostr-tools";
 import { addSeenRelay, mergeRelaySets } from "applesauce-core/helpers";
 import { useActiveAccount } from "applesauce-react/hooks";
-import type { OkPacketAgainstEvent } from "rx-nostr";
+import type { OkPacketAgainstEvent, RxNostr } from "rx-nostr";
 import { BehaviorSubject } from "rxjs";
 import { nanoid } from "nanoid";
 
@@ -20,6 +20,7 @@ import { getCacheRelay } from "../../services/cache-relay";
 import { eventStore } from "../../services/event-store";
 import { useUserOutbox } from "../../hooks/use-user-mailboxes";
 import { useWriteRelays } from "../../hooks/use-client-relays";
+import { useRxNostr } from "./rx-nostr-provider";
 
 export type PublishResults = {
 	packets: OkPacketAgainstEvent[];
@@ -37,16 +38,18 @@ export class PublishLogEntry extends BehaviorSubject<PublishResults> {
 		public label: string,
 		public event: NostrEvent,
 		public relays: string[],
+		public rxNostr: RxNostr,
 	) {
 		super({ packets: [], relays: {} });
 
 		const defaultWriteRelays = Array.from(
-			Object.entries(window.rxNostr.getDefaultRelays()),
+			Object.entries(rxNostr.getDefaultRelays()),
 		)
+			// @ts-ignore
 			.filter(([_, config]) => config.write)
 			.map(([relay]) => relay);
 
-		window.rxNostr
+		rxNostr
 			.send(event, {
 				on: { relays: mergeRelaySets(defaultWriteRelays, relays) },
 			})
@@ -125,6 +128,8 @@ export default function PublishProvider({ children }: PropsWithChildren) {
 		[signerFinalize],
 	);
 
+	const rxNostr = useRxNostr();
+
 	const publishEvent = useCallback(
 		async (
 			label: string,
@@ -133,6 +138,8 @@ export default function PublishProvider({ children }: PropsWithChildren) {
 			quite = true,
 			onlyAdditionalRelays = false,
 		) => {
+			if (!rxNostr) return;
+
 			try {
 				let relays;
 				if (onlyAdditionalRelays) {
@@ -149,7 +156,7 @@ export default function PublishProvider({ children }: PropsWithChildren) {
 					? await requestSignature(event)
 					: (event as NostrEvent);
 
-				const entry = new PublishLogEntry(label, signed, [...relays]);
+				const entry = new PublishLogEntry(label, signed, [...relays], rxNostr);
 
 				setLog((arr) => arr.concat(entry));
 
@@ -167,7 +174,15 @@ export default function PublishProvider({ children }: PropsWithChildren) {
 				if (!quite) throw e;
 			}
 		},
-		[toast, setLog, requestSignature, finalizeDraft, outBoxes, writeRelays],
+		[
+			rxNostr,
+			toast,
+			setLog,
+			requestSignature,
+			finalizeDraft,
+			outBoxes,
+			writeRelays,
+		],
 	) as PublishContextType["publishEvent"];
 
 	const context = useMemo<PublishContextType>(

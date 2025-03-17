@@ -1,82 +1,104 @@
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { Button, Flex, FormControl, FormHelperText, FormLabel, Input, Textarea } from "@chakra-ui/react";
+import {
+	Button,
+	Flex,
+	FormControl,
+	FormHelperText,
+	FormLabel,
+	Input,
+	Textarea,
+} from "@chakra-ui/react";
 import { useObservable } from "applesauce-react/hooks";
 import { firstValueFrom } from "rxjs";
 
-import { controlApi$, clearBakeryURL, bakery$ } from "../../../../services/bakery";
 import SimpleView from "../../../../components/layout/presets/simple-view";
 import { Navigate } from "react-router-dom";
+import { useBakeryProvider } from "~/providers/global/bakery-provider";
 
 function BakeryGeneralSettingsPage() {
-  const bakery = useObservable(bakery$);
-  const controlApi = useObservable(controlApi$);
-  const config = useObservable(controlApi?.config);
-  const { register, handleSubmit, formState, reset } = useForm({
-    defaultValues: config || {},
-    mode: "all",
-  });
+	const { controlApi$, clearBakeryURL, bakery$ } = useBakeryProvider();
+	const bakery = useObservable(bakery$);
+	const controlApi = useObservable(controlApi$);
+	const config = useObservable(controlApi?.config);
+	const { register, handleSubmit, formState, reset } = useForm({
+		defaultValues: config || {},
+		mode: "all",
+	});
 
-  useEffect(() => reset(config, { keepDirty: false }), [config]);
+	useEffect(() => reset(config, { keepDirty: false }), [config]);
 
-  const submit = handleSubmit(async (values) => {
-    if (!controlApi) return;
-    await controlApi.setConfigFields({
-      name: values.name,
-      description: values.description,
-      hyperEnabled: values.hyperEnabled,
-    });
+	const submit = handleSubmit(async (values) => {
+		if (!controlApi) return;
+		await controlApi.setConfigFields({
+			name: values.name,
+			description: values.description,
+			hyperEnabled: values.hyperEnabled,
+		});
 
-    // wait for control api to send config back
-    await firstValueFrom(controlApi?.config);
-  });
+		// wait for control api to send config back
+		await firstValueFrom(controlApi?.config);
+	});
 
-  const disconnect = () => {
-    if (confirm("Disconnect from bakery?")) clearBakeryURL();
-  };
+	const disconnect = () => {
+		if (confirm("Disconnect from bakery?")) clearBakeryURL();
+	};
 
-  return (
-    <SimpleView title="Node Settings" maxW="4xl" gap="4">
-      <FormControl>
-        <FormLabel>Bakery URL</FormLabel>
-        <Flex maxW="lg" gap="2">
-          <Input readOnly value={bakery!.url} />
-          <Button colorScheme="red" onClick={disconnect} variant="ghost" flexShrink={0}>
-            disconnect
-          </Button>
-        </Flex>
-      </FormControl>
+	return (
+		<SimpleView title="Node Settings" maxW="4xl" gap="4">
+			<FormControl>
+				<FormLabel>Bakery URL</FormLabel>
+				<Flex maxW="lg" gap="2">
+					<Input readOnly value={bakery!.url} />
+					<Button
+						colorScheme="red"
+						onClick={disconnect}
+						variant="ghost"
+						flexShrink={0}
+					>
+						disconnect
+					</Button>
+				</Flex>
+			</FormControl>
 
-      <Flex as="form" onSubmit={submit} direction="column" maxW="lg" gap="4">
-        <FormControl isRequired>
-          <FormLabel>Bakery Name</FormLabel>
-          <Input type="text" {...register("name", { required: true })} isRequired autoComplete="off" />
-          <FormHelperText>The publicly visible name of your bakery relay</FormHelperText>
-        </FormControl>
-        <FormControl>
-          <FormLabel>Description</FormLabel>
-          <Textarea {...register("description")} />
-          <FormHelperText>A short description about your bakery</FormHelperText>
-        </FormControl>
+			<Flex as="form" onSubmit={submit} direction="column" maxW="lg" gap="4">
+				<FormControl isRequired>
+					<FormLabel>Bakery Name</FormLabel>
+					<Input
+						type="text"
+						{...register("name", { required: true })}
+						isRequired
+						autoComplete="off"
+					/>
+					<FormHelperText>
+						The publicly visible name of your bakery relay
+					</FormHelperText>
+				</FormControl>
+				<FormControl>
+					<FormLabel>Description</FormLabel>
+					<Textarea {...register("description")} />
+					<FormHelperText>A short description about your bakery</FormHelperText>
+				</FormControl>
 
-        <Button
-          isDisabled={!formState.isDirty}
-          isLoading={formState.isLoading}
-          colorScheme="green"
-          ml="auto"
-          type="submit"
-        >
-          Save
-        </Button>
-      </Flex>
-    </SimpleView>
-  );
+				<Button
+					isDisabled={!formState.isDirty}
+					isLoading={formState.isLoading}
+					colorScheme="green"
+					ml="auto"
+					type="submit"
+				>
+					Save
+				</Button>
+			</Flex>
+		</SimpleView>
+	);
 }
 
 export default function BakeryGeneralSettingsView() {
-  const bakery = useObservable(bakery$);
+	const { bakery$ } = useBakeryProvider();
+	const bakery = useObservable(bakery$);
 
-  if (!bakery) return <Navigate to="/settings/bakery/connect" />;
+	if (!bakery) return <Navigate to="/settings/bakery/connect" />;
 
-  return <BakeryGeneralSettingsPage />;
+	return <BakeryGeneralSettingsPage />;
 }

@@ -23,7 +23,6 @@ import useSingleEvent from "../../hooks/use-single-event";
 import useParamsEventPointer from "../../hooks/use-params-event-pointer";
 import LoadingNostrLink from "../../components/loading-nostr-link";
 import UserAvatarLink from "../../components/user/user-avatar-link";
-import { getSharableEventAddress } from "../../services/relay-hints";
 import useMaxPageWidth from "../../hooks/use-max-page-width";
 import { getNip10References } from "applesauce-core/helpers";
 import useEventIntersectionRef from "../../hooks/use-event-intersection-ref";
@@ -33,8 +32,10 @@ import TextNoteContents from "../../components/note/timeline-note/text-note-cont
 import { TrustProvider } from "../../providers/local/trust-provider";
 import UserDnsIdentityIcon from "../../components/user/user-dns-identity-icon";
 import Timestamp from "../../components/timestamp";
+import { useRelayHints } from "~/providers/global/relay-hints-provider";
 
 function ParentNote({ note, level = 0 }: { note: NostrEvent; level?: number }) {
+	const relayHints = useRelayHints();
 	const ref = useEventIntersectionRef(note);
 	const more = useDisclosure({ defaultIsOpen: level < 2 });
 
@@ -59,7 +60,10 @@ function ParentNote({ note, level = 0 }: { note: NostrEvent; level?: number }) {
 				<UserAvatarLink pubkey={note.pubkey} size="xs" mr="2" />
 				<UserLink pubkey={note.pubkey} fontWeight="bold" mr="1" />
 				<UserDnsIdentityIcon pubkey={note.pubkey} mr="2" />
-				<Link as={RouterLink} to={`/n/${getSharableEventAddress(note)}`}>
+				<Link
+					as={RouterLink}
+					to={`/n/${relayHints.getSharableEventAddress(note)}`}
+				>
 					<Timestamp timestamp={note.created_at} />
 				</Link>
 			</Box>
@@ -71,7 +75,7 @@ function ParentNote({ note, level = 0 }: { note: NostrEvent; level?: number }) {
 			) : (
 				<Link
 					as={RouterLink}
-					to={`/n/${getSharableEventAddress(note)}`}
+					to={`/n/${relayHints.getSharableEventAddress(note)}`}
 					noOfLines={1}
 					fontStyle="italic"
 				>

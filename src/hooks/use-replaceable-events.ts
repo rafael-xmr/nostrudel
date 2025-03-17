@@ -8,6 +8,7 @@ import {
 	type CustomAddressPointer,
 	parseCoordinate,
 } from "../helpers/nostr/event";
+import { useReplaceableEventLoader } from "~/providers/global/replaceable-loader-provider";
 
 export default function useReplaceableEvents(
 	coordinates: string[] | CustomAddressPointer[] | undefined,
@@ -15,6 +16,7 @@ export default function useReplaceableEvents(
 	force?: boolean,
 ): NostrEvent[] {
 	const readRelays = useReadRelays(additionalRelays);
+	const replaceableEventLoader = useReplaceableEventLoader();
 
 	const pointers = React.useMemo(() => {
 		if (!coordinates) return undefined;
@@ -37,7 +39,7 @@ export default function useReplaceableEvents(
 		if (!pointers) return;
 
 		for (const pointer of pointers) {
-			window.replaceableEventLoader?.next({
+			replaceableEventLoader?.next({
 				relays: [...relaysDep.split("|"), ...(pointer.relays ?? [])],
 				kind: pointer.kind,
 				pubkey: pointer.pubkey,
@@ -45,7 +47,7 @@ export default function useReplaceableEvents(
 				force,
 			});
 		}
-	}, [pointers, relaysDep, force]);
+	}, [replaceableEventLoader, pointers, relaysDep, force]);
 
 	const events = useStoreQuery(ReplaceableSetQuery, pointers && [pointers]);
 	return events ? Object.values(events) : [];

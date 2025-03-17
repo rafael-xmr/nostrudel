@@ -27,7 +27,7 @@ import useUserContactList from "../../hooks/use-user-contact-list";
 import { matchSorter } from "match-sorter";
 import UserAvatar from "../user/user-avatar";
 import UserName from "../user/user-name";
-import { userSearchDirectory } from "../../services/username-search";
+import { useUserSearchDirectory } from "~/providers/global/username-search-provider";
 
 function ListCard({
 	list,
@@ -69,6 +69,7 @@ const PeopleListSelection = memo(
 		const { lists: favoriteLists } = useFavoriteLists(account?.pubkey);
 		const { selected, setSelected, listEvent } = usePeopleListContext();
 
+		const userSearchDirectory = useUserSearchDirectory();
 		const searchDirectory = useObservable(userSearchDirectory);
 		const contacts = useUserContactList(account?.pubkey);
 		const getSearchResults = useCallback(

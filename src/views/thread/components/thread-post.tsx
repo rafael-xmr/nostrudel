@@ -39,8 +39,8 @@ import { TextNoteContents } from "../../../components/note/timeline-note/text-no
 import NoteReactions from "../../../components/note/timeline-note/components/note-reactions";
 import DetailsTabs from "./details-tabs";
 import useEventIntersectionRef from "../../../hooks/use-event-intersection-ref";
-import { getSharableEventAddress } from "../../../services/relay-hints";
 import NotePublishedUsing from "../../../components/note/note-published-using";
+import { useRelayHints } from "~/providers/global/relay-hints-provider";
 
 export type ThreadItemProps = {
 	post: ThreadItem;
@@ -55,6 +55,7 @@ function ThreadPost({
 	focusId,
 	level = -1,
 }: ThreadItemProps) {
+	const relayHints = useRelayHints();
 	const { showReactions } = useAppSettings();
 	const expanded = useDisclosure({
 		defaultIsOpen: initShowReplies ?? (level < 2 || post.replies.size <= 1),
@@ -90,7 +91,7 @@ function ThreadPost({
 				as={RouterLink}
 				whiteSpace="nowrap"
 				color="current"
-				to={`/n/${getSharableEventAddress(post.event)}`}
+				to={`/n/${relayHints.getSharableEventAddress(post.event)}`}
 			>
 				<Timestamp timestamp={post.event.created_at} />
 			</Link>

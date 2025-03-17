@@ -1,12 +1,14 @@
 import { useMemo } from "react";
-import { NostrEvent } from "../types/nostr-event";
-import { getSharableEventAddress } from "../services/relay-hints";
-import useUserMailboxes from "./use-user-mailboxes";
+import type { NostrEvent } from "../types/nostr-event";
+import { useRelayHints } from "~/providers/global/relay-hints-provider";
 
-export default function useShareableEventAddress(event: NostrEvent, overrideRelays?: string[]) {
-  const mailboxes = useUserMailboxes(event.pubkey);
+export default function useShareableEventAddress(
+	event: NostrEvent,
+	overrideRelays?: string[],
+) {
+	const relayHints = useRelayHints();
 
-  return useMemo(() => {
-    return getSharableEventAddress(event, overrideRelays);
-  }, [event]);
+	return useMemo(() => {
+		return relayHints.getSharableEventAddress(event, overrideRelays);
+	}, [event, relayHints]);
 }

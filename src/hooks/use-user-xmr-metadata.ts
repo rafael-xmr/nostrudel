@@ -5,8 +5,8 @@ export default function useUserXMRMetadata(pubkey: string) {
 	const userMetadata = useUserProfile(pubkey);
 
 	const metadataAddress = userMetadata?.cryptocurrency_addresses?.monero;
-  // Always match the REGEX, the address could be there but could be wrong
-  // or could be testnet, etc
+	// Always match the REGEX, the address could be there but could be wrong
+	// or could be testnet, etc
 	const addressMatch = metadataAddress?.match(XMR_REGEX);
 
 	let address = addressMatch?.[0];

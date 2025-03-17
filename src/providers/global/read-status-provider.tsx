@@ -1,10 +1,24 @@
+import {
+	createContext,
+	type PropsWithChildren,
+	useContext,
+	useEffect,
+	useMemo,
+} from "react";
 import dayjs from "dayjs";
 import _throttle from "lodash.throttle";
 import { BehaviorSubject } from "rxjs";
+import SuperMap from "~/classes/super-map";
+import { useDB } from "./db-provider";
+import { logger } from "~/helpers/debug";
 
-import SuperMap from "../classes/super-map";
-import getDB from "./db";
-import { logger } from "../helpers/debug";
+const ReadStatusContext = createContext<ReadStatusService | undefined>(
+	undefined,
+);
+
+export function useReadStatusProvider() {
+	return useContext(ReadStatusContext);
+}
 
 class ReadStatusService {
 	log = logger.extend("ReadStatusService");
@@ -12,6 +26,8 @@ class ReadStatusService {
 		() => new BehaviorSubject<boolean | undefined>(undefined),
 	);
 	ttl = new Map<string, number>();
+
+	constructor(private db: any) {}
 
 	private setTTL(key: string, ttl: number) {
 		const current = this.ttl.get(key);
@@ -48,7 +64,7 @@ class ReadStatusService {
 	async read() {
 		if (this.readQueue.size === 0) return;
 
-		const trans = (await getDB())?.transaction("read");
+		const trans = this.db?.transaction("read");
 		if (!trans) return;
 
 		this.log(`Loading ${this.readQueue.size} from database`);
@@ -72,7 +88,7 @@ class ReadStatusService {
 	async write() {
 		if (this.writeQueue.size === 0) return;
 
-		const trans = (await getDB())?.transaction("read", "readwrite");
+		const trans = this.db?.transaction("read", "readwrite");
 		if (!trans) return;
 
 		let count = 0;
@@ -96,7 +112,7 @@ class ReadStatusService {
 	}
 
 	async prune() {
-		const expired = await (await getDB())?.getAllKeysFromIndex(
+		const expired = await this.db?.getAllKeysFromIndex(
 			"read",
 			"ttl",
 			IDBKeyRange.upperBound(dayjs().unix()),
@@ -105,7 +121,7 @@ class ReadStatusService {
 		if (!expired) return;
 		if (expired.length === 0) return;
 
-		const tx = (await getDB())?.transaction("read", "readwrite");
+		const tx = this.db?.transaction("read", "readwrite");
 		if (!tx) return;
 
 		await Promise.all(expired.map((key) => tx.store.delete(key)));
@@ -115,12 +131,30 @@ class ReadStatusService {
 	}
 }
 
-const readStatusService = new ReadStatusService();
+export default function ReadStatusProvider({ children }: PropsWithChildren) {
+	const { db } = useDB();
 
-setInterval(readStatusService.prune.bind(readStatusService), 30_000);
+	const readStatusService = useMemo(() => {
+		if (!db) return undefined;
+		return new ReadStatusService(db);
+	}, [db]);
 
-if (typeof window !== "undefined") {
-	window.readStatusService = readStatusService;
+	useEffect(() => {
+		if (!readStatusService) return;
+
+		const intervalId = setInterval(
+			readStatusService.prune.bind(readStatusService),
+			30_000,
+		);
+
+		return () => {
+			clearInterval(intervalId);
+		};
+	}, [readStatusService]);
+
+	return (
+		<ReadStatusContext.Provider value={readStatusService}>
+			{children}
+		</ReadStatusContext.Provider>
+	);
 }
-
-export default readStatusService;

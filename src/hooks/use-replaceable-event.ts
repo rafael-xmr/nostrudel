@@ -7,6 +7,7 @@ import {
 	type CustomAddressPointer,
 	parseCoordinate,
 } from "../helpers/nostr/event";
+import { useReplaceableEventLoader } from "~/providers/global/replaceable-loader-provider";
 
 export default function useReplaceableEvent(
 	cord: string | CustomAddressPointer | undefined,
@@ -19,10 +20,12 @@ export default function useReplaceableEvent(
 		[cord],
 	);
 
+	const replaceableEventLoader = useReplaceableEventLoader();
+
 	useEffect(() => {
 		if (!parsed) return;
 
-		window.replaceableEventLoader?.next({
+		replaceableEventLoader?.next({
 			kind: parsed.kind,
 			pubkey: parsed.pubkey,
 			identifier: parsed.identifier,
@@ -30,6 +33,7 @@ export default function useReplaceableEvent(
 			force,
 		});
 	}, [
+		replaceableEventLoader,
 		parsed?.kind,
 		parsed?.pubkey,
 		parsed?.identifier,

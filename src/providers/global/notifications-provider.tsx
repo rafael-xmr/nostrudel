@@ -1,16 +1,23 @@
 import {
+	createContext,
+	type PropsWithChildren,
+	useContext,
+	useMemo,
+} from "react";
+import {
 	COMMENT_KIND,
 	getEventPointerFromETag,
 	getEventPointerFromQTag,
 	getZapPayment,
-	Mutes,
+	type Mutes,
 	processTags,
 } from "applesauce-core/helpers";
 import {
 	combineLatest,
 	filter,
 	map,
-	Observable,
+	type Observable,
+	of,
 	ReplaySubject,
 	share,
 	switchMap,
@@ -20,13 +27,14 @@ import {
 } from "rxjs";
 import { TimelineQuery, UserMuteQuery } from "applesauce-core/queries";
 import { getContentPointers } from "applesauce-factory/helpers";
-import { kinds, nip18, nip25, NostrEvent } from "nostr-tools";
-
-import localSettings from "./local-settings";
-import { eventStore, queryStore } from "./event-store";
-import { TORRENT_COMMENT_KIND } from "../helpers/nostr/torrents";
-import { getThreadReferences, isReply, isRepost } from "../helpers/nostr/event";
-import { getPubkeysMentionedInContent } from "../helpers/nostr/post";
+import { kinds, nip18, nip25, type NostrEvent } from "nostr-tools";
+import { useAccountManagerProvider } from "./accounts-provider";
+import { useSingleEventLoader } from "./single-event-loader-provider";
+import localSettings from "~/services/local-settings";
+import { eventStore, queryStore } from "~/services/event-store";
+import { TORRENT_COMMENT_KIND } from "~/helpers/nostr/torrents";
+import { getThreadReferences, isReply, isRepost } from "~/helpers/nostr/event";
+import { getPubkeysMentionedInContent } from "~/helpers/nostr/post";
 
 export const NotificationTypeSymbol = Symbol("notificationType");
 
@@ -42,6 +50,14 @@ export enum NotificationType {
 export type CategorizedEvent = NostrEvent & {
 	[NotificationTypeSymbol]?: NotificationType;
 };
+
+const NotificationsContext = createContext<Observable<CategorizedEvent[]>>(
+	of([]),
+);
+
+export function useNotifications() {
+	return useContext(NotificationsContext);
+}
 
 function categorizeEvent(event: NostrEvent, pubkey?: string): CategorizedEvent {
 	const e = event as CategorizedEvent;
@@ -62,7 +78,6 @@ function categorizeEvent(event: NostrEvent, pubkey?: string): CategorizedEvent {
 		event.kind === kinds.LiveChatMessage ||
 		event.kind === kinds.LongFormArticle
 	) {
-		// is the pubkey mentioned in any way in the content
 		const isMentioned = pubkey
 			? getPubkeysMentionedInContent(event.content, true).includes(pubkey)
 			: false;
@@ -89,16 +104,14 @@ function filterEvents(
 	mute?: Mutes,
 ): CategorizedEvent[] {
 	return events.filter((event) => {
-		// ignore if muted
 		if (mute?.pubkeys.has(event.pubkey)) return false;
 
-		// ignore if own
 		if (event.pubkey === pubkey) return false;
 
 		const e = event as CategorizedEvent;
 
 		switch (e[NotificationTypeSymbol]) {
-			case NotificationType.Reply:
+			case NotificationType.Reply: {
 				const refs = getThreadReferences(e);
 				if (!refs.reply?.e?.id) return false;
 				if (refs.reply?.e?.author && refs.reply?.e?.author !== pubkey)
@@ -106,6 +119,7 @@ function filterEvents(
 				const parent = eventStore.getEvent(refs.reply.e.id);
 				if (parent?.pubkey !== pubkey) return false;
 				break;
+			}
 			case NotificationType.Mention:
 				break;
 			case NotificationType.Repost: {
@@ -123,117 +137,123 @@ function filterEvents(
 					return false;
 				break;
 			}
-			case NotificationType.Zap:
+			case NotificationType.Zap: {
 				const p = getZapPayment(e);
 				if (!p || p.amount === 0) return false;
 				break;
+			}
 		}
 
 		return true;
 	});
 }
 
-async function handleTextNote(event: NostrEvent) {
-	// request quotes
+async function handleTextNote(event: NostrEvent, singleEventLoader: any) {
 	const quotes = processTags(
 		event.tags,
 		(t) => (t[0] === "q" ? t : undefined),
 		getEventPointerFromQTag,
 	);
 	for (const pointer of quotes) {
-		window.singleEventLoader.next({
+		singleEventLoader.next({
 			id: pointer.id,
 			relays: [...localSettings.readRelays.value, ...(pointer.relays ?? [])],
 		});
 	}
 
-	// request other event pointers
 	const pointers = processTags(
 		event.tags,
 		(t) => (t[0] === "e" || t[0] === "E" ? t : undefined),
 		getEventPointerFromETag,
 	);
 	for (const pointer of pointers) {
-		window.singleEventLoader.next({
+		singleEventLoader.next({
 			id: pointer.id,
 			relays: [...localSettings.readRelays.value, ...(pointer.relays ?? [])],
 		});
 	}
 }
 
-async function handleShare(event: NostrEvent) {
+async function handleShare(event: NostrEvent, singleEventLoader: any) {
 	const pointers = processTags(
 		event.tags,
 		(t) => (t[0] === "e" ? t : undefined),
 		getEventPointerFromETag,
 	);
 	for (const pointer of pointers) {
-		window.singleEventLoader.next({
+		singleEventLoader.next({
 			id: pointer.id,
 			relays: [...localSettings.readRelays.value, ...(pointer.relays ?? [])],
 		});
 	}
 }
 
-const notifications$: Observable<CategorizedEvent[]> = combineLatest([
-	window.accounts.active$,
-]).pipe(
-	switchMap(([account]) => {
-		if (!account) return [];
+export default function NotificationsProvider({ children }: PropsWithChildren) {
+	const { accountManager } = useAccountManagerProvider();
+	const singleEventLoader = useSingleEventLoader();
 
-		const timeline$ = queryStore
-			.createQuery(TimelineQuery, {
-				"#p": [account.pubkey],
-				kinds: [
-					kinds.ShortTextNote,
-					kinds.Repost,
-					kinds.GenericRepost,
-					kinds.Reaction,
-					kinds.Zap,
-					TORRENT_COMMENT_KIND,
-					kinds.LongFormArticle,
-					kinds.EncryptedDirectMessage,
-					COMMENT_KIND,
-				],
-			})
-			.pipe(
-				// filter out undefined
-				filter((t) => t !== undefined),
-				// update timeline at 30fps
-				throttleTime(1000 / 30),
-				// trigger logs of extra events
-				tap((timeline) => {
-					// handle loading dependencies of each event
-					for (const event of timeline) {
-						switch (event.kind) {
-							case kinds.ShortTextNote:
-								handleTextNote(event);
-								break;
-							case kinds.Report:
-							case kinds.GenericRepost:
-								handleShare(event);
-								break;
-						}
-					}
-				}),
-				// categorize events
-				map((timeline) =>
-					timeline.map((e) => categorizeEvent(e, account.pubkey)),
-				),
-			);
+	const notifications$ = useMemo(() => {
+		if (!accountManager) return of([]);
 
-		const mute$ = queryStore.createQuery(UserMuteQuery, account.pubkey);
+		return combineLatest([accountManager.active$]).pipe(
+			switchMap(([account]) => {
+				if (!account) return of([]);
 
-		return combineLatest([timeline$, mute$]).pipe(
-			// filter events out by mutes
-			map(([timeline, mutes]) => filterEvents(timeline, account.pubkey, mutes)),
+				const timeline$ = queryStore
+					.createQuery(TimelineQuery, {
+						"#p": [account.pubkey],
+						kinds: [
+							kinds.ShortTextNote,
+							kinds.Repost,
+							kinds.GenericRepost,
+							kinds.Reaction,
+							kinds.Zap,
+							TORRENT_COMMENT_KIND,
+							kinds.LongFormArticle,
+							kinds.EncryptedDirectMessage,
+							COMMENT_KIND,
+						],
+					})
+					.pipe(
+						filter((t) => t !== undefined),
+						throttleTime(1000 / 30),
+						tap((timeline) => {
+							if (!singleEventLoader) return;
+							for (const event of timeline) {
+								switch (event.kind) {
+									case kinds.ShortTextNote:
+										handleTextNote(event, singleEventLoader);
+										break;
+									case kinds.Report:
+									case kinds.GenericRepost:
+										handleShare(event, singleEventLoader);
+										break;
+								}
+							}
+						}),
+						map((timeline) =>
+							timeline.map((e) => categorizeEvent(e, account.pubkey)),
+						),
+					);
+
+				const mute$ = queryStore.createQuery(UserMuteQuery, account.pubkey);
+
+				return combineLatest([timeline$, mute$]).pipe(
+					map(([timeline, mutes]) =>
+						filterEvents(timeline, account.pubkey, mutes),
+					),
+				);
+			}),
+			share({
+				connector: () => new ReplaySubject(1),
+				resetOnComplete: () => timer(5 * 60_000),
+			}),
 		);
-	}),
-	// keep the observable hot for 5 minutes after its unsubscribed
-	share({
-		connector: () => new ReplaySubject(1),
-		resetOnComplete: () => timer(5 * 60_000),
-	}),
-);
+	}, [accountManager, singleEventLoader]);
 
-export default notifications$;
+	return (
+		<NotificationsContext.Provider value={notifications$}>
+			{children}
+		</NotificationsContext.Provider>
+	);
+}

@@ -2,7 +2,6 @@ import useUserProfile from "../../hooks/use-user-profile";
 import { getDisplayName } from "../../helpers/nostr/profile";
 import { useAppTitle } from "../../hooks/use-app-title";
 import { useReadRelays } from "../../hooks/use-client-relays";
-import relayScoreboardService from "../../services/relay-scoreboard";
 import { AdditionalRelayProvider } from "../../providers/local/additional-relay-context";
 import { unique } from "../../helpers/array";
 import useParamsProfilePointer from "../../hooks/use-params-pubkey-pointer";
@@ -11,6 +10,7 @@ import SimpleParentView from "../../components/layout/presets/simple-parent-view
 import { Tab, TabList, TabPanel, TabPanels, Tabs } from "@chakra-ui/react";
 import Header from "./components/header";
 import { useMatches, useNavigate } from "react-router-dom";
+import { useRelayScoreboard } from "~/providers/global/relay-scoreboard-provider";
 
 const tabs = [
 	{ label: "About", path: "about" },
@@ -34,19 +34,20 @@ const tabs = [
 	{ label: "Muted by", path: "muted-by" },
 ];
 
-function useUserBestOutbox(pubkey: string, count: number = 4) {
+function useUserBestOutbox(pubkey: string, count = 4) {
+	const relayScoreboardService = useRelayScoreboard();
 	const mailbox = useUserMailboxes(pubkey);
 	const relays = useReadRelays();
-	const sorted = relayScoreboardService.getRankedRelays(
+	const sorted = relayScoreboardService?.getRankedRelays(
 		mailbox?.outboxes.length ? mailbox?.outboxes : relays,
 	);
-	return !count ? sorted : sorted.slice(0, count);
+	return !count ? sorted : sorted?.slice(0, count);
 }
 
 export default function UserView() {
 	const { pubkey, relays: pointerRelays = [] } = useParamsProfilePointer();
 	const userTopRelays = useUserBestOutbox(pubkey, 4);
-	const readRelays = unique([...userTopRelays, ...pointerRelays]);
+	const readRelays = unique([...(userTopRelays ?? []), ...pointerRelays]);
 
 	const metadata = useUserProfile(pubkey, userTopRelays, true);
 	useAppTitle(getDisplayName(metadata, pubkey));

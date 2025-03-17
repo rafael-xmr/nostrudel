@@ -3,7 +3,8 @@ import type { EventTemplate, UnsignedEvent, VerifiedEvent } from "nostr-tools";
 import { useActiveAccount } from "applesauce-react/hooks";
 import { useToast } from "@chakra-ui/react";
 
-import signingService from "../../services/signing";
+import signingService from "~/services/signing";
+import { AccountsContext } from "applesauce-react/providers";
 
 export type SigningContextType = {
 	finalizeDraft(draft: EventTemplate): Promise<UnsignedEvent>;

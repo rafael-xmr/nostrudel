@@ -3,11 +3,6 @@
 import dynamic from "next/dynamic";
 import { useEffect } from "react";
 
-import "../../src/classes/nostr-connect-connection";
-import "../../src/services/user-event-sync";
-import "../../src/services/username-search";
-import "../../src/services/debug-api";
-
 // Configure Day.js
 import dayjs from "dayjs";
 import relativeTimePlugin from "dayjs/plugin/relativeTime";

@@ -30,8 +30,8 @@ import EventKindsPieChart from "../../../../components/charts/event-kinds-pie-ch
 import EventKindsTable from "../../../../components/charts/event-kinds-table";
 import ImportEventsButton from "./components/import-events-button";
 import ExportEventsButton from "./components/export-events-button";
-import { clearCacheData, deleteDatabase } from "../../../../services/db";
 import localSettings from "../../../../services/local-settings";
+import { useDB } from "~/providers/global/db-provider";
 
 async function importEvents(events: NostrEvent[]) {
 	if (!localDatabase) return;
@@ -48,6 +48,8 @@ async function exportEvents() {
 }
 
 export default function InternalDatabasePage() {
+	const db = useDB();
+
 	const { value: count } = useAsync(
 		async () => await countEvents(localDatabase),
 		[],
@@ -62,14 +64,14 @@ export default function InternalDatabasePage() {
 	const [clearing, setClearing] = useState(false);
 	const handleClearData = async () => {
 		setClearing(true);
-		await clearCacheData();
+		await db.clearCacheData();
 		setClearing(false);
 	};
 
 	const [deleting, setDeleting] = useState(false);
 	const handleDeleteDatabase = async () => {
 		setDeleting(true);
-		await deleteDatabase();
+		await db.deleteDatabase();
 		setDeleting(false);
 	};
 

@@ -38,10 +38,10 @@ import NoteProxyLink from "./components/note-proxy-link";
 import POWIcon from "../../pow/pow-icon";
 import ReplyContext from "./components/reply-context";
 import useEventIntersectionRef from "../../../hooks/use-event-intersection-ref";
-import { getSharableEventAddress } from "../../../services/relay-hints";
 import NotePublishedUsing from "../note-published-using";
 import useAppSettings from "../../../hooks/use-user-app-settings";
 import ShowMoreContainer from "../show-more-container";
+import { useRelayHints } from "~/providers/global/relay-hints-provider";
 
 export type TimelineNoteProps = Omit<CardProps, "children"> & {
 	event: NostrEvent;
@@ -62,6 +62,7 @@ export function TimelineNote({
 	clickable = true,
 	...props
 }: TimelineNoteProps) {
+	const relayHints = useRelayHints();
 	const { showReactions } = useAppSettings();
 	const replyForm = useDisclosure();
 
@@ -92,7 +93,7 @@ export function TimelineNote({
 					{clickable && (
 						<HoverLinkOverlay
 							as={RouterLink}
-							to={`/n/${getSharableEventAddress(event)}`}
+							to={`/n/${relayHints.getSharableEventAddress(event)}`}
 						/>
 					)}
 					<CardHeader p="2">
@@ -108,7 +109,7 @@ export function TimelineNote({
 								as={RouterLink}
 								whiteSpace="nowrap"
 								color="current"
-								to={`/n/${getSharableEventAddress(event)}`}
+								to={`/n/${relayHints.getSharableEventAddress(event)}`}
 							>
 								<Timestamp timestamp={event.created_at} />
 							</Link>

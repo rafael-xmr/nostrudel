@@ -4,6 +4,7 @@ import { IconButton, type IconButtonProps, useToast } from "@chakra-ui/react";
 import PasscodeLock from "../icons/passcode-lock";
 import useRelayAuthState from "../../hooks/use-relay-auth-state";
 import CheckCircleBroken from "../icons/check-circle-broken";
+import { useAuthenticationSigner } from "~/providers/global/authentication-signer-provider";
 
 export function RelayAuthIconButton({
 	relay,
@@ -11,16 +12,17 @@ export function RelayAuthIconButton({
 }: { relay: string } & Omit<IconButtonProps, "icon" | "aria-label" | "title">) {
 	const toast = useToast();
 	const authState = useRelayAuthState(relay);
+	const authenticationSigner = useAuthenticationSigner();
 
 	const authenticate = useCallback(async () => {
 		try {
-			await window.authenticationSigner.authenticate(relay);
+			await authenticationSigner?.authenticate(relay);
 			toast({ description: "Success", status: "success" });
 		} catch (error) {
 			if (error instanceof Error)
 				toast({ status: "error", description: error.message });
 		}
-	}, [relay]);
+	}, [authenticationSigner, relay]);
 
 	switch (authState?.status) {
 		case "success":

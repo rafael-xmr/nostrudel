@@ -3,17 +3,13 @@ import "./classes/nostr-connect-connection";
 
 import { GlobalProviders } from "./providers/global";
 
-import "./services/user-event-sync";
-import "./services/username-search";
-import "./services/debug-api";
-
 // When the app closes, remove the bitcoin-connect config if its set to extension
 // This prevents it from prompting the user to authorize or unlock their extension when the app is opened
 window.addEventListener("unload", () => {
-  const config = localStorageWrapper.getItem("bc:config");
-  if (config && JSON.parse(config).connectorType === "extension.generic") {
-    localStorageWrapper.removeItem("bc:config");
-  }
+	const config = localStorageWrapper.getItem("bc:config");
+	if (config && JSON.parse(config).connectorType === "extension.generic") {
+		localStorageWrapper.removeItem("bc:config");
+	}
 });
 
 // setup dayjs
@@ -25,12 +21,15 @@ dayjs.extend(localizedFormat);
 
 // register nostr: protocol handler
 if (process.env.NEXT_PUBLIC_PROD) {
-  try {
-    navigator.registerProtocolHandler("web+nostr", new URL("/l/%s", location.origin).toString());
-  } catch (e) {
-    console.log("Failed to register handler");
-    console.log(e);
-  }
+	try {
+		navigator.registerProtocolHandler(
+			"web+nostr",
+			new URL("/l/%s", location.origin).toString(),
+		);
+	} catch (e) {
+		console.log("Failed to register handler");
+		console.log(e);
+	}
 }
 
 // mount react app
@@ -42,9 +41,9 @@ import { localStorageWrapper } from "./utils/localStorage";
 logger("Rendering app");
 const root = document.getElementById("root")!;
 createRoot(root).render(
-  <GlobalProviders>
-    <App />
-  </GlobalProviders>,
+	<GlobalProviders>
+		<App />
+	</GlobalProviders>,
 );
 
 // if web, register service worker

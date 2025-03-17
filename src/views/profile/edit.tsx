@@ -25,13 +25,13 @@ import { ExternalLinkIcon, OutboxIcon } from "../../components/icons";
 import { useReadRelays } from "../../hooks/use-client-relays";
 import { useActiveAccount } from "applesauce-react/hooks";
 import useUserProfile from "../../hooks/use-user-profile";
-import dnsIdentityLoader from "../../services/dns-identity-loader";
 import type { DraftNostrEvent } from "../../types/nostr-event";
 import VerticalPageLayout from "../../components/vertical-page-layout";
 import { COMMON_CONTACT_RELAYS } from "../../const";
 import { usePublishEvent } from "../../providers/global/publish-provider";
 import { useInputUploadFileWithForm } from "../../hooks/use-input-upload-file";
 import { IdentityStatus } from "applesauce-loaders/helpers/dns-identity";
+import { useDnsIdentityProvider } from "~/providers/global/dns-identity-provider";
 
 type FormData = {
 	displayName?: string;
@@ -62,6 +62,7 @@ const MetadataForm = ({ defaultValues, onSubmit }: MetadataFormProps) => {
 		mode: "onBlur",
 		defaultValues,
 	});
+	const dnsIdentityLoader = useDnsIdentityProvider();
 
 	useEffect(() => {
 		reset(defaultValues);
@@ -196,11 +197,11 @@ const MetadataForm = ({ defaultValues, onSubmit }: MetadataFormProps) => {
 							const { name, domain } = parseNIP05Address(address) || {};
 							if (!name || !domain) return "Failed to parsed address";
 
-							const identity = await dnsIdentityLoader.fetchIdentity(
+							const identity = await dnsIdentityLoader?.fetchIdentity(
 								name,
 								domain,
 							);
-							switch (identity.status) {
+							switch (identity?.status) {
 								case IdentityStatus.Error:
 									return "Failed to connect to server";
 								case IdentityStatus.Missing:

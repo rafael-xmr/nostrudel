@@ -35,6 +35,7 @@ import { CollapsedContext } from "../context";
 import Users02 from "../../icons/users-02";
 import UserAvatarLink from "../../user/user-avatar-link";
 import UserLink from "../../user/user-link";
+import { useAccountManagerProvider } from "~/providers/global/accounts-provider";
 
 function AccountItem({
 	account,
@@ -42,9 +43,10 @@ function AccountItem({
 }: { account: IAccount; onClick?: () => void }) {
 	const metadata = useUserProfile(account.pubkey, []);
 	const manager = useAccountManager();
+	const { accountManager } = useAccountManagerProvider();
 
 	const handleClick = () => {
-		window.accounts.setActive(account);
+		accountManager?.setActive(account);
 		if (onClick) onClick();
 	};
 

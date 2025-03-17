@@ -1,17 +1,19 @@
-import { NostrConnectConnectionMethods } from "applesauce-signers";
-import { lastValueFrom, Subscription } from "rxjs";
-import { createRxForwardReq } from "rx-nostr";
+import type { NostrConnectConnectionMethods } from "applesauce-signers";
+import { lastValueFrom, type Subscription } from "rxjs";
+import { createRxForwardReq, type RxNostr } from "rx-nostr";
 
-export function createNostrConnectConnection(): NostrConnectConnectionMethods {
+export function createNostrConnectConnection(
+	rxNostr: RxNostr,
+): NostrConnectConnectionMethods {
 	let sub: Subscription | undefined = undefined;
 
 	return {
 		onPublishEvent: async (event, relays) => {
-			await lastValueFrom(window.rxNostr.send(event, { on: { relays } }));
+			await lastValueFrom(rxNostr.send(event, { on: { relays } }));
 		},
 		onSubOpen: async (filters, relays, onEvent) => {
 			const req = createRxForwardReq();
-			sub = window.rxNostr
+			sub = rxNostr
 				.use(req, { on: { relays } })
 				.subscribe((packet) => onEvent(packet.event));
 			req.emit(filters);

@@ -13,6 +13,7 @@ import { buildImageProxyURL } from "../../helpers/image";
 import UserDnsIdentityIcon from "./user-dns-identity-icon";
 import useUserMuteList from "../../hooks/use-user-mute-list";
 import useUserProfile from "../../hooks/use-user-profile";
+import { useAccountManagerProvider } from "~/providers/global/accounts-provider";
 
 export const UserIdenticon = memo(({ pubkey }: { pubkey: string }) => {
 	const { value: identicon } = useAsync(() => getIdenticon(pubkey), [pubkey]);
@@ -92,13 +93,18 @@ export const MetadataAvatar = forwardRef<HTMLDivElement, MetadataAvatarProps>(
 	({ pubkey, metadata, noProxy, children, square = true, ...props }, ref) => {
 		const { imageProxy, proxyUserMedia, hideUsernames } = useAppSettings();
 		const account = useActiveAccount();
+		const { settings } = useAccountManagerProvider();
 		const picture = useMemo(() => {
 			if (hideUsernames && pubkey && pubkey !== account?.pubkey)
 				return undefined;
 			if (metadata?.picture) {
 				const src = safeUrl(metadata?.picture);
 				if (src) {
-					const proxyURL = buildImageProxyURL(src, RESIZE_PROFILE_SIZE);
+					const proxyURL = buildImageProxyURL(
+						src,
+						RESIZE_PROFILE_SIZE,
+						settings,
+					);
 					if (proxyURL) return proxyURL;
 				} else if (!noProxy && proxyUserMedia && pubkey) {
 					const last4 = String(pubkey).slice(pubkey.length - 4, pubkey.length);
@@ -106,7 +112,14 @@ export const MetadataAvatar = forwardRef<HTMLDivElement, MetadataAvatarProps>(
 				}
 				return src;
 			}
-		}, [metadata?.picture, imageProxy, proxyUserMedia, hideUsernames, account]);
+		}, [
+			settings,
+			metadata?.picture,
+			imageProxy,
+			proxyUserMedia,
+			hideUsernames,
+			account,
+		]);
 
 		const color = pubkey ? "#" + pubkey.slice(0, 6) : undefined;
 

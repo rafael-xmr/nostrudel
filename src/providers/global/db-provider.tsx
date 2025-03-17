@@ -1,3 +1,4 @@
+import { createContext, type PropsWithChildren, useContext } from "react";
 import { openDB, deleteDB, type IDBPDatabase, type IDBPTransaction } from "idb";
 import { clearDB, deleteDB as nostrIDBDelete } from "nostr-idb";
 
@@ -13,24 +14,36 @@ import type {
 	SchemaV10,
 	SchemaV11,
 	SchemaV12,
-} from "./schema";
+} from "~/services/db/schema";
 import { logger } from "../../helpers/debug";
-import { localDatabase } from "../cache-relay";
 import { ReadonlyAccount } from "applesauce-accounts/accounts";
+import { useAsync } from "react-use";
+import { localDatabase } from "~/services/cache-relay";
+
+const DBContext = createContext<{
+	db: IDBPDatabase<SchemaV12> | undefined;
+	clearCacheData: () => Promise<void>;
+	deleteDatabase: () => Promise<void>;
+}>({
+	db: undefined,
+	clearCacheData: async () => {},
+	deleteDatabase: async () => {},
+});
 
 const log = logger.extend("Database");
 
 const dbName = "storage";
 const version = 12;
-let db: IDBPDatabase<SchemaV12> | null = null;
 
-async function getDB() {
-	if (db) {
-		return db;
-	}
+export function useDB() {
+	return useContext(DBContext);
+}
 
-	if (typeof window !== "undefined") {
-		db = await openDB<SchemaV12>(dbName, version, {
+export default function DBProvider({ children }: PropsWithChildren) {
+	const { value: db } = useAsync(async () => {
+		log("Open");
+
+		return await openDB<SchemaV12>(dbName, version, {
 			upgrade(db, oldVersion, newVersion, transaction, event) {
 				if (oldVersion < 1) {
 					const v0 = db as unknown as IDBPDatabase<SchemaV1>;
@@ -139,8 +152,6 @@ async function getDB() {
 										? "extension"
 										: undefined,
 								};
-								// @ts-ignore
-								delete newAccount.useExtension;
 
 								objectStore.put(newAccount);
 							}
@@ -243,49 +254,48 @@ async function getDB() {
 				}
 			},
 		});
+	}, []);
+
+  console.log("DBProvider", db);
+
+	async function clearCacheData() {
+		log("Clearing nostr-idb");
+		if (localDatabase) await clearDB(localDatabase);
+
+		log("Clearing userSearch");
+		await db?.clear("userSearch");
+
+		log("Clearing relayInfo");
+		await db?.clear("relayInfo");
+
+		log("Clearing dnsIdentifiers");
+		await db?.clear("dnsIdentifiers");
+
+		log("Clearing relayScoreboardStats");
+		await db?.clear("relayScoreboardStats");
+
+		window.location.reload();
 	}
 
-	if (typeof window !== "undefined") {
-		window.db = db;
+	async function deleteDatabase() {
+		log("Closing");
+		db?.close();
+		log("Deleting");
+		await deleteDB(dbName);
+		if (localDatabase) localDatabase.close();
+		await nostrIDBDelete();
+		window.location.reload();
 	}
 
-	return db;
+	return (
+		<DBContext.Provider
+			value={{
+				db,
+				clearCacheData,
+				deleteDatabase,
+			}}
+		>
+			{children}
+		</DBContext.Provider>
+	);
 }
-
-log("Open");
-
-export async function clearCacheData() {
-	log("Clearing nostr-idb");
-	if (localDatabase) await clearDB(localDatabase);
-
-	log("Clearing userSearch");
-	await (await getDB())?.clear("userSearch");
-
-	log("Clearing relayInfo");
-	await (await getDB())?.clear("relayInfo");
-
-	log("Clearing dnsIdentifiers");
-	await (await getDB())?.clear("dnsIdentifiers");
-
-	log("Clearing relayScoreboardStats");
-	await (await getDB())?.clear("relayScoreboardStats");
-
-	window.location.reload();
-}
-
-export async function deleteDatabase() {
-	log("Closing");
-	(await getDB())?.close();
-	log("Deleting");
-	await deleteDB(dbName);
-	if (localDatabase) localDatabase.close();
-	await nostrIDBDelete();
-	window.location.reload();
-}
-
-if (typeof window !== "undefined") {
-	// @ts-ignore
-	window.db = db;
-}
-
-export default getDB;

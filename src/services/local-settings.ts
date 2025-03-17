@@ -2,7 +2,7 @@ import { generateSecretKey } from "nostr-tools";
 import { bytesToHex, hexToBytes } from "@noble/hashes/utils";
 import { nanoid } from "nanoid";
 
-import type { RelayAuthMode } from "./authentication-signer";
+import type { RelayAuthMode } from "~/providers/global/authentication-signer-provider";
 import { DEFAULT_SIGNAL_RELAYS } from "../const";
 import {
 	ArrayLocalStorageEntry,
@@ -55,7 +55,7 @@ const enableKeyboardShortcuts = new BooleanLocalStorageEntry(
 );
 
 // privacy
-const debugApi = new BooleanLocalStorageEntry("debug-api", false);
+// const debugApi = new BooleanLocalStorageEntry("debug-api", false);
 
 // relay authentication
 const defaultAuthenticationMode = new LocalStorageEntry<RelayAuthMode>(
@@ -96,16 +96,12 @@ const localSettings = {
 	defaultAuthenticationMode,
 	proactivelyAuthenticate,
 	relayAuthenticationMode,
-	debugApi,
+	debugApi: {},
 	deviceId,
 	ntfyTopic,
 	ntfyServer,
 	bakeryURL,
 	cacheRelayURL,
 };
-
-if (typeof window !== "undefined") {
-	window.localSettings = localSettings;
-}
 
 export default localSettings;

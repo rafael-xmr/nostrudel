@@ -1,21 +1,23 @@
 import { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
-import { EventTemplate } from "nostr-tools";
+import type { EventTemplate } from "nostr-tools";
 import {
 	Button,
 	ButtonGroup,
 	Flex,
-	FlexProps,
+	type FlexProps,
 	Heading,
 } from "@chakra-ui/react";
 import { useEventFactory } from "applesauce-react/hooks";
-import { Emoji } from "applesauce-core/helpers";
+import type { Emoji } from "applesauce-core/helpers";
 
-import MagicTextArea, { RefType } from "../../../components/magic-textarea";
+import MagicTextArea, {
+	type RefType,
+} from "../../../components/magic-textarea";
 import useTextAreaUploadFile, {
 	useTextAreaInsertTextWithForm,
 } from "../../../hooks/use-textarea-upload-file";
-import { NostrEvent } from "../../../types/nostr-event";
+import type { NostrEvent } from "../../../types/nostr-event";
 import { useContextEmojis } from "../../../providers/global/emoji-provider";
 import { usePublishEvent } from "../../../providers/global/publish-provider";
 import InsertGifButton from "../../../components/gif/insert-gif-button";
@@ -46,7 +48,7 @@ export default function ChannelMessageForm({
 	watch("content");
 
 	const componentRef = useRef<RefType | null>(null);
-	const textAreaRef = useRef<HTMLTextAreaElement | null>(null);
+	const textAreaRef = useRef(null);
 	const insertText = useTextAreaInsertTextWithForm(
 		componentRef,
 		getValues,
@@ -81,6 +83,7 @@ export default function ChannelMessageForm({
 		reset({ content: "" });
 
 		// refocus input
+		// @ts-ignore
 		setTimeout(() => textAreaRef.current?.focus(), 50);
 		setLoadingMessage("");
 	});
@@ -104,6 +107,7 @@ export default function ChannelMessageForm({
 						rows={2}
 						isRequired
 						instanceRef={(inst) => {
+							// @ts-ignore
 							textAreaRef.current = inst;
 						}}
 						ref={textAreaRef}

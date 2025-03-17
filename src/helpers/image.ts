@@ -1,7 +1,4 @@
-import type { Subscription } from "rxjs";
 import { fixOrientationAndStripMetadata } from "../lib/fix-image-orientation";
-import AppSettingsQuery from "../queries/app-settings";
-import { queryStore } from "../services/event-store";
 import type { AppSettings } from "./app-settings";
 
 export type ImageSize = { width: number; height: number };
@@ -26,20 +23,11 @@ export function getImageSize(
 	});
 }
 
-// hack to get app settings
-let settings: AppSettings | undefined;
-let sub: Subscription;
-window.accounts?.active$.subscribe((account) => {
-	if (sub) sub.unsubscribe();
-	if (!account) return;
-	sub = queryStore
-		.createQuery(AppSettingsQuery, account.pubkey)
-		.subscribe((v) => {
-			settings = v;
-		});
-});
-
-export function buildImageProxyURL(src: string, size: string | number) {
+export function buildImageProxyURL(
+	src: string,
+	size: string | number,
+	settings?: AppSettings,
+) {
 	let url: URL | null = null;
 	if (window.IMAGE_PROXY_PATH) {
 		url = new URL(location.origin);

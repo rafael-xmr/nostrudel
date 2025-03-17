@@ -1,6 +1,7 @@
 import { useObservable } from "applesauce-react/hooks";
-import { bakery$ } from "../services/bakery";
+import { useBakeryProvider } from "~/providers/global/bakery-provider";
 
 export default function useBakery() {
-  return useObservable(bakery$);
+	const { bakery$ } = useBakeryProvider();
+	return useObservable(bakery$);
 }

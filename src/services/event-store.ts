@@ -7,10 +7,5 @@ export const queryStore = new QueryStore(eventStore);
 
 // verify all events added to the store
 eventStore.verifyEvent = (event) => {
-  return isFromCache(event) || verifyEvent(event);
+	return isFromCache(event) || verifyEvent(event);
 };
-
-if (typeof window !== "undefined") {
-  window.eventStore = eventStore;
-  window.queryStore = queryStore;
-}

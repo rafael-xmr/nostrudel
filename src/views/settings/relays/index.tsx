@@ -83,6 +83,7 @@ function RelaySetCard({
 					</Heading>
 				</CardHeader>
 				<CardBody px="4" pt="0" pb="4">
+					{/* @ts-ignore */}
 					{mergeRelaySets(read, write).map((url) => (
 						<Text key={url} whiteSpace="pre" isTruncated>
 							{url}
@@ -136,6 +137,7 @@ export default function AppRelaysView() {
 				{window.nostr && (
 					<Button
 						onClick={async () => {
+							// @ts-ignore
 							const { read, write } = await getRelaysFromExt();
 							localSettings.readRelays.next(Array.from(read));
 							localSettings.writeRelays.next(Array.from(write));

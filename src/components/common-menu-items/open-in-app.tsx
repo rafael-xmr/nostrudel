@@ -1,20 +1,27 @@
 import { useCallback, useContext, useMemo } from "react";
 import { MenuItem } from "@chakra-ui/react";
 
-import { NostrEvent } from "../../types/nostr-event";
+import type { NostrEvent } from "../../types/nostr-event";
 import { ExternalLinkIcon } from "../icons";
 import { AppHandlerContext } from "../../providers/route/app-handler-provider";
-import { getSharableEventAddress } from "../../services/relay-hints";
+import { useRelayHints } from "~/providers/global/relay-hints-provider";
 
 export default function OpenInAppMenuItem({ event }: { event: NostrEvent }) {
-  const address = useMemo(() => getSharableEventAddress(event), [event]);
-  const { openAddress } = useContext(AppHandlerContext);
-  const open = useCallback(() => address && openAddress(address), [address, openAddress]);
+	const relayHints = useRelayHints();
+	const address = useMemo(
+		() => relayHints.getSharableEventAddress(event),
+		[relayHints, event],
+	);
+	const { openAddress } = useContext(AppHandlerContext);
+	const open = useCallback(
+		() => address && openAddress(address),
+		[address, openAddress],
+	);
 
-  if (!address) return null;
-  return (
-    <MenuItem icon={<ExternalLinkIcon />} onClick={open}>
-      View in app...
-    </MenuItem>
-  );
+	if (!address) return null;
+	return (
+		<MenuItem icon={<ExternalLinkIcon />} onClick={open}>
+			View in app...
+		</MenuItem>
+	);
 }

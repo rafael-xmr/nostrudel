@@ -12,11 +12,11 @@ import {
 	ModalFooter,
 	ModalHeader,
 	ModalOverlay,
-	ModalProps,
+	type ModalProps,
 	Text,
 	useDisclosure,
 } from "@chakra-ui/react";
-import { nip19 } from "nostr-tools";
+import type { nip19 } from "nostr-tools";
 import { useSet } from "react-use";
 import { encodeDecodeResult } from "applesauce-core/helpers";
 
@@ -26,7 +26,9 @@ import UserLink from "./user/user-link";
 import RelayFavicon from "./relay-favicon";
 import { AppHandlerContext } from "../providers/route/app-handler-provider";
 import { useObservable } from "applesauce-react/hooks";
-import { connections$ } from "../services/rx-nostr";
+import { connections$ } from "~/providers/global/rx-nostr-provider";
+import { useReplaceableEventLoader } from "~/providers/global/replaceable-loader-provider";
+import { useSingleEventLoader } from "~/providers/global/single-event-loader-provider";
 
 function SearchOnRelaysModal({
 	isOpen,
@@ -35,6 +37,9 @@ function SearchOnRelaysModal({
 }: Omit<ModalProps, "children"> & { decode: nip19.DecodeResult }) {
 	const [loading, setLoading] = useState(false);
 	const [filter, setFilter] = useState("");
+
+	const replaceableEventLoader = useReplaceableEventLoader();
+	const singleEventLoader = useSingleEventLoader();
 
 	const discoveredRelays = Object.entries(useObservable(connections$)).reduce<
 		string[]
@@ -48,20 +53,20 @@ function SearchOnRelaysModal({
 		setLoading(true);
 		switch (decode.type) {
 			case "naddr":
-				window.replaceableEventLoader.next({
+				replaceableEventLoader?.next({
 					...decode.data,
 					relays: [...relays, ...(decode.data.relays ?? [])],
 					force: true,
 				});
 				break;
 			case "note":
-				window.singleEventLoader.next({
+				singleEventLoader?.next({
 					id: decode.data,
 					relays: Array.from(relays),
 				});
 				break;
 			case "nevent":
-				window.singleEventLoader.next({
+				singleEventLoader?.next({
 					id: decode.data.id,
 					relays: Array.from(relays),
 				});

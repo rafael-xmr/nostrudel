@@ -28,7 +28,7 @@ import { useContextEmojis } from "../providers/global/emoji-provider";
 import UserAvatar from "./user/user-avatar";
 import UserDnsIdentity from "./user/user-dns-identity";
 import { useWebOfTrust } from "../providers/global/web-of-trust-provider";
-import { userSearchDirectory } from "../services/username-search";
+import { useUserSearchDirectory } from "~/providers/global/username-search-provider";
 
 // Referencing Textarea and Input so they are not removed from the imports
 [Textarea, Input];
@@ -98,7 +98,7 @@ function output(token: Token) {
 const Loading: ReactTextareaAutocompleteProps<
 	Token,
 	TextareaHTMLAttributes<HTMLTextAreaElement>
->["loadingComponent"] = ({ _data }) => <div>Loading</div>;
+>["loadingComponent"] = ({ data }) => <div>Loading</div>;
 
 function useEmojiTokens() {
 	const customEmojis = useContextEmojis();
@@ -159,6 +159,7 @@ function useEmojiTokens() {
 
 function useAutocompleteTriggers() {
 	const webOfTrust = useWebOfTrust();
+	const userSearchDirectory = useUserSearchDirectory();
 	const directory = useObservable(userSearchDirectory) ?? [];
 	const emojis = useEmojiTokens();
 

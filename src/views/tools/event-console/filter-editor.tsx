@@ -1,5 +1,4 @@
-import { memo, useEffect, useMemo } from "react";
-import { useColorMode } from "@chakra-ui/react";
+import { memo, useMemo } from "react";
 import ReactCodeMirror from "@uiw/react-codemirror";
 import { githubLight, githubDark } from "@uiw/codemirror-theme-github";
 import { jsonSchema } from "codemirror-json-schema";
@@ -8,7 +7,7 @@ import _throttle from "lodash.throttle";
 import { jsonLanguage } from "@codemirror/lang-json";
 
 import { NostrFilterSchema } from "./schema";
-import { codeMirrorUserAutocomplete } from "./user-autocomplete";
+import { useCodeMirrorUserAutocomplete } from "~/providers/global/user-autocomplete-provider";
 
 const FilterEditor = memo(
 	({
@@ -16,6 +15,7 @@ const FilterEditor = memo(
 		onChange,
 		onRun,
 	}: { value: string; onChange: (v: string) => void; onRun: () => void }) => {
+		const codeMirrorUserAutocomplete = useCodeMirrorUserAutocomplete();
 		const extensions = useMemo(
 			() => [
 				keymap.of([

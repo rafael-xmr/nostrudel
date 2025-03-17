@@ -1,17 +1,23 @@
 import { MenuItem } from "@chakra-ui/react";
 
-import { NostrEvent } from "../../types/nostr-event";
+import type { NostrEvent } from "../../types/nostr-event";
 import { CopyToClipboardIcon } from "../icons";
-import { getSharableEventAddress } from "../../services/relay-hints";
+import { useRelayHints } from "~/providers/global/relay-hints-provider";
 
-export default function CopyEmbedCodeMenuItem({ event }: { event: NostrEvent }) {
-  const address = getSharableEventAddress(event);
+export default function CopyEmbedCodeMenuItem({
+	event,
+}: { event: NostrEvent }) {
+	const relayHints = useRelayHints();
+	const address = relayHints.getSharableEventAddress(event);
 
-  return (
-    address && (
-      <MenuItem onClick={() => window.navigator.clipboard.writeText("nostr:" + address)} icon={<CopyToClipboardIcon />}>
-        Copy embed code
-      </MenuItem>
-    )
-  );
+	return (
+		address && (
+			<MenuItem
+				onClick={() => window.navigator.clipboard.writeText(`nostr:${address}`)}
+				icon={<CopyToClipboardIcon />}
+			>
+				Copy embed code
+			</MenuItem>
+		)
+	);
 }

@@ -121,6 +121,7 @@ localSettings.cacheRelayURL
 		if (cacheRelay$.value && cacheRelay$.value.url === url) return;
 
 		const relay = await connectRelay(url);
+		// @ts-ignore
 		cacheRelay$.next(relay);
 	});
 

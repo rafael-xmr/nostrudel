@@ -7,21 +7,23 @@ import {
 	Button,
 	ButtonGroup,
 	Flex,
-	FlexProps,
+	type FlexProps,
 	Heading,
 } from "@chakra-ui/react";
 import { useSigningContext } from "../../../providers/global/signing-provider";
-import MagicTextArea, { RefType } from "../../../components/magic-textarea";
+import MagicTextArea, {
+	type RefType,
+} from "../../../components/magic-textarea";
 import useTextAreaUploadFile, {
 	useTextAreaInsertTextWithForm,
 } from "../../../hooks/use-textarea-upload-file";
-import { DraftNostrEvent } from "../../../types/nostr-event";
+import type { DraftNostrEvent } from "../../../types/nostr-event";
 import useUserMailboxes from "../../../hooks/use-user-mailboxes";
 import { usePublishEvent } from "../../../providers/global/publish-provider";
 import useCacheForm from "../../../hooks/use-cache-form";
-import decryptionCacheService from "../../../services/decryption-cache";
 import InsertGifButton from "../../../components/gif/insert-gif-button";
 import InsertReactionButton from "../../../components/reactions/insert-reaction-button";
+import { useDecryptionCacheService } from "~/providers/global/decryption-cache-provider";
 
 export default function SendMessageForm({
 	pubkey,
@@ -30,6 +32,7 @@ export default function SendMessageForm({
 }: { pubkey: string; rootId?: string } & Omit<FlexProps, "children">) {
 	const publish = usePublishEvent();
 	const { requestEncrypt } = useSigningContext();
+	const decryptionCacheService = useDecryptionCacheService();
 
 	const [loadingMessage, setLoadingMessage] = useState("");
 	const { getValues, setValue, watch, handleSubmit, formState, reset } =
@@ -86,7 +89,7 @@ export default function SendMessageForm({
 
 			// add plaintext to decryption context
 			decryptionCacheService
-				.getOrCreateContainer(pub.event.id, "nip04", pubkey, encrypted)
+				?.getOrCreateContainer(pub.event.id, "nip04", pubkey, encrypted)
 				.plaintext.next(values.content);
 
 			// refocus input
@@ -117,6 +120,7 @@ export default function SendMessageForm({
 						rows={2}
 						isRequired
 						instanceRef={(inst) => {
+							// @ts-ignore
 							textAreaRef.current = inst;
 						}}
 						ref={textAreaRef}

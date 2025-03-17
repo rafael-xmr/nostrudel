@@ -22,7 +22,6 @@ import type {
 } from "../../../../types/nostr-event";
 import useTimelineLoader from "../../../../hooks/use-timeline-loader";
 import { useReadRelays } from "../../../../hooks/use-client-relays";
-import relayScoreboardService from "../../../../services/relay-scoreboard";
 import {
 	DVM_STATUS_KIND,
 	DVM_TRANSLATE_JOB_KIND,
@@ -32,16 +31,18 @@ import {
 import { useActiveAccount } from "applesauce-react/hooks";
 import TranslationJob from "./translation-job";
 import { usePublishEvent } from "../../../../providers/global/publish-provider";
+import { useRelayScoreboard } from "~/providers/global/relay-scoreboard-provider";
 
 export function NoteTranslationsPage({ note }: { note: NostrEvent }) {
-  const account = useActiveAccount();
-  const publish = usePublishEvent();
+	const account = useActiveAccount();
+	const publish = usePublishEvent();
 
 	const [lang, setLang] = useState(navigator.language.split("-")[0] ?? "en");
 	const readRelays = useReadRelays();
+	const relayScoreboardService = useRelayScoreboard();
 	const requestTranslation = useCallback(async () => {
 		const top8Relays = relayScoreboardService
-			.getRankedRelays(readRelays)
+			?.getRankedRelays(readRelays)
 			.slice(0, 8);
 		const draft: DraftNostrEvent = {
 			kind: DVM_TRANSLATE_JOB_KIND,
@@ -51,12 +52,12 @@ export function NoteTranslationsPage({ note }: { note: NostrEvent }) {
 				["i", note.id, "event"],
 				["param", "language", lang],
 				["output", "text/plain"],
-				["relays", ...top8Relays],
+				["relays", ...(top8Relays ?? [])],
 			],
 		};
 
 		await publish("Request Translation", draft);
-	}, [publish, note, readRelays, lang]);
+	}, [relayScoreboardService, publish, note, readRelays, lang]);
 
 	const { loader, timeline: events } = useTimelineLoader(
 		`${getEventUID(note)}-translations`,
@@ -72,25 +73,31 @@ export function NoteTranslationsPage({ note }: { note: NostrEvent }) {
 
 	const jobs = Object.values(groupEventsIntoJobs(events));
 
-  return (
-    <>
-      <Flex gap="2">
-        <Select value={lang} onChange={(e) => setLang(e.target.value)} w="60">
-          {codes.map((code) => (
-            <option key={code.iso639_1} value={code.iso639_1}>
-              {code.name} ({code.nativeName})
-            </option>
-          ))}
-        </Select>
-        <Button size="md" variant="solid" colorScheme="primary" onClick={requestTranslation} flexShrink={0}>
-          Request new translation
-        </Button>
-      </Flex>
-      {jobs.map((job) => (
-        <TranslationJob key={job.request.id} job={job} />
-      ))}
-    </>
-  );
+	return (
+		<>
+			<Flex gap="2">
+				<Select value={lang} onChange={(e) => setLang(e.target.value)} w="60">
+					{codes.map((code) => (
+						<option key={code.iso639_1} value={code.iso639_1}>
+							{code.name} ({code.nativeName})
+						</option>
+					))}
+				</Select>
+				<Button
+					size="md"
+					variant="solid"
+					colorScheme="primary"
+					onClick={requestTranslation}
+					flexShrink={0}
+				>
+					Request new translation
+				</Button>
+			</Flex>
+			{jobs.map((job) => (
+				<TranslationJob key={job.request.id} job={job} />
+			))}
+		</>
+	);
 }
 
 export default function NoteTranslationModal({

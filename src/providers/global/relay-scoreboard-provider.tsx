@@ -1,6 +1,13 @@
+import {
+	createContext,
+	type PropsWithChildren,
+	useContext,
+	useEffect,
+	useMemo,
+} from "react";
 import dayjs from "dayjs";
-import SuperMap from "../classes/super-map";
-import getDB from "./db";
+import SuperMap from "~/classes/super-map";
+import { useDB } from "./db-provider";
 
 function clamp(v: number, min: number, max: number) {
 	return Math.min(Math.max(v, min), max);
@@ -80,7 +87,6 @@ class TimeMeasure implements RelayMeasure, PersistentMeasure {
 		return this.measures.length;
 	}
 
-	/** cache the average since it gets called a lot */
 	private averageCache: number | null = null;
 	getAverage(undef: number = Infinity) {
 		if (this.measures.length === 0) return undef;
@@ -120,21 +126,26 @@ class TimeMeasure implements RelayMeasure, PersistentMeasure {
 	}
 }
 
+const RelayScoreboardContext = createContext<
+	RelayScoreboardService | undefined
+>(undefined);
+
+export function useRelayScoreboard() {
+	return useContext(RelayScoreboardContext);
+}
+
 class RelayScoreboardService {
-	/** the time it takes for relays to respond to queries */
 	relayResponseTimes = new SuperMap<string, TimeMeasure>(
 		(relay) => new TimeMeasure(relay),
 	);
-	/** the time it takes before the relay closes the connection */
 	relayEjectTime = new SuperMap<string, TimeMeasure>(
 		(relay) => new TimeMeasure(relay),
 	);
-	/** the time it takes to connect to the relay */
 	relayConnectionTime = new SuperMap<string, TimeMeasure>(
 		(relay) => new TimeMeasure(relay),
 	);
-	/** the number of times the connection has timed out */
-	// relayTimeouts = new SuperMap<string, IncidentMeasure>((relay) => new IncidentMeasure(relay));
+
+	constructor(private db: any) {}
 
 	prune() {
 		const cutOff = dayjs().subtract(1, "week").toDate();
@@ -143,7 +154,6 @@ class RelayScoreboardService {
 		for (const [relay, measure] of this.relayEjectTime) measure.prune(cutOff);
 		for (const [relay, measure] of this.relayConnectionTime)
 			measure.prune(cutOff);
-		// for (const [relay, measure] of this.relayTimeouts) measure.prune(cutOff);
 	}
 
 	getAverageResponseTime(relay: string) {
@@ -155,9 +165,6 @@ class RelayScoreboardService {
 	getAverageConnectionTime(relay: string) {
 		return this.relayConnectionTime.get(relay).getAverage();
 	}
-	// getTimeoutCount(relay: string) {
-	//   return this.relayTimeouts.get(relay).getCount();
-	// }
 
 	hasConnected(relay: string) {
 		return this.relayConnectionTime.get(relay).getCount() > 0;
@@ -166,26 +173,21 @@ class RelayScoreboardService {
 		const responseTime = this.getAverageResponseTime(relay);
 		const connected = this.hasConnected(relay);
 
-		// no points if we have never connected
 		if (!connected) return 0;
 
-		// 1 point (max 10) for ever 10 ms under 1000. negative points for over 1000
 		return clamp(Math.round(-(responseTime - 1000) / 100), -10, 10);
 	}
 	getConnectionTimeScore(relay: string) {
 		const connectionTime = this.getAverageConnectionTime(relay);
 
-		// no points if we have never connected
 		if (connectionTime === Infinity) return 0;
 
-		// 1 point (max 10) for ever 10 ms under 1000. negative points for over 1000
 		return clamp(Math.round(-(connectionTime - 1000) / 100), -10, 10);
 	}
 	getEjectTimeScore(relay: string) {
 		const ejectTime = this.getAverageEjectTime(relay);
 		const connected = this.hasConnected(relay);
 
-		// no points if we have never connected
 		if (!connected) return 0;
 
 		let score = 0;
@@ -195,18 +197,12 @@ class RelayScoreboardService {
 		if (ejectTime > 1000 * 200) score += 5;
 		return score;
 	}
-	// getTimeoutsScore(relay: string) {
-	//   const timeouts = this.getTimeoutCount(relay);
-	//   // subtract 5 points for ever time its timed out
-	//   return -(timeouts * 5);
-	// }
 	getRelayScore(relay: string) {
 		let score = 0;
 
 		score += this.getResponseTimeScore(relay);
 		score += this.getConnectionTimeScore(relay);
 		score += this.getEjectTimeScore(relay);
-		// score += this.getTimeoutsScore(relay);
 
 		return score;
 	}
@@ -229,7 +225,6 @@ class RelayScoreboardService {
 		for (const [relay, measure] of this.relayResponseTimes) relays.add(relay);
 		for (const [relay, measure] of this.relayEjectTime) relays.add(relay);
 		for (const [relay, measure] of this.relayConnectionTime) relays.add(relay);
-		// for (const [relay, measure] of this.relayTimeouts) relays.add(relay);
 		return Array.from(relays);
 	}
 
@@ -237,11 +232,10 @@ class RelayScoreboardService {
 		this.relayResponseTimes.forEach((m) => m.reset());
 		this.relayEjectTime.forEach((m) => m.reset());
 		this.relayConnectionTime.forEach((m) => m.reset());
-		// this.relayTimeouts.forEach((m) => m.reset());
 	}
 
 	async loadStats() {
-		const stats = await (await getDB())?.getAll("relayScoreboardStats");
+		const stats = await this.db?.getAll("relayScoreboardStats");
 		if (!stats) return;
 
 		for (const relayStats of stats) {
@@ -252,12 +246,11 @@ class RelayScoreboardService {
 			this.relayConnectionTime
 				.get(relayStats.relay)
 				.load(relayStats.connectionTimes);
-			// this.relayTimeouts.get(relayStats.relay).load(relayStats.timeouts);
 		}
 	}
 
 	async saveStats() {
-		const transaction = (await getDB())?.transaction(
+		const transaction = this.db?.transaction(
 			"relayScoreboardStats",
 			"readwrite",
 		);
@@ -267,7 +260,6 @@ class RelayScoreboardService {
 				const responseTimes = this.relayResponseTimes.get(relay).save();
 				const ejectTimes = this.relayEjectTime.get(relay).save();
 				const connectionTimes = this.relayConnectionTime.get(relay).save();
-				// const timeouts = this.relayTimeouts.get(relay).save();
 				transaction.store.put({
 					relay,
 					responseTimes,
@@ -280,18 +272,35 @@ class RelayScoreboardService {
 	}
 }
 
-const relayScoreboardService = new RelayScoreboardService();
+export default function RelayScoreboardProvider({
+	children,
+}: PropsWithChildren) {
+	const { db } = useDB();
 
-setTimeout(() => {
-	relayScoreboardService.loadStats();
-}, 0);
+	const relayScoreboardService = useMemo(() => {
+		if (!db) return undefined;
+		return new RelayScoreboardService(db);
+	}, [db]);
 
-setInterval(() => {
-	relayScoreboardService.saveStats();
-}, 1000 * 30);
+	useEffect(() => {
+		if (!relayScoreboardService) return;
 
-if (typeof window !== "undefined") {
-	window.relayScoreboardService = relayScoreboardService;
+		setTimeout(() => {
+			relayScoreboardService.loadStats();
+		}, 0);
+
+		const intervalId = setInterval(() => {
+			relayScoreboardService.saveStats();
+		}, 1000 * 30);
+
+		return () => {
+			clearInterval(intervalId);
+		};
+	}, [relayScoreboardService]);
+
+	return (
+		<RelayScoreboardContext.Provider value={relayScoreboardService}>
+			{children}
+		</RelayScoreboardContext.Provider>
+	);
 }
-
-export default relayScoreboardService;

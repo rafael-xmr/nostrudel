@@ -36,10 +36,10 @@ declare module "yet-another-react-lightbox" {
 	}
 }
 
-import { NostrEvent } from "../types/nostr-event";
+import type { NostrEvent } from "../types/nostr-event";
 import UserAvatarLink from "./user/user-avatar-link";
 import UserLink from "./user/user-link";
-import { getSharableEventAddress } from "../services/relay-hints";
+import { useRelayHints } from "~/providers/global/relay-hints-provider";
 
 type RefType = MutableRefObject<HTMLElement | null>;
 
@@ -113,7 +113,11 @@ function EventSlideHeader({
 	event,
 	...props
 }: { event: NostrEvent } & Omit<FlexProps, "children">) {
-	const encoded = useMemo(() => getSharableEventAddress(event), [event]);
+	const relayHints = useRelayHints();
+	const encoded = useMemo(
+		() => relayHints.getSharableEventAddress(event),
+		[relayHints, event],
+	);
 
 	return (
 		<Flex gap="2" alignItems="center" p="2" {...props}>

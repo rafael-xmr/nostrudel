@@ -1,36 +1,49 @@
-import { Select, SelectProps } from "@chakra-ui/react";
+import { Select, type SelectProps } from "@chakra-ui/react";
 import { useObservable } from "applesauce-react/hooks";
 
 import localSettings from "../../services/local-settings";
-import { RelayAuthMode } from "../../services/authentication-signer";
+import type { RelayAuthMode } from "~/providers/global/authentication-signer-provider";
 
 export default function RelayAuthModeSelect({
-  relay,
-  ...props
+	relay,
+	...props
 }: { relay: string } & Omit<SelectProps, "value" | "onChange" | "children">) {
-  const defaultMode = useObservable(localSettings.defaultAuthenticationMode);
-  const relayMode = useObservable(localSettings.relayAuthenticationMode);
+	const defaultMode = useObservable(localSettings.defaultAuthenticationMode);
+	const relayMode = useObservable(localSettings.relayAuthenticationMode);
 
-  const authMode = relayMode.find((r) => r.relay === relay)?.mode ?? "";
+	const authMode = relayMode.find((r) => r.relay === relay)?.mode ?? "";
 
-  const setAuthMode = (mode: RelayAuthMode | "") => {
-    const existing = relayMode.find((r) => r.relay === relay);
+	const setAuthMode = (mode: RelayAuthMode | "") => {
+		const existing = relayMode.find((r) => r.relay === relay);
 
-    if (!mode) {
-      if (existing) localSettings.relayAuthenticationMode.next(relayMode.filter((r) => r.relay !== relay));
-    } else {
-      if (existing)
-        localSettings.relayAuthenticationMode.next(relayMode.map((r) => (r.relay === relay ? { relay, mode } : r)));
-      else localSettings.relayAuthenticationMode.next([...relayMode, { relay, mode }]);
-    }
-  };
+		if (!mode) {
+			if (existing)
+				localSettings.relayAuthenticationMode.next(
+					relayMode.filter((r) => r.relay !== relay),
+				);
+		} else {
+			if (existing)
+				localSettings.relayAuthenticationMode.next(
+					relayMode.map((r) => (r.relay === relay ? { relay, mode } : r)),
+				);
+			else
+				localSettings.relayAuthenticationMode.next([
+					...relayMode,
+					{ relay, mode },
+				]);
+		}
+	};
 
-  return (
-    <Select value={authMode} onChange={(e) => setAuthMode(e.target.value as RelayAuthMode)} {...props}>
-      <option value="">Default ({defaultMode})</option>
-      <option value="always">Always</option>
-      <option value="ask">Ask</option>
-      <option value="never">Never</option>
-    </Select>
-  );
+	return (
+		<Select
+			value={authMode}
+			onChange={(e) => setAuthMode(e.target.value as RelayAuthMode)}
+			{...props}
+		>
+			<option value="">Default ({defaultMode})</option>
+			<option value="always">Always</option>
+			<option value="ask">Ask</option>
+			<option value="never">Never</option>
+		</Select>
+	);
 }

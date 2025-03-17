@@ -6,11 +6,9 @@ import {
 	type IconButtonProps,
 } from "@chakra-ui/react";
 
-import EmbeddedUnknown from "../../../components/embed-event/event-types/embedded-unknown";
 import { ErrorBoundary } from "../../../components/error-boundary";
 import { TrustProvider } from "../../../providers/local/trust-provider";
 import { ChevronDownIcon, ChevronUpIcon } from "../../../components/icons";
-import useEventIntersectionRef from "../../../hooks/use-event-intersection-ref";
 import type { NostrEvent } from "nostr-tools";
 import ReplyNotification from "./reply-notification";
 import MentionNotification from "./mention-notification";
@@ -24,7 +22,7 @@ import {
 	type CategorizedEvent,
 	NotificationType,
 	NotificationTypeSymbol,
-} from "../../../services/notifications";
+} from "~/providers/global/notifications-provider";
 
 export const ExpandableToggleButton = ({
 	toggle,

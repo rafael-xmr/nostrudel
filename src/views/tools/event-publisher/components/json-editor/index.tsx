@@ -1,7 +1,7 @@
 import { memo, useEffect, useMemo, useState } from "react";
 import { Text, useColorMode } from "@chakra-ui/react";
 import ReactCodeMirror from "@uiw/react-codemirror";
-import { EventTemplate } from "nostr-tools";
+import type { EventTemplate } from "nostr-tools";
 import { githubLight, githubDark } from "@uiw/codemirror-theme-github";
 import { jsonSchema } from "codemirror-json-schema";
 import { keymap } from "@codemirror/view";
@@ -9,8 +9,8 @@ import _throttle from "lodash.throttle";
 import { jsonLanguage } from "@codemirror/lang-json";
 
 import { NostrEventSchema } from "./schema";
-import { codeMirrorUserAutocomplete } from "../../../event-console/user-autocomplete";
-import { LooseEventTemplate } from "../../process";
+import type { LooseEventTemplate } from "../../process";
+import { useCodeMirrorUserAutocomplete } from "~/providers/global/user-autocomplete-provider";
 
 const EventJsonEditor = memo(
 	({
@@ -22,6 +22,7 @@ const EventJsonEditor = memo(
 		onChange: (v: EventTemplate) => void;
 		onRun?: () => void;
 	}) => {
+		const codeMirrorUserAutocomplete = useCodeMirrorUserAutocomplete();
 		const [value, setValue] = useState(JSON.stringify(draft, null, 2));
 		const [error, setError] = useState<Error>();
 		const handleChange = (v: string) => {
@@ -65,7 +66,7 @@ const EventJsonEditor = memo(
 					autocomplete: codeMirrorUserAutocomplete,
 				}),
 			],
-			[onRun],
+			[codeMirrorUserAutocomplete, onRun],
 		);
 		return (
 			<>

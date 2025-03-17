@@ -1,12 +1,12 @@
-import { NostrEvent, SimplePool } from "nostr-tools";
-import { AbstractRelay } from "nostr-tools/abstract-relay";
+import { type NostrEvent, SimplePool } from "nostr-tools";
+import type { AbstractRelay } from "nostr-tools/abstract-relay";
 import { SimpleSigner } from "applesauce-signers";
 
 import { logger } from "../helpers/debug";
 import NostrWebRtcBroker from "../classes/webrtc/nostr-webrtc-broker";
 import WebRtcRelayClient from "../classes/webrtc/webrtc-relay-client";
 import WebRtcRelayServer from "../classes/webrtc/webrtc-relay-server";
-import NostrWebRTCPeer from "../classes/webrtc/nostr-webrtc-peer";
+import type NostrWebRTCPeer from "../classes/webrtc/nostr-webrtc-peer";
 import verifyEventMethod from "./verify-event";
 import localSettings from "./local-settings";
 import { DEFAULT_ICE_SERVERS } from "../const";
@@ -28,7 +28,7 @@ class WebRtcRelaysService {
 		}[] = [];
 		for (const call of this.calls) {
 			const peer = this.broker.peers.get(call.pubkey);
-			if (peer && peer.peer && peer.connection.connectionState !== "new") {
+			if (peer?.peer && peer.connection.connectionState !== "new") {
 				answered.push({ call, peer, pubkey: peer.peer });
 			}
 		}
@@ -144,9 +144,5 @@ broker.iceServers = DEFAULT_ICE_SERVERS;
 const webRtcRelaysService = new WebRtcRelaysService(broker, null);
 
 webRtcRelaysService.start();
-
-if (typeof window !== "undefined") {
-	window.webRtcRelaysService = webRtcRelaysService;
-}
 
 export default webRtcRelaysService;

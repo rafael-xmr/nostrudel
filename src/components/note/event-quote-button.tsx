@@ -1,34 +1,35 @@
 import { useContext } from "react";
-import { IconButton, IconButtonProps } from "@chakra-ui/react";
-import { NostrEvent } from "nostr-tools";
+import { IconButton, type IconButtonProps } from "@chakra-ui/react";
+import type { NostrEvent } from "nostr-tools";
 
 import { QuoteEventIcon } from "../icons";
 import { PostModalContext } from "../../providers/route/post-modal-provider";
-import { getSharableEventAddress } from "../../services/relay-hints";
+import { useRelayHints } from "~/providers/global/relay-hints-provider";
 
 export default function EventQuoteButton({
-  event,
-  "aria-label": ariaLabel,
-  title = "Quote Event",
-  ...props
+	event,
+	"aria-label": ariaLabel,
+	title = "Quote Event",
+	...props
 }: Omit<IconButtonProps, "children" | "onClick" | "aria-label"> & {
-  event: NostrEvent;
-  "aria-label"?: string;
+	event: NostrEvent;
+	"aria-label"?: string;
 }) {
-  const { openModal } = useContext(PostModalContext);
+	const relayHints = useRelayHints();
+	const { openModal } = useContext(PostModalContext);
 
-  const handleClick = () => {
-    const nevent = getSharableEventAddress(event);
-    openModal({ cacheFormKey: null, initContent: "\nnostr:" + nevent });
-  };
+	const handleClick = () => {
+		const nevent = relayHints.getSharableEventAddress(event);
+		openModal({ cacheFormKey: null, initContent: "\nnostr:" + nevent });
+	};
 
-  return (
-    <IconButton
-      icon={<QuoteEventIcon />}
-      onClick={handleClick}
-      aria-label={ariaLabel || title}
-      title={title}
-      {...props}
-    />
-  );
+	return (
+		<IconButton
+			icon={<QuoteEventIcon />}
+			onClick={handleClick}
+			aria-label={ariaLabel || title}
+			title={title}
+			{...props}
+		/>
+	);
 }

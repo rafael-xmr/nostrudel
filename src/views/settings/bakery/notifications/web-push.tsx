@@ -9,6 +9,7 @@ import {
 	useToast,
 } from "@chakra-ui/react";
 import { useObservable } from "applesauce-react/hooks";
+import { useBakeryProvider } from "~/providers/global/bakery-provider";
 
 // import { serviceWorkerRegistration } from "../../../../services/worker";
 // import {
@@ -16,7 +17,6 @@ import { useObservable } from "applesauce-react/hooks";
 //   enableNotifications,
 //   pushSubscription,
 // } from "../../../../services/web-push-notifications";
-import { controlApi$ } from "../../../../services/bakery";
 
 function WebPushNotificationStatus() {
 	const toast = useToast();
@@ -84,6 +84,7 @@ function WebPushNotificationStatus() {
 }
 
 export default function WebPushNotificationSettings() {
+	const { controlApi$ } = useBakeryProvider();
 	const controlApi = useObservable(controlApi$);
 	useEffect(() => {
 		// controlApi?.send(["CONTROL", "NOTIFICATIONS", "GET-VAPID-KEY"]);

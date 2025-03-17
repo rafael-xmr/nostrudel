@@ -1,4 +1,7 @@
-import { NostrEvent, verifyEvent as internalVerifyEvent } from "nostr-tools";
+import {
+	type NostrEvent,
+	verifyEvent as internalVerifyEvent,
+} from "nostr-tools";
 import { setNostrWasm, verifyEvent as wasmVerifyEvent } from "nostr-tools/wasm";
 import { fakeVerifyEvent } from "applesauce-core/helpers/event";
 import { distinctUntilChanged } from "rxjs";
@@ -54,7 +57,7 @@ async function updateVerifyMethod() {
 				verifyEventMethod = fakeVerifyEvent;
 				alwaysVerifyMethod = internalVerifyEvent;
 				break;
-			case "internal":
+			// case "internal":
 			default:
 				log("Using internal nostr-tools");
 				verifyEventMethod = alwaysVerifyMethod = internalVerifyEvent;

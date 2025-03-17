@@ -1,4 +1,4 @@
-import { NostrEvent, nip19 } from "nostr-tools";
+import { type NostrEvent, nip19 } from "nostr-tools";
 import {
 	Alert,
 	AlertIcon,
@@ -40,8 +40,8 @@ import EventVoteButtons from "../../components/reactions/event-vote-buttions";
 import { useActiveAccount } from "applesauce-react/hooks";
 import { useReadRelays } from "../../hooks/use-client-relays";
 import { useWebOfTrust } from "../../providers/global/web-of-trust-provider";
-import { getSharableEventAddress } from "../../services/relay-hints";
 import useWikiPages from "../../hooks/use-wiki-pages";
+import { useRelayHints } from "~/providers/global/relay-hints-provider";
 
 function ForkAlert({
 	page,
@@ -103,6 +103,7 @@ function DeferAlert({
 }
 
 export function WikiPagePage({ page }: { page: NostrEvent }) {
+	const relayHints = useRelayHints();
 	const account = useActiveAccount();
 
 	const { address } = getPageForks(page);
@@ -134,7 +135,7 @@ export function WikiPagePage({ page }: { page: NostrEvent }) {
 							<Button
 								as={RouterLink}
 								colorScheme="primary"
-								to={`/wiki/create?fork=${getSharableEventAddress(page)}`}
+								to={`/wiki/create?fork=${relayHints.getSharableEventAddress(page)}`}
 							>
 								Fork
 							</Button>

@@ -1,5 +1,5 @@
 import {
-	FormEventHandler,
+	type FormEventHandler,
 	useCallback,
 	useEffect,
 	useRef,
@@ -9,7 +9,7 @@ import { Link as RouterLink, useNavigate } from "react-router-dom";
 import {
 	Card,
 	Flex,
-	FlexProps,
+	type FlexProps,
 	Input,
 	InputGroup,
 	InputRightElement,
@@ -24,7 +24,7 @@ import UserAvatar from "../../../components/user/user-avatar";
 import UserName from "../../../components/user/user-name";
 import KeyboardShortcut from "../../../components/keyboard-shortcut";
 import { useWebOfTrust } from "../../../providers/global/web-of-trust-provider";
-import { userSearchDirectory } from "../../../services/username-search";
+import { useUserSearchDirectory } from "~/providers/global/username-search-provider";
 
 function UserOption({ pubkey }: { pubkey: string }) {
 	return (
@@ -43,6 +43,7 @@ function UserOption({ pubkey }: { pubkey: string }) {
 
 export default function SearchForm({ ...props }: Omit<FlexProps, "children">) {
 	const webOfTrust = useWebOfTrust();
+	const userSearchDirectory = useUserSearchDirectory();
 	const directory = useObservable(userSearchDirectory);
 	const navigate = useNavigate();
 	const autoComplete = useDisclosure();

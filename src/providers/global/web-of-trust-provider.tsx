@@ -1,19 +1,20 @@
 import {
-	PropsWithChildren,
+	type PropsWithChildren,
 	createContext,
 	useContext,
 	useEffect,
 	useMemo,
 } from "react";
-import { NostrEvent, kinds } from "nostr-tools";
+import { type NostrEvent, kinds } from "nostr-tools";
 import { useActiveAccount } from "applesauce-react/hooks";
 import _throttle from "lodash.throttle";
-
 import { getPubkeysFromList } from "../../helpers/nostr/lists";
 import { PubkeyGraph } from "../../classes/pubkey-graph";
 import { COMMON_CONTACT_RELAYS } from "../../const";
 import { eventStore } from "../../services/event-store";
+import { useReplaceableEventLoader } from "./replaceable-loader-provider";
 
+// Utility function (no hooks)
 export function loadSocialGraph(
 	graph: PubkeyGraph,
 	kind: number,
@@ -21,11 +22,11 @@ export function loadSocialGraph(
 	relay?: string,
 	maxLvl = 0,
 	walked: Set<string> = new Set(),
+	replaceableEventLoader?: ReturnType<typeof useReplaceableEventLoader>,
+	handleEventCallback?: (event: NostrEvent) => void,
 ) {
 	let newEvents = 0;
-
 	const contacts = eventStore.getReplaceable(kind, pubkey);
-
 	walked.add(pubkey);
 
 	const handleEvent = (event: NostrEvent) => {
@@ -44,21 +45,23 @@ export function loadSocialGraph(
 					person.relay,
 					maxLvl - 1,
 					walked,
+					replaceableEventLoader,
+					handleEventCallback,
 				);
 			}
 		}
+		if (handleEventCallback) handleEventCallback(event);
 	};
 
 	if (contacts) {
 		handleEvent(contacts);
-	} else {
-		window.replaceableEventLoader.next({
+	} else if (replaceableEventLoader) {
+		replaceableEventLoader.next({
 			relays: relay ? [relay, ...COMMON_CONTACT_RELAYS] : COMMON_CONTACT_RELAYS,
 			kind,
 			pubkey,
 		});
 
-		// wait for event to load
 		const sub = eventStore.replaceable(kind, pubkey).subscribe((e) => {
 			if (e) {
 				handleEvent(e);
@@ -66,6 +69,33 @@ export function loadSocialGraph(
 			}
 		});
 	}
+
+	return newEvents;
+}
+
+// Custom hook to manage social graph loading
+function useSocialGraphLoader(pubkey?: string, maxLvl = 1) {
+	const replaceableEventLoader = useReplaceableEventLoader();
+	const graph = useMemo(
+		() => (pubkey ? new PubkeyGraph(pubkey) : null),
+		[pubkey],
+	);
+
+	useEffect(() => {
+		if (!graph || !pubkey) return;
+
+		loadSocialGraph(
+			graph,
+			kinds.Contacts,
+			pubkey,
+			undefined,
+			maxLvl,
+			new Set(),
+			replaceableEventLoader,
+		);
+	}, [graph, pubkey, replaceableEventLoader]);
+
+	return graph;
 }
 
 const WebOfTrustContext = createContext<PubkeyGraph | null>(null);
@@ -79,17 +109,8 @@ export default function WebOfTrustProvider({
 	children,
 }: PropsWithChildren<{ pubkey?: string }>) {
 	const account = useActiveAccount();
-	if (account && !pubkey) pubkey = account.pubkey;
-
-	const graph = useMemo(() => {
-		return pubkey ? new PubkeyGraph(pubkey) : null;
-	}, [pubkey]);
-
-	// load the graph when it changes
-	useEffect(() => {
-		if (!graph) return;
-		loadSocialGraph(graph, kinds.Contacts, graph.root, undefined, 1);
-	}, [graph]);
+	const effectivePubkey = pubkey || account?.pubkey;
+	const graph = useSocialGraphLoader(effectivePubkey);
 
 	return (
 		<WebOfTrustContext.Provider value={graph}>

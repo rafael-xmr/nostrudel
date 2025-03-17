@@ -1,4 +1,3 @@
-import { hidePaywall } from "../../../services/paywall";
 import {
 	Button,
 	Modal,
@@ -12,8 +11,11 @@ import { unixNow } from "applesauce-core/helpers";
 import { PAYWALL_MESSAGE } from "../../../env";
 import SupportButton from "~/components/support-button";
 import { useEffect, useState } from "react";
+import { usePaywall } from "~/providers/global/paywall-provider";
 
 export default function SupportPaywall() {
+	const { hidePaywall } = usePaywall();
+
 	const [isOpen, setIsOpen] = useState(
 		hidePaywall.value ? hidePaywall.value < unixNow() : false,
 	);
@@ -29,7 +31,7 @@ export default function SupportPaywall() {
 			// Hide for a day on first load
 			hidePaywall.next(unixNow() + 10);
 		}
-	}, []);
+	}, [hidePaywall]);
 
 	return (
 		<Modal

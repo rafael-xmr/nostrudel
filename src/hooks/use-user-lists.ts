@@ -4,6 +4,7 @@ import { TimelineQuery } from "applesauce-core/queries";
 
 import { SET_KINDS, isJunkList } from "../helpers/nostr/lists";
 import { useReadRelays } from "./use-client-relays";
+import { useUserSetsLoader } from "~/providers/global/user-sets-loader-provider";
 
 export default function useUserSets(
 	pubkey?: string,
@@ -11,11 +12,12 @@ export default function useUserSets(
 	force?: boolean,
 ) {
 	const readRelays = useReadRelays(additionalRelays);
+	const userSetsLoader = useUserSetsLoader();
 
 	useEffect(() => {
 		if (pubkey) {
 			for (const kind of SET_KINDS) {
-				window.userSetsLoader?.next({
+				userSetsLoader?.next({
 					kind,
 					pubkey,
 					relays: [...readRelays],
@@ -23,7 +25,7 @@ export default function useUserSets(
 				});
 			}
 		}
-	}, [pubkey, readRelays.join("|"), force]);
+	}, [userSetsLoader, pubkey, readRelays.join("|"), force]);
 
 	return (
 		useStoreQuery(

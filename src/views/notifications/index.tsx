@@ -20,7 +20,7 @@ import NotificationTypeToggles from "./notification-type-toggles";
 import useLocalStorageDisclosure from "../../hooks/use-localstorage-disclosure";
 import TimelineActionAndStatus from "../../components/timeline/timeline-action-and-status";
 import FocusedContext from "./focused-context";
-import readStatusService from "../../services/read-status";
+import { useReadStatusProvider } from "~/providers/global/read-status-provider";
 import useTimelineLocationCacheKey from "../../hooks/timeline/use-timeline-cache-key";
 import useNumberCache from "../../hooks/timeline/use-number-cache";
 import { useTimelineDates } from "../../hooks/timeline/use-timeline-dates";
@@ -30,16 +30,19 @@ import useTimelineLoader from "../../hooks/use-timeline-loader";
 import { truncateId } from "../../helpers/string";
 import { useReadRelays } from "../../hooks/use-client-relays";
 import useUserMailboxes from "../../hooks/use-user-mailboxes";
-import notifications$, {
+import {
 	type CategorizedEvent,
 	NotificationType,
 	NotificationTypeSymbol,
-} from "../../services/notifications";
+	useNotifications,
+} from "~/providers/global/notifications-provider";
 
 function TimeMarker({ date, ids }: { date: Dayjs; ids: string[] }) {
+	const readStatusService = useReadStatusProvider();
+
 	const readAll = useCallback(() => {
-		for (const id of ids) readStatusService.setRead(id);
-	}, [ids]);
+		for (const id of ids) readStatusService?.setRead(id);
+	}, [readStatusService, ids]);
 
 	return (
 		<Flex gap="4" p="2" key={`${date.unix()}-marker`} alignItems="center">
@@ -72,6 +75,7 @@ const NotificationsTimeline = memo(
 		const { people } = usePeopleListContext();
 		const peoplePubkeys = useMemo(() => people?.map((p) => p.pubkey), [people]);
 
+		const notifications$ = useNotifications();
 		const timeline = useObservable(notifications$) ?? [];
 
 		const cacheKey = useTimelineLocationCacheKey();

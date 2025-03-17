@@ -1,46 +1,69 @@
-import { Tab, TabIndicator, TabList, TabPanel, TabPanels, Tabs } from "@chakra-ui/react";
+import {
+	Tab,
+	TabIndicator,
+	TabList,
+	TabPanel,
+	TabPanels,
+	Tabs,
+} from "@chakra-ui/react";
 import { useObservable } from "applesauce-react/hooks";
 
 import useRouteSearchValue from "../../../hooks/use-route-search-value";
-import { connections$, notices$ } from "../../../services/rx-nostr";
+import { connections$, notices$ } from "~/providers/global/rx-nostr-provider";
 import RelayConnectionsTab from "./tabs/connections";
 import RelayAuthenticationTab from "./tabs/authentication";
 import NoticesTab from "./tabs/notices";
+import { useAuthenticationSigner } from "~/providers/global/authentication-signer-provider";
 
 const TABS = ["relays", "auth", "notices"];
 
 export default function TaskManagerRelays() {
-  const { value: tab, setValue: setTab } = useRouteSearchValue("tab", TABS[0]);
-  const tabIndex = TABS.indexOf(tab);
+	const { value: tab, setValue: setTab } = useRouteSearchValue("tab", TABS[0]);
+	const tabIndex = TABS.indexOf(tab);
 
-  const notices = useObservable(notices$);
+	const notices = useObservable(notices$);
+	const authenticationSigner = useAuthenticationSigner();
 
-  const connections = useObservable(connections$);
-  const connected = Object.values(connections).reduce((t, s) => (s === "connected" ? t + 1 : t), 0);
-  const pending = useObservable(window.authenticationSigner.relayState$);
+	const connections = useObservable(connections$);
+	const connected = Object.values(connections).reduce(
+		(t, s) => (s === "connected" ? t + 1 : t),
+		0,
+	);
+	const pending = useObservable(authenticationSigner?.relayState$);
 
-  return (
-    <Tabs position="relative" variant="unstyled" index={tabIndex} onChange={(i) => setTab(TABS[i])} isLazy>
-      <TabList>
-        <Tab>
-          Relays ({connected}/{Object.keys(connections).length})
-        </Tab>
-        <Tab>Authentication ({Object.keys(pending).length})</Tab>
-        <Tab>Notices ({notices.length})</Tab>
-      </TabList>
-      <TabIndicator mt="-1.5px" height="2px" bg="primary.500" borderRadius="1px" />
+	return (
+		<Tabs
+			position="relative"
+			variant="unstyled"
+			index={tabIndex}
+			onChange={(i) => setTab(TABS[i])}
+			isLazy
+		>
+			<TabList>
+				<Tab>
+					Relays ({connected}/{Object.keys(connections).length})
+				</Tab>
+				<Tab>Authentication ({Object.keys(pending).length})</Tab>
+				<Tab>Notices ({notices.length})</Tab>
+			</TabList>
+			<TabIndicator
+				mt="-1.5px"
+				height="2px"
+				bg="primary.500"
+				borderRadius="1px"
+			/>
 
-      <TabPanels>
-        <TabPanel p="0">
-          <RelayConnectionsTab />
-        </TabPanel>
-        <TabPanel p="0">
-          <RelayAuthenticationTab />
-        </TabPanel>
-        <TabPanel p="0">
-          <NoticesTab />
-        </TabPanel>
-      </TabPanels>
-    </Tabs>
-  );
+			<TabPanels>
+				<TabPanel p="0">
+					<RelayConnectionsTab />
+				</TabPanel>
+				<TabPanel p="0">
+					<RelayAuthenticationTab />
+				</TabPanel>
+				<TabPanel p="0">
+					<NoticesTab />
+				</TabPanel>
+			</TabPanels>
+		</Tabs>
+	);
 }

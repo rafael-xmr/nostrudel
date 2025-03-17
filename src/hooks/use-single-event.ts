@@ -4,6 +4,7 @@ import type { EventPointer } from "nostr-tools/nip19";
 import { Queries } from "applesauce-core";
 
 import { useReadRelays } from "./use-client-relays";
+import { useSingleEventLoader } from "~/providers/global/single-event-loader-provider";
 
 export default function useSingleEvent(
 	id?: string | EventPointer,
@@ -11,10 +12,11 @@ export default function useSingleEvent(
 ) {
 	const pointer = useMemo(() => (typeof id === "string" ? { id } : id), [id]);
 	const readRelays = useReadRelays();
+	const singleEventLoader = useSingleEventLoader();
 
 	useEffect(() => {
 		if (pointer)
-			window.singleEventLoader.next({
+			singleEventLoader?.next({
 				id: pointer.id,
 				relays: [
 					...(pointer.relays ?? []),
@@ -22,7 +24,7 @@ export default function useSingleEvent(
 					...(additionalRelays ?? []),
 				],
 			});
-	}, [pointer, readRelays.join("|")]);
+	}, [singleEventLoader, pointer, readRelays.join("|")]);
 
 	return useStoreQuery(
 		Queries.SingleEventQuery,

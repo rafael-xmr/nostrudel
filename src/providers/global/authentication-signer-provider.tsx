@@ -1,3 +1,10 @@
+import {
+	createContext,
+	type PropsWithChildren,
+	useContext,
+	useEffect,
+	useMemo,
+} from "react";
 import type { Nip07Interface } from "applesauce-signers";
 import type { EventTemplate, NostrEvent } from "nostr-tools";
 import type { ConnectionState, EventSigner } from "rx-nostr";
@@ -5,9 +12,9 @@ import { BehaviorSubject } from "rxjs";
 import { createDefer, type Deferred } from "applesauce-core/promise";
 import { unixNow } from "applesauce-core/helpers";
 import type { Event, EventParameters } from "nostr-typedef";
-
-import { logger } from "../helpers/debug";
-import localSettings from "./local-settings";
+import { logger } from "~/helpers/debug";
+import { useAccountManagerProvider } from "./accounts-provider";
+import localSettings from "~/services/local-settings";
 
 export type RelayAuthMode = "always" | "ask" | "never";
 
@@ -31,6 +38,14 @@ export type RelayAuthState =
 	| RelayAuthRejectedState
 	| RelayAuthSuccessState;
 
+const AuthenticationSignerContext = createContext<
+	AuthenticationSigner | undefined
+>(undefined);
+
+export function useAuthenticationSigner() {
+	return useContext(AuthenticationSignerContext);
+}
+
 export class AuthenticationSigner implements EventSigner {
 	protected log = logger.extend("AuthenticationSigner");
 
@@ -52,13 +67,11 @@ export class AuthenticationSigner implements EventSigner {
 	defaultMode: RelayAuthMode = "ask";
 	relayMode = new Map<string, RelayAuthMode>();
 
-	/** manually sign an authenticate request */
 	authenticate(relay: string) {
 		const state = this.getRelayState(relay);
 
 		if (state?.status === "signing") return state.promise;
 
-		// TODO: maybe throw here?
 		if (state?.status !== "requested") return;
 
 		const signer = this.signer;
@@ -70,7 +83,6 @@ export class AuthenticationSigner implements EventSigner {
 		const promise = createDefer<NostrEvent>();
 		this.setRelayState(relay, { status: "signing", promise });
 
-		// update status after signing is complete
 		const request = state.promise;
 		promise.then(
 			(event) => {
@@ -93,7 +105,6 @@ export class AuthenticationSigner implements EventSigner {
 		);
 
 		try {
-			// start signing request
 			const result = signer.signEvent(state.template);
 
 			if (result instanceof Promise) {
@@ -109,7 +120,6 @@ export class AuthenticationSigner implements EventSigner {
 		}
 	}
 
-	/** cancel a pending authentication request */
 	cancel(relay: string) {
 		const state = this.getRelayState(relay);
 		if (!state) return;
@@ -117,7 +127,6 @@ export class AuthenticationSigner implements EventSigner {
 		const log = this.log.extend(relay);
 		log("Canceling");
 
-		// reject the promise if it exists
 		if (state.status === "requested" || state.status === "signing")
 			state.promise.reject(new Error("Canceled"));
 
@@ -140,22 +149,19 @@ export class AuthenticationSigner implements EventSigner {
 		return this.relayMode.get(relay) || this.defaultMode;
 	}
 
-	/** handle relay state changes */
 	handleRelayConnectionState(packet: { from: string; state: ConnectionState }) {
-		const from = new URL(packet.from).toString();
-
-		// if the state is anything but connected, cancel any pending requests
-		if (packet.state !== "connected") this.cancel(from);
+		if (packet.from !== "") {
+			const from = new URL(packet.from).toString();
+			if (packet.state !== "connected") this.cancel(from);
+		}
 	}
 
-	/** intercept sign requests and save them for later */
 	signEvent<K extends number>(draft: EventParameters<K>): Promise<Event<K>> {
 		if (!draft.tags) throw new Error("Missing tags");
 
 		let relay = draft.tags.find((t) => t[0] === "relay" && t[1])?.[1];
 		if (!relay) throw new Error("Missing relay tag");
 
-		// fix relay formatting
 		relay = new URL(relay).toString();
 
 		const log = this.log.extend(relay);
@@ -163,7 +169,6 @@ export class AuthenticationSigner implements EventSigner {
 		log(`Got request for ${relay}`);
 		const mode = this.getRelayAuthMode(relay);
 
-		// throw if mode is set to "never"
 		if (mode === "never") {
 			log("Automatically rejecting");
 			this.setRelayState(relay, { status: "rejected", reason: "Canceled" });
@@ -175,7 +180,6 @@ export class AuthenticationSigner implements EventSigner {
 
 		const promise = createDefer<NostrEvent>();
 
-		// add to pending
 		const template: EventTemplate = {
 			tags: [],
 			created_at: unixNow(),
@@ -188,7 +192,6 @@ export class AuthenticationSigner implements EventSigner {
 			promise,
 		});
 
-		// start the authentication process imminently if set to "always"
 		if (mode === "always") {
 			log("Automatically authenticating");
 			this.authenticate(relay);
@@ -204,34 +207,46 @@ export class AuthenticationSigner implements EventSigner {
 	}
 }
 
-let topLevelAuthenticationSigner: AuthenticationSigner | null = null;
+export default function AuthenticationSignerProvider({
+	children,
+}: PropsWithChildren) {
+	const { accountManager } = useAccountManagerProvider();
 
-export default async function getAuthenticationSigner() {
-	if (topLevelAuthenticationSigner) return topLevelAuthenticationSigner;
+	const authenticationSigner = useMemo(() => {
+		if (!accountManager) return undefined;
 
-	const authenticationSigner = new AuthenticationSigner(
-		window.accounts?.active$ as BehaviorSubject<
-			Nip07Interface | undefined
-		>,
+		return new AuthenticationSigner(
+			accountManager.active$ as BehaviorSubject<Nip07Interface | undefined>,
+		);
+	}, [accountManager]);
+
+	useEffect(() => {
+		if (!authenticationSigner) return;
+
+		const subscriptionDefault =
+			localSettings.defaultAuthenticationMode.subscribe((mode) => {
+				authenticationSigner.defaultMode = mode as RelayAuthMode;
+			});
+
+		const subscriptionRelay = localSettings.relayAuthenticationMode.subscribe(
+			(relays) => {
+				authenticationSigner.relayMode.clear();
+
+				for (const { relay, mode } of relays) {
+					authenticationSigner.relayMode.set(relay, mode);
+				}
+			},
+		);
+
+		return () => {
+			subscriptionDefault.unsubscribe();
+			subscriptionRelay.unsubscribe();
+		};
+	}, [authenticationSigner]);
+
+	return (
+		<AuthenticationSignerContext.Provider value={authenticationSigner}>
+			{children}
+		</AuthenticationSignerContext.Provider>
 	);
-
-	// update signer based on local settings
-	localSettings.defaultAuthenticationMode.subscribe((mode) => {
-		authenticationSigner.defaultMode = mode as RelayAuthMode;
-	});
-	localSettings.relayAuthenticationMode.subscribe((relays) => {
-		authenticationSigner.relayMode.clear();
-
-		for (const { relay, mode } of relays) {
-			authenticationSigner.relayMode.set(relay, mode);
-		}
-	});
-
-	topLevelAuthenticationSigner = authenticationSigner;
-
-	if (typeof window !== "undefined") {
-		window.authenticationSigner = authenticationSigner;
-	}
-
-	return authenticationSigner;
 }

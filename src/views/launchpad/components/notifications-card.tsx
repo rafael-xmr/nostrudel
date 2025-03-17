@@ -4,22 +4,23 @@ import {
 	Card,
 	CardBody,
 	CardHeader,
-	CardProps,
+	type CardProps,
 	Heading,
 	Link,
 } from "@chakra-ui/react";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 import { useActiveAccount, useObservable } from "applesauce-react/hooks";
 import { getEventUID } from "applesauce-core/helpers";
-import { kinds, NostrEvent } from "nostr-tools";
+import { kinds, type NostrEvent } from "nostr-tools";
 
 import KeyboardShortcut from "../../../components/keyboard-shortcut";
 import NotificationItem from "../../notifications/components/notification-item";
 import { ErrorBoundary } from "../../../components/error-boundary";
-import notifications$, {
+import {
 	NotificationType,
 	NotificationTypeSymbol,
-} from "../../../services/notifications";
+	useNotifications,
+} from "~/providers/global/notifications-provider";
 import useForwardSubscription from "../../../hooks/use-forward-subscription";
 import useUserMailboxes from "../../../hooks/use-user-mailboxes";
 import { useReadRelays } from "../../../hooks/use-client-relays";
@@ -28,6 +29,8 @@ export default function NotificationsCard({
 	...props
 }: Omit<CardProps, "children">) {
 	const navigate = useNavigate();
+
+	const notifications$ = useNotifications();
 
 	const account = useActiveAccount();
 	const mailboxes = useUserMailboxes(account?.pubkey);

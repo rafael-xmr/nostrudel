@@ -1,112 +1,167 @@
 import { useMemo, useState } from "react";
-import { Button, Card, CardBody, CardHeader, CardProps, Flex, Heading, Link, LinkBox, Text } from "@chakra-ui/react";
+import {
+	Button,
+	Card,
+	CardBody,
+	CardHeader,
+	type CardProps,
+	Flex,
+	Heading,
+	Link,
+	LinkBox,
+	Text,
+} from "@chakra-ui/react";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 import { nip19 } from "nostr-tools";
 
 import KeyboardShortcut from "../../../components/keyboard-shortcut";
 import { useActiveAccount } from "applesauce-react/hooks";
 import {
-  KnownConversation,
-  groupIntoConversations,
-  hasResponded,
-  identifyConversation,
-  sortConversationsByLastReceived,
+	type KnownConversation,
+	groupIntoConversations,
+	hasResponded,
+	identifyConversation,
+	sortConversationsByLastReceived,
 } from "../../../helpers/nostr/dms";
-import { NostrEvent } from "../../../types/nostr-event";
+import type { NostrEvent } from "../../../types/nostr-event";
 import UserAvatar from "../../../components/user/user-avatar";
 import HoverLinkOverlay from "../../../components/hover-link-overlay";
 import UserName from "../../../components/user/user-name";
 import UserDnsIdentity from "../../../components/user/user-dns-identity";
 import Timestamp from "../../../components/timestamp";
 import { useKind4Decrypt } from "../../../hooks/use-kind4-decryption";
-import decryptionCacheService from "../../../services/decryption-cache";
 import { useDirectMessagesTimeline } from "../../messages";
+import { useDecryptionCacheService } from "~/providers/global/decryption-cache-provider";
 
-function MessagePreview({ message, pubkey }: { message: NostrEvent; pubkey: string }) {
-  const { plaintext } = useKind4Decrypt(message);
-  return <Text isTruncated>{plaintext || "<Encrypted>"}</Text>;
+function MessagePreview({
+	message,
+	pubkey,
+}: { message: NostrEvent; pubkey: string }) {
+	const { plaintext } = useKind4Decrypt(message);
+	return <Text isTruncated>{plaintext || "<Encrypted>"}</Text>;
 }
 
 function Conversation({ conversation }: { conversation: KnownConversation }) {
-  const lastReceived = conversation.messages.find((m) => m.pubkey === conversation.correspondent);
+	const lastReceived = conversation.messages.find(
+		(m) => m.pubkey === conversation.correspondent,
+	);
 
-  return (
-    <Flex gap="2" as={LinkBox} py="2" px="5">
-      <UserAvatar pubkey={conversation.correspondent} />
-      <Flex direction="column" overflow="hidden">
-        <Flex gap="2">
-          <HoverLinkOverlay as={RouterLink} to={`/messages/${nip19.npubEncode(conversation.correspondent)}`}>
-            <UserName pubkey={conversation.correspondent} />
-          </HoverLinkOverlay>
-          <UserDnsIdentity pubkey={conversation.correspondent} onlyIcon />
-        </Flex>
-        {lastReceived && <MessagePreview message={lastReceived} pubkey={conversation.correspondent} />}
-      </Flex>
-      {lastReceived && <Timestamp timestamp={lastReceived.created_at} ml="auto" />}
-    </Flex>
-  );
+	return (
+		<Flex gap="2" as={LinkBox} py="2" px="5">
+			<UserAvatar pubkey={conversation.correspondent} />
+			<Flex direction="column" overflow="hidden">
+				<Flex gap="2">
+					<HoverLinkOverlay
+						as={RouterLink}
+						to={`/messages/${nip19.npubEncode(conversation.correspondent)}`}
+					>
+						<UserName pubkey={conversation.correspondent} />
+					</HoverLinkOverlay>
+					<UserDnsIdentity pubkey={conversation.correspondent} onlyIcon />
+				</Flex>
+				{lastReceived && (
+					<MessagePreview
+						message={lastReceived}
+						pubkey={conversation.correspondent}
+					/>
+				)}
+			</Flex>
+			{lastReceived && (
+				<Timestamp timestamp={lastReceived.created_at} ml="auto" />
+			)}
+		</Flex>
+	);
 }
 
 export default function DMsCard({ ...props }: Omit<CardProps, "children">) {
-  const navigate = useNavigate();
-  const account = useActiveAccount()!;
+	const navigate = useNavigate();
+	const account = useActiveAccount()!;
 
-  const { timeline: messages } = useDirectMessagesTimeline(account.pubkey);
+	const { timeline: messages } = useDirectMessagesTimeline(account.pubkey);
+	const decryptionCacheService = useDecryptionCacheService();
 
-  const conversations = useMemo(() => {
-    const grouped = groupIntoConversations(messages)
-      .map((c) => identifyConversation(c, account.pubkey))
-      .filter((c) => {
-        if (c.messages.some((m) => m.pubkey === c.correspondent)) return !hasResponded(c);
-        else return false;
-      });
-    const sorted = sortConversationsByLastReceived(grouped);
-    return sorted;
-  }, [messages, account.pubkey]);
+	const conversations = useMemo(() => {
+		const grouped = groupIntoConversations(messages)
+			.map((c) => identifyConversation(c, account.pubkey))
+			.filter((c) => {
+				if (c.messages.some((m) => m.pubkey === c.correspondent))
+					return !hasResponded(c);
 
-  const [loading, setLoading] = useState(false);
-  const decrypt = async () => {
-    const promises = conversations
-      .slice(0, 4)
-      .map((conversation) => {
-        const last = conversation.messages.find((m) => m.pubkey === conversation.correspondent);
-        if (!last) return;
+				return false;
+			});
+		const sorted = sortConversationsByLastReceived(grouped);
+		return sorted;
+	}, [messages, account.pubkey]);
 
-        const container = decryptionCacheService.getOrCreateContainer(
-          last.id,
-          "nip04",
-          conversation.correspondent,
-          last.content,
-        );
-        return decryptionCacheService.requestDecrypt(container);
-      })
-      .filter(Boolean);
+	const [loading, setLoading] = useState(false);
+	const decrypt = async () => {
+		const promises = conversations
+			.slice(0, 4)
+			.map((conversation) => {
+				const last = conversation.messages.find(
+					(m) => m.pubkey === conversation.correspondent,
+				);
+				if (!last) return;
 
-    setLoading(true);
-    Promise.all(promises).finally(() => setLoading(false));
-  };
+				const container = decryptionCacheService?.getOrCreateContainer(
+					last.id,
+					"nip04",
+					conversation.correspondent,
+					last.content,
+				);
+				return decryptionCacheService?.requestDecrypt(container!);
+			})
+			.filter(Boolean);
 
-  return (
-    <Card variant="outline" {...props}>
-      <CardHeader display="flex" justifyContent="space-between" alignItems="center">
-        <Heading size="lg">
-          <Link as={RouterLink} to="/messages">
-            Messages
-          </Link>
-        </Heading>
-        <Button variant="link" isLoading={loading} ml="auto" onClick={decrypt}>
-          Decrypt
-        </Button>
-        <KeyboardShortcut letter="m" requireMeta onPress={() => navigate("/dm")} />
-      </CardHeader>
-      <CardBody overflow="hidden" pt="0" display="flex" flexDirection="column" px="0">
-        {conversations.slice(0, 4).map((conversation) => (
-          <Conversation key={conversation.pubkeys.join("-")} conversation={conversation} />
-        ))}
-        <Button as={RouterLink} to="/messages" flexShrink={0} variant="link" size="lg" py="4">
-          View More
-        </Button>
-      </CardBody>
-    </Card>
-  );
+		setLoading(true);
+		Promise.all(promises).finally(() => setLoading(false));
+	};
+
+	return (
+		<Card variant="outline" {...props}>
+			<CardHeader
+				display="flex"
+				justifyContent="space-between"
+				alignItems="center"
+			>
+				<Heading size="lg">
+					<Link as={RouterLink} to="/messages">
+						Messages
+					</Link>
+				</Heading>
+				<Button variant="link" isLoading={loading} ml="auto" onClick={decrypt}>
+					Decrypt
+				</Button>
+				<KeyboardShortcut
+					letter="m"
+					requireMeta
+					onPress={() => navigate("/dm")}
+				/>
+			</CardHeader>
+			<CardBody
+				overflow="hidden"
+				pt="0"
+				display="flex"
+				flexDirection="column"
+				px="0"
+			>
+				{conversations.slice(0, 4).map((conversation) => (
+					<Conversation
+						key={conversation.pubkeys.join("-")}
+						conversation={conversation}
+					/>
+				))}
+				<Button
+					as={RouterLink}
+					to="/messages"
+					flexShrink={0}
+					variant="link"
+					size="lg"
+					py="4"
+				>
+					View More
+				</Button>
+			</CardBody>
+		</Card>
+	);
 }

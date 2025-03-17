@@ -1,19 +1,5 @@
-import type { Subscription } from "rxjs";
-import AppSettingsQuery from "../queries/app-settings";
-import { queryStore } from "../services/event-store";
-import type { AppSettings } from "./app-settings";
 import { convertToUrl } from "./url";
-
-// hack to get app settings
-let settings: AppSettings | undefined;
-let sub: Subscription;
-window.accounts.active$.subscribe((account) => {
-	if (sub) sub.unsubscribe();
-	if (!account) return;
-	sub = queryStore
-		.createQuery(AppSettingsQuery, account.pubkey)
-		.subscribe((v) => (settings = v));
-});
+import { useAccountManagerProvider } from "~/providers/global/accounts-provider";
 
 const clearNetFailedHosts = new Set();
 const proxyFailedHosts = new Set();
@@ -22,6 +8,8 @@ export function createRequestProxyUrl(
 	url: URL | string,
 	corsProxyParam?: string,
 ) {
+	const { settings } = useAccountManagerProvider();
+
 	let corsProxy = corsProxyParam;
 
 	if (!corsProxy && window.REQUEST_PROXY)
@@ -41,6 +29,8 @@ export function createRequestProxyUrl(
 }
 
 export function fetchWithProxy(url: URL | string, opts?: RequestInit) {
+	const { settings } = useAccountManagerProvider();
+
 	if (!settings?.corsProxy && !window.REQUEST_PROXY) return fetch(url, opts);
 
 	const u = typeof url === "string" ? convertToUrl(url) : url;

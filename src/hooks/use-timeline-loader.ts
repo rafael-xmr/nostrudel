@@ -5,8 +5,8 @@ import { Queries } from "applesauce-core";
 import type { Filter, NostrEvent } from "nostr-tools";
 import sum from "hash-sum";
 
-import timelineCacheService from "../services/timeline-cache";
 import useForwardSubscription from "./use-forward-subscription";
+import { useTimelineCacheService } from "~/providers/global/timeline-cache-provider";
 
 type Options = {
 	eventFilter?: (event: NostrEvent) => boolean;
@@ -21,10 +21,12 @@ export default function useTimelineLoader(
 	// Start a forward subscription while the component is mounted
 	useForwardSubscription(relays, filters);
 
+	const timelineCacheService = useTimelineCacheService();
+
 	const eventStore = useEventStore();
 	const loader = useMemo(() => {
 		if (filters)
-			return timelineCacheService.createTimeline(
+			return timelineCacheService?.createTimeline(
 				key,
 				relays,
 				Array.isArray(filters) ? filters : [filters],
