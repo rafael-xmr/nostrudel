@@ -1,5 +1,5 @@
 import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
+import { vitePlugin as remix } from "@remix-run/dev";
 import { VitePWA } from "vite-plugin-pwa";
 import tsconfigPaths from "vite-tsconfig-paths";
 
@@ -16,7 +16,7 @@ export default defineConfig({
     sourcemap: true,
   },
   plugins: [
-    react(),
+    remix(),
     tsconfigPaths(),
     VitePWA({
       strategies: "injectManifest",
@@ -52,8 +52,18 @@ export default defineConfig({
           { src: "/favicon.ico", type: "image/x-icon", sizes: "16x16 32x32" },
           { src: "/icon-192.png", type: "image/png", sizes: "192x192" },
           { src: "/icon-512.png", type: "image/png", sizes: "512x512" },
-          { src: "/icon-192-maskable.png", type: "image/png", sizes: "192x192", purpose: "maskable" },
-          { src: "/icon-512-maskable.png", type: "image/png", sizes: "512x512", purpose: "maskable" },
+          {
+            src: "/icon-192-maskable.png",
+            type: "image/png",
+            sizes: "192x192",
+            purpose: "maskable",
+          },
+          {
+            src: "/icon-512-maskable.png",
+            type: "image/png",
+            sizes: "512x512",
+            purpose: "maskable",
+          },
         ],
         lang: "en",
         start_url: "/",

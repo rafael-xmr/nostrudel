@@ -1,0 +1,257 @@
+import {
+	createContext,
+	type PropsWithChildren,
+	useContext,
+	useEffect,
+	useMemo,
+} from "react";
+import type { Nip07Interface } from "applesauce-signers";
+import type { EventTemplate, NostrEvent } from "nostr-tools";
+import type { ConnectionState, EventSigner } from "rx-nostr";
+import { BehaviorSubject } from "rxjs";
+import { createDefer, type Deferred } from "applesauce-core/promise";
+import { unixNow } from "applesauce-core/helpers";
+import type { Event, EventParameters } from "nostr-typedef";
+import { logger } from "~/helpers/debug";
+import { useAccountManagerProvider } from "./accounts-provider";
+import localSettings from "~/services/preferences";
+
+export type RelayAuthMode = "always" | "ask" | "never";
+
+type HasChallenge = { template: EventTemplate; challenge: string };
+export type RelayAuthDormantState = { status: "dormant" };
+export type RelayAuthRequestedState = {
+	status: "requested";
+	promise: Deferred<NostrEvent>;
+} & HasChallenge;
+export type RelayAuthSigningState = {
+	status: "signing";
+	promise: Deferred<NostrEvent>;
+};
+export type RelayAuthRejectedState = { status: "rejected"; reason: string };
+export type RelayAuthSuccessState = { status: "success" };
+
+export type RelayAuthState =
+	| RelayAuthDormantState
+	| RelayAuthRequestedState
+	| RelayAuthSigningState
+	| RelayAuthRejectedState
+	| RelayAuthSuccessState;
+
+const AuthenticationSignerContext = createContext<
+	AuthenticationSigner | undefined
+>(undefined);
+
+export function useAuthenticationSigner() {
+	return useContext(AuthenticationSignerContext);
+}
+
+export class AuthenticationSigner implements EventSigner {
+	protected log = logger.extend("AuthenticationSigner");
+
+	relayState$ = new BehaviorSubject<Record<string, RelayAuthState>>({});
+	get relayState() {
+		return this.relayState$.value;
+	}
+
+	protected get signer() {
+		if (this.upstream instanceof BehaviorSubject) return this.upstream.value;
+		return this.upstream;
+	}
+	constructor(
+		protected upstream:
+			| Nip07Interface
+			| BehaviorSubject<Nip07Interface | undefined>,
+	) {}
+
+	defaultMode: RelayAuthMode = "ask";
+	relayMode = new Map<string, RelayAuthMode>();
+
+	authenticate(relay: string) {
+		const state = this.getRelayState(relay);
+
+		if (state?.status === "signing") return state.promise;
+
+		if (state?.status !== "requested") return;
+
+		const signer = this.signer;
+		if (!signer) throw new Error("Missing signer");
+
+		const log = this.log.extend(relay);
+		log("Requesting signature");
+
+		const promise = createDefer<NostrEvent>();
+		this.setRelayState(relay, { status: "signing", promise });
+
+		const request = state.promise;
+		promise.then(
+			(event) => {
+				log(`Authenticated with ${relay}`);
+				this.setRelayState(relay, { status: "success" });
+				request.resolve(event);
+			},
+			(err) => {
+				if (err instanceof Error) {
+					log(`Failed ${err.message}`);
+					this.setRelayState(relay, {
+						status: "rejected",
+						reason: err.message,
+					});
+				} else
+					this.setRelayState(relay, { status: "rejected", reason: "Unknown" });
+
+				request.reject(err);
+			},
+		);
+
+		try {
+			const result = signer.signEvent(state.template);
+
+			if (result instanceof Promise) {
+				result.then(
+					(event) => promise.resolve(event),
+					(err) => promise.reject(err),
+				);
+			} else {
+				promise.resolve(result);
+			}
+		} catch (error) {
+			promise.reject(error);
+		}
+	}
+
+	cancel(relay: string) {
+		const state = this.getRelayState(relay);
+		if (!state) return;
+
+		const log = this.log.extend(relay);
+		log("Canceling");
+
+		if (state.status === "requested" || state.status === "signing")
+			state.promise.reject(new Error("Canceled"));
+
+		this.clearRelayState(relay);
+	}
+
+	getRelayState(relay: string): RelayAuthState | undefined {
+		return this.relayState$.value[relay];
+	}
+	protected setRelayState(relay: string, state: RelayAuthState) {
+		this.relayState$.next({ ...this.relayState$.value, [relay]: state });
+	}
+	protected clearRelayState(relay: string) {
+		if (!this.relayState$.value[relay]) return;
+
+		this.setRelayState(relay, { status: "dormant" });
+	}
+
+	protected getRelayAuthMode(relay: string): RelayAuthMode {
+		return this.relayMode.get(relay) || this.defaultMode;
+	}
+
+	handleRelayConnectionState(packet: { from: string; state: ConnectionState }) {
+		if (packet.from !== "") {
+			const from = new URL(packet.from).toString();
+			if (packet.state !== "connected") this.cancel(from);
+		}
+	}
+
+	signEvent<K extends number>(draft: EventParameters<K>): Promise<Event<K>> {
+		if (!draft.tags) throw new Error("Missing tags");
+
+		let relay = draft.tags.find((t) => t[0] === "relay" && t[1])?.[1];
+		if (!relay) throw new Error("Missing relay tag");
+
+		relay = new URL(relay).toString();
+
+		const log = this.log.extend(relay);
+
+		log(`Got request for ${relay}`);
+		const mode = this.getRelayAuthMode(relay);
+
+		if (mode === "never") {
+			log("Automatically rejecting");
+			this.setRelayState(relay, { status: "rejected", reason: "Canceled" });
+			return Promise.reject(new Error("Authentication rejected"));
+		}
+
+		const challenge = draft.tags.find((t) => t[0] === "challenge" && t[1])?.[1];
+		if (!challenge) throw new Error("Missing challenge tag");
+
+		const promise = createDefer<NostrEvent>();
+
+		const template: EventTemplate = {
+			tags: [],
+			created_at: unixNow(),
+			...draft,
+		};
+		this.setRelayState(relay, {
+			status: "requested",
+			template,
+			challenge,
+			promise,
+		});
+
+		if (mode === "always") {
+			log("Automatically authenticating");
+			this.authenticate(relay);
+		}
+
+		// @ts-expect-error
+		return promise;
+	}
+
+	async getPublicKey(): Promise<string> {
+		if (!this.signer) throw new Error("Missing signer");
+		return await this.signer.getPublicKey();
+	}
+}
+
+let cachedAuthenticationSigner: AuthenticationSigner | undefined;
+
+export default function AuthenticationSignerProvider({
+	children,
+}: PropsWithChildren) {
+	const { accountManager } = useAccountManagerProvider();
+
+	const authenticationSigner = useMemo(() => {
+		if (cachedAuthenticationSigner) return cachedAuthenticationSigner;
+		if (!accountManager) return undefined;
+
+		const authenticationSigner = new AuthenticationSigner(
+			accountManager.active$ as BehaviorSubject<Nip07Interface | undefined>,
+		);
+		cachedAuthenticationSigner = authenticationSigner;
+		return authenticationSigner;
+	}, [accountManager]);
+
+	useEffect(() => {
+		if (!authenticationSigner) return;
+
+		const subscriptionDefault =
+			localSettings.defaultAuthenticationMode.subscribe((mode) => {
+				authenticationSigner.defaultMode = mode as RelayAuthMode;
+			});
+
+		const subscriptionRelay = localSettings.relayAuthenticationMode.subscribe(
+			(relays) => {
+				authenticationSigner.relayMode.clear();
+
+				for (const { relay, mode } of relays) {
+					authenticationSigner.relayMode.set(relay, mode);
+				}
+			},
+		);
+
+		return () => {
+			subscriptionDefault.unsubscribe();
+			subscriptionRelay.unsubscribe();
+		};
+	}, [authenticationSigner]);
+
+	return (
+		<AuthenticationSignerContext.Provider value={authenticationSigner}>
+			{children}
+		</AuthenticationSignerContext.Provider>
+	);
+}

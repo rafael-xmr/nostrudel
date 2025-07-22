@@ -1,160 +1,211 @@
+import {
+	type PropsWithChildren,
+	createContext,
+	useCallback,
+	useContext,
+	useMemo,
+	useState,
+} from "react";
 import { useToast } from "@chakra-ui/react";
+import type { EventTemplate, NostrEvent, UnsignedEvent } from "nostr-tools";
 import { addSeenRelay, mergeRelaySets } from "applesauce-core/helpers";
-import { useActiveAccount, useEventFactory } from "applesauce-react/hooks";
-import { PublishResponse } from "applesauce-relay";
+import { useActiveAccount, useEventStore } from "applesauce-react/hooks";
+import type { OkPacketAgainstEvent, RxNostr } from "rx-nostr";
+import { BehaviorSubject } from "rxjs";
 import { nanoid } from "nanoid";
 import { EventTemplate, NostrEvent, UnsignedEvent } from "nostr-tools";
-import { createContext, PropsWithChildren, useCallback, useContext, useMemo, useState } from "react";
+import {
+	createContext,
+	PropsWithChildren,
+	useCallback,
+	useContext,
+	useMemo,
+	useState,
+} from "react";
 import { BehaviorSubject, map, Observable, share } from "rxjs";
 
-import { scanToArray } from "../../helpers/observable";
-import { useWriteRelays } from "../../hooks/use-client-relays";
+import { useSigningContext } from "./signing-provider";
+import type { DraftNostrEvent } from "../../types/nostr-event";
 import { useUserOutbox } from "../../hooks/use-user-mailboxes";
-import { writeEvent } from "../../services/event-cache";
-import { eventStore } from "../../services/event-store";
-import pool from "../../services/pool";
+import { useWriteRelays } from "../../hooks/use-client-relays";
+import { useRxNostr } from "./rx-nostr-provider";
 
-export type PublishResults = { packets: PublishResponse[]; relays: Record<string, PublishResponse> };
+export type PublishResults = {
+	packets: OkPacketAgainstEvent[];
+	relays: Record<string, OkPacketAgainstEvent>;
+};
 
-export class PublishLogEntry {
-  public id = nanoid();
+export class PublishLogEntry extends BehaviorSubject<PublishResults> {
+	public id = nanoid();
 
-  public done = false;
-  public publish$: Observable<PublishResponse>;
-  public results$ = new BehaviorSubject<PublishResponse[]>([]);
-  public relayStatus$: Observable<Record<string, PublishResponse | undefined>>;
+	public done = false;
+	public packets: OkPacketAgainstEvent[] = [];
+	public relay: Record<string, OkPacketAgainstEvent> = {};
 
-  constructor(
-    public label: string,
-    public event: NostrEvent,
-    public relays: string[],
-  ) {
-    // Build a custom publish observable so the responses can be streamed back to the UI
-    this.publish$ = pool.event(relays, event).pipe(share());
+	constructor(
+		public label: string,
+		public event: NostrEvent,
+		public relays: string[],
+		public rxNostr: RxNostr,
+	) {
+		super({ packets: [], relays: {} });
 
-    // Save all results to an array
-    this.publish$.pipe(scanToArray()).subscribe((r) => this.results$.next(r));
+		const defaultWriteRelays = Array.from(
+			Object.entries(rxNostr.getDefaultRelays()),
+		)
+			// @ts-ignore
+			.filter(([_, config]) => config.write)
+			.map(([relay]) => relay);
 
-    // Create a directory of relay statuses
-    this.relayStatus$ = this.results$.pipe(
-      map((results) => Object.fromEntries(relays.map((relay) => [relay, results.find((r) => r.from === relay)]))),
-    );
+		rxNostr
+			.send(event, {
+				on: { relays: mergeRelaySets(defaultWriteRelays, relays) },
+			})
+			.subscribe({
+				next: (packet) => {
+					if (packet.ok) {
+						addSeenRelay(event, packet.from);
+						// eventStore.update(event);
+					}
 
-    // Update the event store and add seen relays
-    this.publish$.subscribe({
-      next: (result) => {
-        if (result.ok) {
-          addSeenRelay(event, result.from);
-          eventStore.update(event);
-        }
-      },
-      complete: () => {
-        this.done = true;
-      },
-    });
-  }
+					this.packets.push(packet);
+					this.relay[packet.from] = packet;
+
+					this.next({ packets: this.packets, relays: this.relay });
+				},
+				complete: () => {
+					this.done = true;
+				},
+			});
+	}
 }
 
 type PublishContextType = {
-  log: PublishLogEntry[];
-  finalizeDraft(draft: EventTemplate | NostrEvent): Promise<UnsignedEvent>;
-  publishEvent(
-    label: string,
-    event: EventTemplate | UnsignedEvent | NostrEvent,
-    additionalRelays: Iterable<string> | undefined,
-    quite: false,
-    onlyAdditionalRelays: false,
-  ): Promise<PublishLogEntry>;
-  publishEvent(
-    label: string,
-    event: EventTemplate | UnsignedEvent | NostrEvent,
-    additionalRelays: Iterable<string> | undefined,
-    quite: false,
-    onlyAdditionalRelays?: boolean,
-  ): Promise<PublishLogEntry>;
-  publishEvent(
-    label: string,
-    event: EventTemplate | UnsignedEvent | NostrEvent,
-    additionalRelays?: Iterable<string> | undefined,
-    quite?: boolean,
-    onlyAdditionalRelays?: boolean,
-  ): Promise<PublishLogEntry | undefined>;
+	log: PublishLogEntry[];
+	finalizeDraft(draft: EventTemplate | NostrEvent): Promise<UnsignedEvent>;
+	publishEvent(
+		label: string,
+		event: EventTemplate | UnsignedEvent | NostrEvent,
+		additionalRelays: Iterable<string> | undefined,
+		quite: false,
+		onlyAdditionalRelays: false,
+	): Promise<PublishLogEntry>;
+	publishEvent(
+		label: string,
+		event: EventTemplate | UnsignedEvent | NostrEvent,
+		additionalRelays: Iterable<string> | undefined,
+		quite: false,
+		onlyAdditionalRelays?: boolean,
+	): Promise<PublishLogEntry>;
+	publishEvent(
+		label: string,
+		event: EventTemplate | UnsignedEvent | NostrEvent,
+		additionalRelays?: Iterable<string> | undefined,
+		quite?: boolean,
+		onlyAdditionalRelays?: boolean,
+	): Promise<PublishLogEntry | undefined>;
 };
 export const PublishContext = createContext<PublishContextType>({
-  log: [],
-  finalizeDraft: () => {
-    throw new Error("Publish provider not setup");
-  },
-  publishEvent: async () => {
-    throw new Error("Publish provider not setup");
-  },
+	log: [],
+	finalizeDraft: () => {
+		throw new Error("Publish provider not setup");
+	},
+	publishEvent: async () => {
+		throw new Error("Publish provider not setup");
+	},
 });
 
 export function usePublishEvent() {
-  return useContext(PublishContext).publishEvent;
+	return useContext(PublishContext).publishEvent;
 }
 export function useFinalizeDraft() {
-  return useContext(PublishContext).finalizeDraft;
+	return useContext(PublishContext).finalizeDraft;
 }
 
 export default function PublishProvider({ children }: PropsWithChildren) {
-  const toast = useToast();
-  const [log, setLog] = useState<PublishLogEntry[]>([]);
-  const account = useActiveAccount();
-  const outbox = useUserOutbox(account?.pubkey);
-  const writeRelays = useWriteRelays();
-  const factory = useEventFactory();
+	const toast = useToast();
+	const [log, setLog] = useState<PublishLogEntry[]>([]);
+	const { requestSignature, finalizeDraft: signerFinalize } =
+		useSigningContext();
+	const account = useActiveAccount();
+	const outBoxes = useUserOutbox(account?.pubkey);
+	const writeRelays = useWriteRelays();
 
-  const finalizeDraft = useCallback<PublishContextType["finalizeDraft"]>(
-    (event: EventTemplate | NostrEvent) => factory.stamp(event),
-    [factory],
-  );
+	const finalizeDraft = useCallback<PublishContextType["finalizeDraft"]>(
+		(event: EventTemplate | NostrEvent) => signerFinalize(event),
+		[signerFinalize],
+	);
 
-  const publishEvent = useCallback(
-    async (
-      label: string,
-      event: EventTemplate | NostrEvent,
-      additionalRelays?: string[],
-      quite = true,
-      onlyAdditionalRelays = false,
-    ) => {
-      try {
-        let relays;
-        if (onlyAdditionalRelays) relays = mergeRelaySets(additionalRelays ?? []);
-        else relays = mergeRelaySets(writeRelays, outbox, additionalRelays);
+	const rxNostr = useRxNostr();
+	const eventStore = useEventStore();
 
-        // add pubkey to event
-        if (!Reflect.has(event, "pubkey")) event = await finalizeDraft(event);
+	const publishEvent = useCallback(
+		async (
+			label: string,
+			event: DraftNostrEvent | NostrEvent,
+			additionalRelays?: string[],
+			quite = true,
+			onlyAdditionalRelays = false,
+		) => {
+			if (!rxNostr) return;
 
-        // sign event
-        const signed = !Reflect.has(event, "sig") ? await account!.signEvent(event) : (event as NostrEvent);
+			try {
+				let relays;
+				if (onlyAdditionalRelays) {
+					relays = mergeRelaySets(additionalRelays ?? []);
+				} else {
+					relays = mergeRelaySets(writeRelays, outBoxes, additionalRelays);
+				}
 
-        const entry = new PublishLogEntry(label, signed, [...relays]);
+				// add pubkey to event
+				if (!Reflect.has(event, "pubkey")) event = await finalizeDraft(event);
 
-        setLog((arr) => arr.concat(entry));
+				// sign event
+				const signed = !Reflect.has(event, "sig")
+					? await requestSignature(event)
+					: (event as NostrEvent);
 
-        await writeEvent(signed);
+				const entry = new PublishLogEntry(label, signed, [...relays], rxNostr);
 
-        // add it to the event store
-        eventStore.add(signed);
+				setLog((arr) => arr.concat(entry));
 
-        return entry;
-      } catch (e) {
-        if (e instanceof Error) toast({ description: e.message, status: "error" });
-        if (!quite) throw e;
-      }
-    },
-    [toast, setLog, account, finalizeDraft, outbox, writeRelays],
-  ) as PublishContextType["publishEvent"];
+				// send it to the local relay
+				// const cacheRelay = getCacheRelay();
+				// if (cacheRelay) cacheRelay.publish(signed);
 
-  const context = useMemo<PublishContextType>(
-    () => ({
-      publishEvent,
-      finalizeDraft,
-      log,
-    }),
-    [publishEvent, finalizeDraft, log],
-  );
+				// add it to the event store
+				eventStore.add(signed);
 
-  return <PublishContext.Provider value={context}>{children}</PublishContext.Provider>;
+				return entry;
+			} catch (e) {
+				if (e instanceof Error)
+					toast({ description: e.message, status: "error" });
+				if (!quite) throw e;
+			}
+		},
+		[
+			rxNostr,
+			toast,
+			setLog,
+			requestSignature,
+			finalizeDraft,
+			outBoxes,
+			writeRelays,
+		],
+	) as PublishContextType["publishEvent"];
+
+	const context = useMemo<PublishContextType>(
+		() => ({
+			publishEvent,
+			finalizeDraft,
+			log,
+		}),
+		[publishEvent, finalizeDraft, log],
+	);
+
+	return (
+		<PublishContext.Provider value={context}>
+			{children}
+		</PublishContext.Provider>
+	);
 }
