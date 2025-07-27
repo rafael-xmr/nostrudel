@@ -1,10 +1,10 @@
-import { Card, CardProps, Flex, LinkBox, Spacer } from "@chakra-ui/react";
-import { NostrEvent } from "nostr-tools";
-import { MouseEventHandler, useCallback } from "react";
+import { Card, type CardProps, Flex, LinkBox, Spacer } from "@chakra-ui/react";
+import type { NostrEvent } from "nostr-tools";
+import { type MouseEventHandler, useCallback } from "react";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 
 import { ContentSettingsProvider } from "../../../providers/local/content-settings";
-import { getSharableEventAddress } from "../../../services/relay-hints";
+import { useLocalSettings } from "~/providers/global/preferences";
 import { CompactNoteContent } from "../../compact-note-content";
 import HoverLinkOverlay from "../../hover-link-overlay";
 import { NoteLink } from "../../note/note-link";
@@ -12,32 +12,41 @@ import Timestamp from "../../timestamp";
 import UserAvatarLink from "../../user/user-avatar-link";
 import UserLink from "../../user/user-link";
 
-export default function EmbeddedNote({ event, ...props }: Omit<CardProps, "children"> & { event: NostrEvent }) {
-  const navigate = useNavigate();
-  const to = `/n/${getSharableEventAddress(event)}`;
+export default function EmbeddedNote({
+	event,
+	...props
+}: Omit<CardProps, "children"> & { event: NostrEvent }) {
+	const navigate = useNavigate();
+	const { relayHintsManagement } = useLocalSettings();
+	const to = `/n/${relayHintsManagement.getSharableEventAddress(event)}`;
 
-  const handleClick = useCallback<MouseEventHandler>(
-    (e) => {
-      e.preventDefault();
-      navigate(to);
-    },
-    [navigate, to],
-  );
+	const handleClick = useCallback<MouseEventHandler>(
+		(e) => {
+			e.preventDefault();
+			navigate(to);
+		},
+		[navigate, to],
+	);
 
-  return (
-    <ContentSettingsProvider event={event}>
-      <Card as={LinkBox} {...props}>
-        <Flex p="2" gap="2" alignItems="center">
-          <UserAvatarLink pubkey={event.pubkey} size="sm" />
-          <UserLink pubkey={event.pubkey} fontWeight="bold" isTruncated fontSize="lg" />
-          <NoteLink noteId={event.id} color="current" whiteSpace="nowrap">
-            <Timestamp timestamp={event.created_at} />
-          </NoteLink>
-          <HoverLinkOverlay as={RouterLink} to={to} onClick={handleClick} />
-          <Spacer />
-        </Flex>
-        <CompactNoteContent px="2" event={event} maxLength={96} />
-      </Card>
-    </ContentSettingsProvider>
-  );
+	return (
+		<ContentSettingsProvider event={event}>
+			<Card as={LinkBox} {...props}>
+				<Flex p="2" gap="2" alignItems="center">
+					<UserAvatarLink pubkey={event.pubkey} size="sm" />
+					<UserLink
+						pubkey={event.pubkey}
+						fontWeight="bold"
+						isTruncated
+						fontSize="lg"
+					/>
+					<NoteLink noteId={event.id} color="current" whiteSpace="nowrap">
+						<Timestamp timestamp={event.created_at} />
+					</NoteLink>
+					<HoverLinkOverlay as={RouterLink} to={to} onClick={handleClick} />
+					<Spacer />
+				</Flex>
+				<CompactNoteContent px="2" event={event} maxLength={96} />
+			</Card>
+		</ContentSettingsProvider>
+	);
 }

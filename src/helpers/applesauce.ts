@@ -1,11 +1,24 @@
-import { NostrPublishMethod, NostrSubscriptionMethod } from "applesauce-signers";
+import type {
+	NostrPublishMethod,
+	NostrSubscriptionMethod,
+} from "applesauce-signers";
 
 import { onlyEvents } from "applesauce-relay";
-import pool from "../services/pool";
+import { useLocalSettings } from "~/providers/global/preferences";
 
-export const nostrConnectSubscription: NostrSubscriptionMethod = (relays, filters) => {
-  return pool.subscription(relays, filters).pipe(onlyEvents());
+export const nostrConnectSubscription: NostrSubscriptionMethod = (
+	relays,
+	filters,
+) => {
+	const { relayPoolManagement } = useLocalSettings();
+	return relayPoolManagement.pool
+		.subscription(relays, filters)
+		.pipe(onlyEvents());
 };
-export const nostrConnectPublish: NostrPublishMethod = async (relays, event) => {
-  await pool.publish(relays, event);
+export const nostrConnectPublish: NostrPublishMethod = async (
+	relays,
+	event,
+) => {
+	const { relayPoolManagement } = useLocalSettings();
+	await relayPoolManagement.pool.publish(relays, event);
 };

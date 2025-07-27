@@ -6,13 +6,14 @@ import { Link as RouterLink } from "react-router-dom";
 
 import UserAvatar from "../../../components/user/user-avatar";
 import UserDnsIdentity from "../../../components/user/user-dns-identity";
-import trustedUserStatsService from "../../../services/trusted-user-stats";
 import UserAboutContent from "../../../components/user/user-about-content";
 import UserName from "../../../components/user/user-name";
 import HoverLinkOverlay from "../../../components/hover-link-overlay";
-import { sortByDistanceAndConnections } from "../../../services/social-graph";
+import { useLocalSettings } from "~/providers/global/preferences";
 
 function ProfileResult({ profile }: { profile: NostrEvent }) {
+	const { trustedUserStatsService } = useLocalSettings();
+
 	const { value: stats } = useAsync(
 		() => trustedUserStatsService.getUserStats(profile.pubkey),
 		[profile.pubkey],
@@ -43,12 +44,8 @@ function ProfileResult({ profile }: { profile: NostrEvent }) {
 				</Flex>
 			</Flex>
 			<UserAboutContent pubkey={profile.pubkey} noOfLines={3} isTruncated />
-			{stats && (
-				<>
-					{stats.followers_pubkey_count && (
-						<Text>Followers: {stats.followers_pubkey_count}</Text>
-					)}
-				</>
+			{stats?.followers_pubkey_count && (
+				<Text>Followers: {stats.followers_pubkey_count}</Text>
 			)}
 		</Flex>
 	);
@@ -56,14 +53,20 @@ function ProfileResult({ profile }: { profile: NostrEvent }) {
 
 export default function ProfileSearchResults({
 	profiles,
-}: { profiles: NostrEvent[] }) {
+}: {
+	profiles: NostrEvent[];
+}) {
 	const [order, setOrder] = useState("relay");
+	const { socialGraphManagement } = useLocalSettings();
 
 	const sorted = useMemo(() => {
 		switch (order) {
 			case "trust":
 				return (
-					sortByDistanceAndConnections(profiles, (p) => p.pubkey) || profiles
+					socialGraphManagement.sortByDistanceAndConnections(
+						profiles,
+						(p) => p.pubkey,
+					) || profiles
 				);
 			default:
 			case "relay":

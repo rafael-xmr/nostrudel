@@ -37,8 +37,7 @@ import { useReadRelays } from "../../hooks/use-client-relays";
 import useParamsAddressPointer from "../../hooks/use-params-address-pointer";
 import useReplaceableEvent from "../../hooks/use-replaceable-event";
 import useWikiPages from "../../hooks/use-wiki-pages";
-import { getSharableEventAddress } from "../../services/relay-hints";
-import { sortByDistanceAndConnections } from "../../services/social-graph";
+import { useLocalSettings } from "~/providers/global/preferences";
 import WikiPageHeader from "./components/wiki-page-header";
 import WikiPageMenu from "./components/wiki-page-menu";
 import WikiPageResult from "./components/wiki-page-result";
@@ -46,7 +45,10 @@ import WikiPageResult from "./components/wiki-page-result";
 function ForkAlert({
 	page,
 	address,
-}: { page: NostrEvent; address: nip19.AddressPointer }) {
+}: {
+	page: NostrEvent;
+	address: nip19.AddressPointer;
+}) {
 	const topic = getPageTopic(page);
 
 	return (
@@ -79,9 +81,11 @@ function ForkAlert({
 }
 
 function DeferAlert({
-	page,
 	address,
-}: { page: NostrEvent; address: nip19.AddressPointer }) {
+}: {
+	page: NostrEvent;
+	address: nip19.AddressPointer;
+}) {
 	return (
 		<Alert status="warning" display="flex" flexWrap="wrap">
 			<AlertIcon />
@@ -108,6 +112,7 @@ export function WikiPagePage({ page }: { page: NostrEvent }) {
 	const { address } = getPageForks(page);
 	const defer = getPageDefer(page);
 	const summary = getPageSummary(page, false);
+	const { relayHintsManagement } = useLocalSettings();
 
 	return (
 		<>
@@ -134,7 +139,7 @@ export function WikiPagePage({ page }: { page: NostrEvent }) {
 							<Button
 								as={RouterLink}
 								colorScheme="primary"
-								to={`/wiki/create?fork=${getSharableEventAddress(page)}`}
+								to={`/wiki/create?fork=${relayHintsManagement.getSharableEventAddress(page)}`}
 							>
 								Fork
 							</Button>
@@ -159,6 +164,7 @@ export function WikiPagePage({ page }: { page: NostrEvent }) {
 }
 
 function WikiPageFooter({ page }: { page: NostrEvent }) {
+	const { socialGraphManagement } = useLocalSettings();
 	const topic = getPageTopic(page);
 
 	const readRelays = useReadRelays();
@@ -169,14 +175,20 @@ function WikiPageFooter({ page }: { page: NostrEvent }) {
 				(p) => getPageForks(p).address?.pubkey === page.pubkey,
 			)
 		: [];
-	forks = sortByDistanceAndConnections(forks, (p) => p.pubkey);
+	forks = socialGraphManagement.sortByDistanceAndConnections(
+		forks,
+		(p) => p.pubkey,
+	);
 
 	let other = pages
 		? Array.from(pages.values()).filter(
 				(p) => !forks.includes(p) && p.pubkey !== page.pubkey,
 			)
 		: [];
-	other = sortByDistanceAndConnections(other, (p) => p.pubkey);
+	other = socialGraphManagement.sortByDistanceAndConnections(
+		other,
+		(p) => p.pubkey,
+	);
 
 	return (
 		<>

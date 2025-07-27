@@ -1,54 +1,54 @@
-import accounts from "./accounts";
-import { eventCache$ } from "./event-cache";
-import { eventStore } from "./event-store";
-import {
-	addressLoader,
-	channelMetadataLoader,
-	eventLoader,
-	profileLoader,
-	reactionsLoader,
-	userSetsLoader,
-} from "./loaders";
-import pool from "./pool";
-import localSettings from "./preferences";
-import readStatusService from "./read-status";
-import relayInfoService from "./relay-info";
-import timelineCacheService from "./timeline-cache";
-import { userSearchDirectory } from "./username-search";
+// import accounts from "./accounts";
+// import { eventCache$ } from "./event-cache";
+// import { eventStore } from "./event-store";
+// import {
+// 	addressLoader,
+// 	channelMetadataLoader,
+// 	eventLoader,
+// 	profileLoader,
+// 	reactionsLoader,
+// 	userSetsLoader,
+// } from "./loaders";
+// import pool from "./pool";
+// import localSettings from "./preferences";
+// import readStatusService from "./read-status";
+// import relayInfoService from "./relay-info";
+// import timelineCacheService from "./timeline-cache";
+// import { userSearchDirectory } from "./username-search";
 
-const noStrudel = {
-	/** Connection pool */
-	pool,
+// const noStrudel = {
+// 	/** Connection pool */
+// 	pool,
 
-	/**
-	 * Internal applesauce EventStore
-	 * @see https://hzrd149.github.io/applesauce/classes/applesauce_core.EventStore.html
-	 */
-	eventStore,
+// 	/**
+// 	 * Internal applesauce EventStore
+// 	 * @see https://hzrd149.github.io/applesauce/classes/applesauce_core.EventStore.html
+// 	 */
+// 	eventStore,
 
-	/** Account management */
-	accounts,
+// 	/** Account management */
+// 	accounts,
 
-	get eventCache() {
-		return eventCache$.value;
-	},
+// 	get eventCache() {
+// 		return eventCache$.value;
+// 	},
 
-	// other internal services
-	profileLoader,
-	addressLoader,
-	eventLoader,
-	reactionsLoader,
-	userSetsLoader,
-	channelMetadataLoader,
-	userSearchDirectory,
-	readStatusService,
-	relayInfoService,
-	timelineCacheService,
-	localSettings: localSettings,
-};
+// 	// other internal services
+// 	profileLoader,
+// 	addressLoader,
+// 	eventLoader,
+// 	reactionsLoader,
+// 	userSetsLoader,
+// 	channelMetadataLoader,
+// 	userSearchDirectory,
+// 	readStatusService,
+// 	relayInfoService,
+// 	timelineCacheService,
+// 	localSettings: localSettings,
+// };
 
-localSettings.enableDebugApi.subscribe((enabled) => {
-	if (enabled) Reflect.set(window, "noStrudel", noStrudel);
-	// @ts-expect-error debug
-	else delete window.noStrudel;
-});
+// localSettings.enableDebugApi.subscribe((enabled) => {
+// 	if (enabled) Reflect.set(window, "noStrudel", noStrudel);
+// 	// @ts-expect-error debug
+// 	else delete window.noStrudel;
+// });

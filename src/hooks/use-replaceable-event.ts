@@ -5,15 +5,23 @@ import type { AddressPointer } from "nostr-tools/nip19";
 import { useMemo } from "react";
 
 import { parseCoordinate } from "../helpers/nostr/event";
-import { AddressableQuery } from "../models";
+
+import createAddressableQueryManagement from "../models/addressable";
+import { useLocalSettings } from "~/providers/global/preferences";
 
 export default function useReplaceableEvent(
 	cord: string | AddressPointer | AddressPointerWithoutD | undefined,
 ) {
+	const { eventStoreManagement, loadersManagement } = useLocalSettings();
+
 	const parsed = useMemo(
 		() => (typeof cord === "string" ? parseCoordinate(cord) : cord),
 		[hash_sum(cord)],
 	);
 
-	return useEventModel(AddressableQuery, parsed ? [parsed] : undefined);
+	return useEventModel(
+		createAddressableQueryManagement(eventStoreManagement, loadersManagement)
+			.AddressableQuery,
+		parsed ? [parsed] : undefined,
+	);
 }

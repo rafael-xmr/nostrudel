@@ -1,6 +1,6 @@
 import { Button, Flex, Heading, Input, Link } from "@chakra-ui/react";
 import { getEventUID } from "nostr-idb";
-import { Filter, NostrEvent } from "nostr-tools";
+import type { Filter, NostrEvent } from "nostr-tools";
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Navigate, Link as RouterLink } from "react-router-dom";
@@ -10,73 +10,93 @@ import VerticalPageLayout from "../../components/vertical-page-layout";
 import { DEFAULT_SEARCH_RELAYS, WIKI_RELAYS } from "../../const";
 import { WIKI_PAGE_KIND } from "../../helpers/nostr/wiki";
 import useRouteSearchValue from "../../hooks/use-route-search-value";
-import { eventStore } from "../../services/event-store";
-import { sortByDistanceAndConnections } from "../../services/social-graph";
 import { createSearchAction } from "../search/components/search-results";
 import WikiPageResult from "./components/wiki-page-result";
+import { useLocalSettings } from "~/providers/global/preferences";
 
 export default function WikiSearchView() {
-  const { value: query, setValue: setQuery } = useRouteSearchValue("q");
-  if (!query) return <Navigate to="/wiki" />;
+	const { value: query, setValue: setQuery } = useRouteSearchValue("q");
+	const {
+		eventStoreManagement,
+		relayPoolManagement,
+		eventCacheManagement,
+		socialGraphManagement,
+	} = useLocalSettings();
 
-  const { register, handleSubmit } = useForm({ defaultValues: { search: query } });
-  const onSubmit = handleSubmit((values) => {
-    setQuery(values.search);
-  });
+	if (!query) return <Navigate to="/wiki" />;
 
-  const [results, setResults] = useState<NostrEvent[]>([]);
-  const search = useMemo(() => createSearchAction([...DEFAULT_SEARCH_RELAYS, ...WIKI_RELAYS]), []);
+	const { register, handleSubmit } = useForm({
+		defaultValues: { search: query },
+	});
+	const onSubmit = handleSubmit((values) => {
+		setQuery(values.search);
+	});
 
-  useEffect(() => {
-    setResults([]);
+	const [results, setResults] = useState<NostrEvent[]>([]);
+	const search = useMemo(
+		() =>
+			createSearchAction(
+				eventCacheManagement.eventCache$,
+				eventStoreManagement,
+				relayPoolManagement,
+				[...DEFAULT_SEARCH_RELAYS, ...WIKI_RELAYS],
+			),
+		[eventCacheManagement, eventStoreManagement, relayPoolManagement],
+	);
 
-    const filter: Filter = { kinds: [WIKI_PAGE_KIND], search: query };
+	useEffect(() => {
+		setResults([]);
 
-    const seen = new Set<string>();
-    const handleEvent = (event: NostrEvent) => {
-      if (seen.has(getEventUID(event))) return;
-      setResults((arr) => arr.concat(event));
-      seen.add(getEventUID(event));
-    };
+		const filter: Filter = { kinds: [WIKI_PAGE_KIND], search: query };
 
-    const sub = search([filter]).subscribe((event) => {
-      eventStore.add(event);
-      handleEvent(event);
-    });
+		const seen = new Set<string>();
+		const handleEvent = (event: NostrEvent) => {
+			if (seen.has(getEventUID(event))) return;
+			setResults((arr) => arr.concat(event));
+			seen.add(getEventUID(event));
+		};
 
-    return () => sub.unsubscribe();
-  }, [query, setResults]);
+		const sub = search([filter]).subscribe((event) => {
+			eventStoreManagement.eventStore.add(event);
+			handleEvent(event);
+		});
 
-  const sorted = sortByDistanceAndConnections(results, (p) => p.pubkey);
+		return () => sub.unsubscribe();
+	}, [query, setResults, search, eventStoreManagement]);
 
-  return (
-    <VerticalPageLayout>
-      <Flex gap="2" wrap="wrap">
-        <Heading mr="4">
-          <Link as={RouterLink} to="/wiki">
-            Wikifreedia
-          </Link>
-        </Heading>
-        <Flex gap="2" as="form" maxW="md" onSubmit={onSubmit} w="full">
-          <Input
-            {...register("search", { required: true })}
-            type="search"
-            name="search"
-            autoComplete="on"
-            w="sm"
-            placeholder="Search Wikifreedia"
-            isRequired
-          />
-          <Button type="submit" colorScheme="primary">
-            Search
-          </Button>
-        </Flex>
-      </Flex>
-      {sorted.map((page) => (
-        <ErrorBoundary key={page.id}>
-          <WikiPageResult page={page} />
-        </ErrorBoundary>
-      ))}
-    </VerticalPageLayout>
-  );
+	const sorted = socialGraphManagement.sortByDistanceAndConnections(
+		results,
+		(p) => p.pubkey,
+	);
+
+	return (
+		<VerticalPageLayout>
+			<Flex gap="2" wrap="wrap">
+				<Heading mr="4">
+					<Link as={RouterLink} to="/wiki">
+						Wikifreedia
+					</Link>
+				</Heading>
+				<Flex gap="2" as="form" maxW="md" onSubmit={onSubmit} w="full">
+					<Input
+						{...register("search", { required: true })}
+						type="search"
+						name="search"
+						autoComplete="on"
+						w="sm"
+						placeholder="Search Wikifreedia"
+						isRequired
+					/>
+					<Button type="submit" colorScheme="primary">
+						Search
+					</Button>
+				</Flex>
+			</Flex>
+			{sorted.map((page) => (
+				<ErrorBoundary key={page.id}>
+					<WikiPageResult page={page} />
+				</ErrorBoundary>
+			))}
+		</VerticalPageLayout>
+	);
 }

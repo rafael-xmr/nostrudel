@@ -17,16 +17,11 @@ import { useReadRelays } from "../../../hooks/use-client-relays";
 import useUploadFile from "../../../hooks/use-upload-file";
 import useUserProfile from "../../../hooks/use-user-profile";
 import { usePublishEvent } from "../../../providers/global/publish-provider";
-import { profileLoader } from "../../../services/loaders";
-import localSettings from "../../../services/preferences";
 import ProfileEditForm from "./components/profile-edit-form";
-import ProfilePreview from "./components/profile-preview";
-import { eventStore } from "../../../services/event-store";
-
-export type ProfileFormData = Omit<ProfileContent, "picture" | "banner"> & {
-	picture?: string | File;
-	banner?: string | File;
-};
+import ProfilePreview, {
+	type ProfileFormData,
+} from "./components/profile-preview";
+import { useLocalSettings } from "~/providers/global/preferences";
 
 function isLightningAddress(addr: string) {
 	const isEmail =
@@ -43,6 +38,8 @@ export default function ProfileSettingsView() {
 	const navigate = useNavigate();
 	const [uploadStatus, setUploadStatus] = useState<string>();
 	const actions = useActionHub();
+	const { localSettings, eventStoreManagement, loadersManagement } =
+		useLocalSettings();
 
 	// Form management
 	const formMethods = useForm<ProfileFormData>({
@@ -53,13 +50,13 @@ export default function ProfileSettingsView() {
 	// Load a fresh profile metadata to avoid stale data
 	useObservableMemo(
 		() =>
-			profileLoader({
+			loadersManagement.profileLoader({
 				pubkey: account.pubkey,
 				kind: 0,
 				cache: false,
 				relays: readRelays,
 			}),
-		[account.pubkey, readRelays],
+		[account.pubkey, readRelays, loadersManagement],
 	);
 
 	// Reset form when metadata changes
@@ -120,7 +117,7 @@ export default function ProfileSettingsView() {
 				// }
 
 				setUploadStatus("Signing and publishing...");
-				if (eventStore.hasReplaceable(0, account.pubkey)) {
+				if (eventStoreManagement.eventStore.hasReplaceable(0, account.pubkey)) {
 					await actions
 						.exec(UpdateProfile, newMetadata)
 						.forEach((e) =>
@@ -141,7 +138,15 @@ export default function ProfileSettingsView() {
 				setUploadStatus(undefined);
 			}
 		},
-		[uploadFile, actions, publish, navigate, account.pubkey],
+		[
+			uploadFile,
+			actions,
+			publish,
+			navigate,
+			account.pubkey,
+			eventStoreManagement,
+			localSettings,
+		],
 	);
 
 	return (

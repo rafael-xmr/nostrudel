@@ -1,33 +1,49 @@
 import { onlyEvents } from "applesauce-relay";
 import { storeEvents } from "applesauce-relay/operators";
-import { NostrEvent } from "nostr-tools";
-import { Observable, repeat, retry, share, tap, timer } from "rxjs";
-
-import { eventStore } from "./event-store";
-import pool from "./pool";
+import type { NostrEvent } from "nostr-tools";
+import { type Observable, repeat, retry, share, tap, timer } from "rxjs";
 import { logger } from "../helpers/debug";
+import type { EventStoreManagement } from "./event-store";
+import type { RelayPoolManagement } from "./pool";
 
 export const RELAY_CHAT_MESSAGE_KIND = 23333;
 
-const log = logger.extend("RelayChat");
-const subscriptions = new Map<string, Observable<NostrEvent>>();
+export interface RelayChatManagement {
+	getRelayChatSubscription: (relay: string) => Observable<NostrEvent>;
+}
 
-export function getRelayChatSubscription(relay: string): Observable<NostrEvent> {
-  if (subscriptions.has(relay)) return subscriptions.get(relay)!;
+export default function createRelayChatManagement(
+	relayPoolManagement: RelayPoolManagement,
+	eventStoreManagement: EventStoreManagement,
+): RelayChatManagement {
+	const log = logger.extend("RelayChat");
+	const subscriptions = new Map<string, Observable<NostrEvent>>();
+	const { pool } = relayPoolManagement;
+	const { eventStore } = eventStoreManagement;
 
-  const subscription = pool.subscription([relay], { kinds: [RELAY_CHAT_MESSAGE_KIND] }).pipe(
-    repeat(),
-    retry(),
-    storeEvents(eventStore),
-    onlyEvents(),
-    tap({
-      complete: () => {
-        log(`Closed subscription to ${relay}`);
-      },
-    }),
-    share({ resetOnRefCountZero: () => timer(120_000) }),
-  );
+	const getRelayChatSubscription = (relay: string): Observable<NostrEvent> => {
+		if (subscriptions.has(relay)) return subscriptions.get(relay)!;
 
-  subscriptions.set(relay, subscription);
-  return subscription;
+		const subscription = pool
+			.subscription([relay], { kinds: [RELAY_CHAT_MESSAGE_KIND] })
+			.pipe(
+				repeat(),
+				retry(),
+				storeEvents(eventStore),
+				onlyEvents(),
+				tap({
+					complete: () => {
+						log(`Closed subscription to ${relay}`);
+					},
+				}),
+				share({ resetOnRefCountZero: () => timer(120_000) }),
+			);
+
+		subscriptions.set(relay, subscription);
+		return subscription;
+	};
+
+	return {
+		getRelayChatSubscription,
+	};
 }

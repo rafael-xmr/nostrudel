@@ -1,8 +1,18 @@
 import { useEventModel } from "applesauce-react/hooks";
 
-import { CustomAddressPointer } from "../helpers/nostr/event";
-import { AddressableQuery } from "../models";
+import type { CustomAddressPointer } from "../helpers/nostr/event";
 
-export default function useAddressableEvent(address: CustomAddressPointer | undefined) {
-  return useEventModel(AddressableQuery, address ? [address] : undefined);
+import createAddressableQueryManagement from "../models/addressable";
+import { useLocalSettings } from "~/providers/global/preferences";
+
+export default function useAddressableEvent(
+	address: CustomAddressPointer | undefined,
+) {
+	const { eventStoreManagement, loadersManagement } = useLocalSettings();
+
+	return useEventModel(
+		createAddressableQueryManagement(eventStoreManagement, loadersManagement)
+			.AddressableQuery,
+		address ? [address] : undefined,
+	);
 }

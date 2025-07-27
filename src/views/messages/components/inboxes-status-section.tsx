@@ -5,44 +5,55 @@ import { RelayAuthIconButton } from "../../../components/relays/relay-auth-icon-
 import RelayStatusBadge from "../../../components/relays/relay-status";
 import RouterLink from "../../../components/router-link";
 import { useObservableEagerMemo } from "applesauce-react/hooks";
-import pool from "../../../services/pool";
+import { useLocalSettings } from "~/providers/global/preferences";
 
 function InboxRelayStatus({ relay }: { relay: string }) {
-  const response = useObservableEagerMemo(() => pool.relay(relay).authenticationResponse$, [relay]);
+	const { relayPoolManagement } = useLocalSettings();
+	const response = useObservableEagerMemo(
+		() => relayPoolManagement.pool.relay(relay).authenticationResponse$,
+		[relay],
+	);
 
-  return (
-    <Flex gap="2" w="full" overflow="hidden" alignItems="flex-start">
-      <RelayFavicon relay={relay} size="xs" mt="1" />
-      <Box overflow="hidden" w="full">
-        <Link as={RouterLink} to={`/relays/${encodeURIComponent(relay)}`} isTruncated fontWeight="bold">
-          {relay}
-        </Link>
-        {response && (
-          <Text fontSize="sm" color={response.ok ? "green.500" : "red.500"}>
-            {response.message || (response.ok ? "Authenticated" : "Failed")}
-          </Text>
-        )}
-      </Box>
-      <Box display="flex" gap="2" alignItems="center">
-        <RelayStatusBadge relay={relay} />
-        <RelayAuthIconButton relay={relay} size="sm" />
-      </Box>
-    </Flex>
-  );
+	return (
+		<Flex gap="2" w="full" overflow="hidden" alignItems="flex-start">
+			<RelayFavicon relay={relay} size="xs" mt="1" />
+			<Box overflow="hidden" w="full">
+				<Link
+					as={RouterLink}
+					to={`/relays/${encodeURIComponent(relay)}`}
+					isTruncated
+					fontWeight="bold"
+				>
+					{relay}
+				</Link>
+				{response && (
+					<Text fontSize="sm" color={response.ok ? "green.500" : "red.500"}>
+						{response.message || (response.ok ? "Authenticated" : "Failed")}
+					</Text>
+				)}
+			</Box>
+			<Box display="flex" gap="2" alignItems="center">
+				<RelayStatusBadge relay={relay} />
+				<RelayAuthIconButton relay={relay} size="sm" />
+			</Box>
+		</Flex>
+	);
 }
 
 interface InboxesStatusSectionProps {
-  relays: string[];
+	relays: string[];
 }
 
-export default function InboxesStatusSection({ relays }: InboxesStatusSectionProps) {
-  if (!relays || relays.length === 0) return null;
+export default function InboxesStatusSection({
+	relays,
+}: InboxesStatusSectionProps) {
+	if (!relays || relays.length === 0) return null;
 
-  return (
-    <VStack spacing={2} align="stretch">
-      {relays.map((relay) => (
-        <InboxRelayStatus key={relay} relay={relay} />
-      ))}
-    </VStack>
-  );
+	return (
+		<VStack spacing={2} align="stretch">
+			{relays.map((relay) => (
+				<InboxRelayStatus key={relay} relay={relay} />
+			))}
+		</VStack>
+	);
 }

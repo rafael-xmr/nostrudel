@@ -22,7 +22,7 @@ import useAppSettings from "../../../hooks/use-user-app-settings";
 import { useBreakpointValue } from "../../../providers/global/breakpoint-provider";
 import { ExpandProvider } from "../../../providers/local/expanded";
 import { ContentSettingsProvider } from "../../../providers/local/content-settings";
-import { getSharableEventAddress } from "../../../services/relay-hints";
+import { useLocalSettings } from "~/providers/global/preferences";
 import ReplyForm from "../../../views/thread/components/reply-form";
 import HoverLinkOverlay from "../../hover-link-overlay";
 import { ReplyIcon } from "../../icons";
@@ -67,6 +67,7 @@ export function TimelineNote({
 	const ref = useEventIntersectionRef(event);
 
 	const showReactionsOnNewLine = useBreakpointValue({ base: true, lg: false });
+	const { relayHintsManagement } = useLocalSettings();
 
 	const reactionButtons = showReactions && (
 		<NoteReactions
@@ -97,7 +98,7 @@ export function TimelineNote({
 						{clickable && (
 							<HoverLinkOverlay
 								as={RouterLink}
-								to={`/n/${getSharableEventAddress(event)}`}
+								to={`/n/${relayHintsManagement.getSharableEventAddress(event)}`}
 							/>
 						)}
 						<CardHeader p="2">
@@ -113,7 +114,7 @@ export function TimelineNote({
 									as={RouterLink}
 									whiteSpace="nowrap"
 									color="current"
-									to={`/n/${getSharableEventAddress(event)}`}
+									to={`/n/${relayHintsManagement.getSharableEventAddress(event)}`}
 								>
 									<Timestamp timestamp={event.created_at} />
 								</Link>

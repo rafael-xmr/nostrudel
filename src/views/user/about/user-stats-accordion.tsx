@@ -19,11 +19,12 @@ import Timestamp from "../../../components/timestamp";
 import { getPubkeysFromList } from "../../../helpers/nostr/lists";
 import useUserContactList from "../../../hooks/use-user-contact-list";
 import { useAdditionalRelayContext } from "../../../providers/local/additional-relay";
-import trustedUserStatsService from "../../../services/trusted-user-stats";
+import { useLocalSettings } from "~/providers/global/preferences";
 
 export default function UserStatsAccordion({ pubkey }: { pubkey: string }) {
 	const contextRelays = useAdditionalRelayContext();
 	const contacts = useUserContactList({ pubkey, relays: contextRelays });
+	const { trustedUserStatsService } = useLocalSettings();
 
 	const { value: stats } = useAsync(
 		() => trustedUserStatsService.getUserStats(pubkey),

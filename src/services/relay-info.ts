@@ -1,35 +1,54 @@
 import { Relay } from "applesauce-relay";
 import { nip11 } from "nostr-tools";
-import { RelayInformation } from "nostr-tools/nip11";
+import type { RelayInformation } from "nostr-tools/nip11";
 import { from } from "rxjs";
-import { fetchWithProxy } from "../helpers/request";
+import type { RequestProxyManagement } from "../helpers/request";
 
-import db from "./database";
+import type { DatabaseManagement } from "./database";
 
-// Use CORS fetch implementation
-nip11.useFetchImplementation(fetchWithProxy);
-
-async function getInfo(relay: string, alwaysFetch = false): Promise<RelayInformation | null> {
-  let info = (await db.get("relayInfo", relay)) as RelayInformation | null;
-
-  if (!info || alwaysFetch) {
-    try {
-      info = await nip11.fetchRelayInformation(relay);
-      db.put("relayInfo", info, relay);
-    } catch (error) {
-      return null;
-    }
-  }
-  return info;
+export interface RelayInfoManagement {
+	getInfo: (
+		relay: string,
+		alwaysFetch?: boolean,
+	) => Promise<RelayInformation | null>;
 }
 
-export const relayInfoService = { getInfo };
+export default async function createRelayInfoManagement(
+	databaseManagement: DatabaseManagement,
+	requestProxyManagement: RequestProxyManagement,
+): Promise<RelayInfoManagement> {
+	// Use proxy fetch implementation
+	nip11.useFetchImplementation(requestProxyManagement.fetchWithProxy);
 
-Relay.fetchInformationDocument = (url) => from(getInfo(url, true));
+	const db = await databaseManagement.database;
 
-if (import.meta.env.DEV) {
-  // @ts-ignore
-  window.relayInfoService = relayInfoService;
+	const getInfo = async (
+		relay: string,
+		alwaysFetch = false,
+	): Promise<RelayInformation | null> => {
+		let info = (await db.get("relayInfo", relay)) as RelayInformation | null;
+
+		if (!info || alwaysFetch) {
+			try {
+				info = await nip11.fetchRelayInformation(relay);
+				db.put("relayInfo", info, relay);
+			} catch (_) {
+				return null;
+			}
+		}
+		return info;
+	};
+
+	// Set up the global relay information fetcher
+	Relay.fetchInformationDocument = (url) => from(getInfo(url, true));
+
+	// Debug exposure
+	if (import.meta.env.DEV) {
+		// @ts-expect-error debug
+		window.relayInfoService = { getInfo };
+	}
+
+	return {
+		getInfo,
+	};
 }
-
-export default relayInfoService;

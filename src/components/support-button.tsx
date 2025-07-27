@@ -17,7 +17,7 @@ import { TipModalContents, TipModalHeader } from "./event-tip-modal";
 import { MoneroBlackIcon, MoneroWhiteIcon } from "./icons";
 import { useBreakpointValue } from "~/providers/global/breakpoint-provider";
 import { useEffect, useRef, useState } from "react";
-import { useAsync } from "react-use";
+import * as reactUse from "react-use";
 import { useActiveAccount } from "applesauce-react/hooks";
 
 export default function SupportButton() {
@@ -32,7 +32,7 @@ export default function SupportButton() {
 	const initialPaymentOkResponseRef = useRef<boolean | null>(null);
 	const paymentOkRef = useRef<boolean | null>(null);
 
-	useAsync(async () => {
+	reactUse.useAsync(async () => {
 		if (tabIndex === 1 && paymentDetailsRef.current === null && account) {
 			const res = await fetch(
 				`https://relay.mostard.org/api/user/${account!.pubkey}`,

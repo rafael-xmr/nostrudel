@@ -3,8 +3,8 @@ import DesktopLayout from "./desktop";
 import { useBreakpointValue } from "../../providers/global/breakpoint-provider";
 
 export default function AppLayout() {
-  const mobile = useBreakpointValue({ base: true, md: false });
+	const mobile = useBreakpointValue({ base: true, md: false });
 
-  if (mobile) return <MobileLayout />;
-  return <DesktopLayout />;
+	if (mobile) return <MobileLayout />;
+	return <DesktopLayout />;
 }

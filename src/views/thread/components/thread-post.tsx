@@ -7,10 +7,11 @@ import {
 	IconButton,
 	Link,
 	Spacer,
+	Spinner,
 	useDisclosure,
 } from "@chakra-ui/react";
 import type { ThreadItem } from "applesauce-core/models";
-import { memo, useState } from "react";
+import { memo, useState, lazy, Suspense } from "react";
 import { Link as RouterLink } from "react-router-dom";
 
 import { ReplyIcon } from "../../../components/icons";
@@ -36,10 +37,11 @@ import useThreadColorLevelProps from "../../../hooks/use-thread-color-level-prop
 import useAppSettings from "../../../hooks/use-user-app-settings";
 import { useBreakpointValue } from "../../../providers/global/breakpoint-provider";
 import { ContentSettingsProvider } from "../../../providers/local/content-settings";
-import { getSharableEventAddress } from "../../../services/relay-hints";
-import DetailsTabs from "./details-tabs";
+import { useLocalSettings } from "~/providers/global/preferences";
 import ReplyForm from "./reply-form";
 import SeenOnRelaysButton from "../../../components/note/seen-on-relays-button";
+
+const DetailsTabs = lazy(() => import("./details-tabs"));
 
 export type ThreadItemProps = {
 	post: ThreadItem;
@@ -78,6 +80,7 @@ function ThreadPost({
 		</Alert>
 	);
 
+	const { relayHintsManagement } = useLocalSettings();
 	const colorProps = useThreadColorLevelProps(level, focusId === post.event.id);
 
 	const header = (
@@ -89,7 +92,7 @@ function ThreadPost({
 				as={RouterLink}
 				whiteSpace="nowrap"
 				color="current"
-				to={`/n/${getSharableEventAddress(post.event)}`}
+				to={`/n/${relayHintsManagement.getSharableEventAddress(post.event)}`}
 			>
 				<Timestamp timestamp={post.event.created_at} />
 			</Link>
@@ -197,7 +200,9 @@ function ThreadPost({
 				/>
 			)}
 			{isFocused ? (
-				<DetailsTabs post={post} />
+				<Suspense fallback={<Spinner />}>
+					<DetailsTabs post={post} />
+				</Suspense>
 			) : (
 				expanded.isOpen &&
 				post.replies.size > 0 && (

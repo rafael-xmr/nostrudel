@@ -1,17 +1,20 @@
-import { Model } from "applesauce-core";
-import { ChannelMetadataContent } from "applesauce-core/helpers";
+import type { Model } from "applesauce-core";
+import type { ChannelMetadataContent } from "applesauce-core/helpers";
 import { ChannelMetadataModel } from "applesauce-core/models";
 import { defer, ignoreElements, mergeWith } from "rxjs";
-import { channelMetadataLoader } from "../services/loaders";
-import { NostrEvent } from "nostr-tools";
+import type { NostrEvent } from "nostr-tools";
+import type { LoadersManagement } from "~/services/loaders";
 
 export function ChannelMetadataQuery(
-  channel: NostrEvent,
-  relays?: string[],
+	channel: NostrEvent,
+	loadersManagement: LoadersManagement,
+	relays?: string[],
 ): Model<ChannelMetadataContent | undefined> {
-  return (events) =>
-    defer(() => channelMetadataLoader({ value: channel.id, relays })).pipe(
-      ignoreElements(),
-      mergeWith(events.model(ChannelMetadataModel, channel)),
-    );
+	return (events) =>
+		defer(() =>
+			loadersManagement.channelMetadataLoader({ value: channel.id, relays }),
+		).pipe(
+			ignoreElements(),
+			mergeWith(events.model(ChannelMetadataModel, channel)),
+		);
 }

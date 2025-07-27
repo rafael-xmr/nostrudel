@@ -1,3 +1,5 @@
+import { kinds } from "nostr-tools";
+import { EMPTY } from "rxjs";
 import {
 	createAddressLoader,
 	createEventLoader,
@@ -6,74 +8,94 @@ import {
 	createTagValueLoader,
 	createUserListsLoader,
 } from "applesauce-loaders/loaders";
-import { kinds } from "nostr-tools";
-import { cacheRequest } from "./event-cache";
-import { eventStore } from "./event-store";
-import localSettings from "./preferences";
-import pool from "./pool";
 
-/** Loader for replaceable events based on coordinate */
-export const addressLoader = createAddressLoader(pool, {
-	cacheRequest,
-	eventStore,
-	bufferTime: 500,
-	extraRelays: localSettings.readRelays,
-});
+import type { PreferenceSubject } from "~/classes/preference-subject";
+import type { EventStoreManagement } from "~/services/event-store";
+import type { RelayPoolManagement } from "~/services/pool";
 
-/** Loader for replaceable events based on coordinate */
-export const profileLoader = createAddressLoader(pool, {
-	cacheRequest,
-	eventStore,
-	bufferTime: 200,
-	extraRelays: localSettings.readRelays,
-	lookupRelays: localSettings.lookupRelays,
-});
+export interface LoadersManagement {
+	addressLoader: ReturnType<typeof createAddressLoader>;
+	profileLoader: ReturnType<typeof createAddressLoader>;
+	eventLoader: ReturnType<typeof createEventLoader>;
+	reactionsLoader: ReturnType<typeof createReactionsLoader>;
+	userSetsLoader: ReturnType<typeof createUserListsLoader>;
+	channelMetadataLoader: ReturnType<typeof createTagValueLoader>;
+	groupInfoLoader: ReturnType<typeof createTagValueLoader>;
+	socialGraphLoader: ReturnType<typeof createSocialGraphLoader>;
+}
 
-/** Loader for single events based on id */
-export const eventLoader = createEventLoader(pool, {
-	cacheRequest,
-	eventStore,
-	bufferTime: 500,
-	extraRelays: localSettings.readRelays,
-});
+export default function createLoadersManagement(
+	relayPoolManagement: RelayPoolManagement,
+	eventStoreManagement: EventStoreManagement,
+	readRelays: PreferenceSubject<string[]>,
+	lookupRelays: PreferenceSubject<string[]>,
+): LoadersManagement {
+	const { pool } = relayPoolManagement;
+	const { eventStore } = eventStoreManagement;
 
-export const reactionsLoader = createReactionsLoader(pool, {
-	cacheRequest,
-	eventStore,
-	extraRelays: localSettings.readRelays,
-});
+	/** Loader for replaceable events based on coordinate */
+	const addressLoader = createAddressLoader(pool, {
+		cacheRequest: () => EMPTY, // Will be replaced after cache management is created
+		eventStore,
+		bufferTime: 500,
+		extraRelays: readRelays,
+	});
 
-export const userSetsLoader = createUserListsLoader(pool, {
-	cacheRequest,
-	eventStore,
-	extraRelays: localSettings.readRelays,
-});
+	/** Loader for replaceable events based on coordinate */
+	const profileLoader = createAddressLoader(pool, {
+		cacheRequest: () => EMPTY, // Will be replaced after cache management is created
+		eventStore,
+		bufferTime: 200,
+		extraRelays: readRelays,
+		lookupRelays: lookupRelays,
+	});
 
-export const channelMetadataLoader = createTagValueLoader(pool, "e", {
-	kinds: [kinds.ChannelMetadata],
-	cacheRequest,
-	extraRelays: localSettings.readRelays,
-});
+	/** Loader for single events based on id */
+	const eventLoader = createEventLoader(pool, {
+		cacheRequest: () => EMPTY, // Will be replaced after cache management is created
+		eventStore,
+		bufferTime: 500,
+		extraRelays: readRelays,
+	});
 
-// A loader to load the group info from the relays
-export const groupInfoLoader = createTagValueLoader(pool, "d", {
-	kinds: [39000],
-});
+	const reactionsLoader = createReactionsLoader(pool, {
+		cacheRequest: () => EMPTY, // Will be replaced after cache management is created
+		eventStore,
+		extraRelays: readRelays,
+	});
 
-/** Loader for loading a users social graph */
-export const socialGraphLoader = createSocialGraphLoader(profileLoader, {
-	eventStore,
-	extraRelays: localSettings.readRelays,
-	hints: false,
-});
+	const userSetsLoader = createUserListsLoader(pool, {
+		cacheRequest: () => EMPTY, // Will be replaced after cache management is created
+		eventStore,
+		extraRelays: readRelays,
+	});
 
-if (import.meta.env.DEV) {
-	// @ts-expect-error
-	window.profileLoader = profileLoader;
-	// @ts-expect-error
-	window.addressLoader = addressLoader;
-	// @ts-expect-error
-	window.eventLoader = eventLoader;
-	// @ts-expect-error
-	window.reactionsLoader = reactionsLoader;
+	const channelMetadataLoader = createTagValueLoader(pool, "e", {
+		kinds: [kinds.ChannelMetadata],
+		cacheRequest: () => EMPTY, // Will be replaced after cache management is created
+		extraRelays: readRelays,
+	});
+
+	// A loader to load the group info from the relays
+	const groupInfoLoader = createTagValueLoader(pool, "d", {
+		kinds: [39000],
+	});
+
+	/** Loader for loading a users social graph */
+	const socialGraphLoader = createSocialGraphLoader(profileLoader, {
+		eventStore,
+		extraRelays: readRelays,
+		hints: false,
+	});
+
+	return {
+		addressLoader,
+		profileLoader,
+		eventLoader,
+		reactionsLoader,
+		userSetsLoader,
+		channelMetadataLoader,
+		groupInfoLoader,
+		socialGraphLoader,
+	};
 }

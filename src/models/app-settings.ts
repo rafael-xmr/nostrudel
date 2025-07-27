@@ -1,27 +1,45 @@
-import { Model } from "applesauce-core";
+import type { Model } from "applesauce-core";
 import { safeParse } from "applesauce-core/helpers/json";
-import { ProfilePointer } from "nostr-tools/nip19";
+import type { ProfilePointer } from "nostr-tools/nip19";
 import { map } from "rxjs";
 
-import { APP_SETTING_IDENTIFIER, APP_SETTINGS_KIND, AppSettings, DEFAULT_APP_SETTINGS } from "../helpers/app-settings";
-import { AddressableQuery } from "./addressable";
+import {
+	APP_SETTING_IDENTIFIER,
+	APP_SETTINGS_KIND,
+	type AppSettings,
+	DEFAULT_APP_SETTINGS,
+} from "../helpers/app-settings";
 
-export function AppSettingsQuery(pubkey: string | ProfilePointer): Model<AppSettings> {
-  const pointer = typeof pubkey === "string" ? { pubkey } : pubkey;
+import createAddressableQueryManagement from "./addressable";
+import type { EventStoreManagement } from "../services/event-store";
+import type { LoadersManagement } from "../services/loaders";
 
-  return (events) =>
-    events
-      .model(AddressableQuery, {
-        kind: APP_SETTINGS_KIND,
-        pubkey: pointer.pubkey,
-        identifier: APP_SETTING_IDENTIFIER,
-        relays: pointer.relays,
-      })
-      .pipe(
-        map((event) => {
-          if (!event) return DEFAULT_APP_SETTINGS;
-          const parsed = safeParse<Partial<AppSettings>>(event.content);
-          return { ...DEFAULT_APP_SETTINGS, ...parsed };
-        }),
-      );
+export function AppSettingsQuery(
+	pubkey: string | ProfilePointer,
+	eventStoreManagement: EventStoreManagement,
+	loadersManagement: LoadersManagement,
+): Model<AppSettings> {
+	const pointer = typeof pubkey === "string" ? { pubkey } : pubkey;
+
+	return (events) =>
+		events
+			.model(
+				createAddressableQueryManagement(
+					eventStoreManagement,
+					loadersManagement,
+				).AddressableQuery,
+				{
+					kind: APP_SETTINGS_KIND,
+					pubkey: pointer.pubkey,
+					identifier: APP_SETTING_IDENTIFIER,
+					relays: pointer.relays,
+				},
+			)
+			.pipe(
+				map((event) => {
+					if (!event) return DEFAULT_APP_SETTINGS;
+					const parsed = safeParse<Partial<AppSettings>>(event.content);
+					return { ...DEFAULT_APP_SETTINGS, ...parsed };
+				}),
+			);
 }

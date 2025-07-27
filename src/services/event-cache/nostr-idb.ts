@@ -1,35 +1,87 @@
 import { markFromCache } from "applesauce-core/helpers";
-import { addEvents, clearDB, getEventsForFilters, IndexCache, openDB, pruneLastUsed } from "nostr-idb";
-import { NostrEvent } from "nostr-tools";
+import {
+	addEvents,
+	clearDB,
+	getEventsForFilters,
+	IndexCache,
+	openDB,
+	pruneLastUsed,
+	type NostrIDB,
+} from "nostr-idb";
+import type { NostrEvent } from "nostr-tools";
 import { from, mergeMap, tap } from "rxjs";
 
-import localSettings from "../preferences";
-import { EventCache } from "./interface";
+import type { PreferenceSubject } from "~/classes/preference-subject";
+import type { EventCache } from "./interface";
 
-export const indexes = new IndexCache();
-export const database = await openDB();
-
-export async function saveEvents(events: NostrEvent[]) {
-  await addEvents(database, events);
+export interface IndexedDBManagement {
+	indexes: IndexCache;
+	database: NostrIDB;
+	cache: EventCache;
+	pruneInterval: NodeJS.Timeout | null;
+	startPruning: () => void;
+	stopPruning: () => void;
 }
 
-const indexeddbCache: EventCache = {
-  type: "nostr-idb",
-  read: (filters) =>
-    from(getEventsForFilters(database, filters, indexes)).pipe(
-      mergeMap((events) => from(events)),
-      tap((e) => markFromCache(e)),
-    ),
-  write(events) {
-    for (let event of events) indexes.addEventToIndexes(event);
-    return addEvents(database, events);
-  },
-  async clear() {
-    await clearDB(database);
-  },
-};
+export default async function createIndexedDBManagement(
+	idbMaxEvents: PreferenceSubject<number>,
+): Promise<IndexedDBManagement> {
+	const indexes = new IndexCache();
+	const database = await openDB();
 
-// Prune the database on startup
-await pruneLastUsed(database, localSettings.idbMaxEvents.value);
+	const indexeddbCache: EventCache = {
+		type: "nostr-idb",
+		read: (filters) =>
+			from(getEventsForFilters(database, filters, indexes)).pipe(
+				mergeMap((events) => from(events)),
+				tap((e) => markFromCache(e)),
+			),
+		write(events) {
+			for (const event of events) indexes.addEventToIndexes(event);
+			return addEvents(database, events);
+		},
+		async clear() {
+			await clearDB(database);
+		},
+	};
 
-export default indexeddbCache;
+	let pruneInterval: NodeJS.Timeout | null = null;
+
+	const startPruning = () => {
+		if (pruneInterval) return; // Already running
+
+		pruneInterval = setInterval(async () => {
+			const maxEvents = idbMaxEvents.value;
+			if (maxEvents) {
+				await pruneLastUsed(database, maxEvents);
+			}
+		}, 60_000);
+	};
+
+	const stopPruning = () => {
+		if (pruneInterval) {
+			clearInterval(pruneInterval);
+			pruneInterval = null;
+		}
+	};
+
+	// Initial pruning on startup
+	await pruneLastUsed(database, idbMaxEvents.value);
+
+	return {
+		indexes,
+		database,
+		cache: indexeddbCache,
+		pruneInterval,
+		startPruning,
+		stopPruning,
+	};
+}
+
+// Helper function for backward compatibility
+export async function saveEvents(
+	events: NostrEvent[],
+	management: IndexedDBManagement,
+) {
+	await addEvents(management.database, events);
+}

@@ -13,7 +13,7 @@ import { useEventFactory } from "applesauce-react/hooks";
 import { kinds, type NostrEvent } from "nostr-tools";
 import { useMemo, useRef } from "react";
 import { useForm } from "react-hook-form";
-import { useAsync, useThrottle } from "react-use";
+import * as reactUse from "react-use";
 
 import InsertGifButton from "../../../components/gif/insert-gif-button";
 import { ChevronDownIcon, ChevronUpIcon } from "../../../components/icons";
@@ -101,8 +101,8 @@ export default function ReplyForm({
 	const formRef = useRef<HTMLFormElement | null>(null);
 
 	// throttle preview
-	const throttleValues = useThrottle(getValues(), 500);
-	const { value: preview } = useAsync(
+	const throttleValues = reactUse.useThrottle(getValues(), 500);
+	const { value: preview } = reactUse.useAsync(
 		() =>
 			factory.noteReply(item.event, throttleValues.content, {
 				emojis: customEmojis,

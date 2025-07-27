@@ -1,42 +1,45 @@
 import { CloseButton, Code, Flex, Text } from "@chakra-ui/react";
-import { NostrEvent } from "nostr-tools";
+import type { NostrEvent } from "nostr-tools";
 
 import useEventUpdate from "../../../hooks/use-event-update";
-import { eventStore } from "../../../services/event-store";
+import { useLocalSettings } from "~/providers/global/preferences";
 
 export default function DebugEventCachePage({ event }: { event: NostrEvent }) {
-  useEventUpdate(event.id);
-  const fields = Object.getOwnPropertySymbols(event);
-  const update = () => eventStore.update(event);
+	const { eventStoreManagement } = useLocalSettings();
 
-  const renderValue = (field: symbol) => {
-    const value = Reflect.get(event, field);
+	useEventUpdate(event.id);
+	const fields = Object.getOwnPropertySymbols(event);
+	const update = () => eventStoreManagement.eventStore.update(event);
 
-    if (value instanceof Map) return JSON.stringify(Object.fromEntries(value.entries()));
-    if (value instanceof Set) return JSON.stringify(Array.from(value));
+	const renderValue = (field: symbol) => {
+		const value = Reflect.get(event, field);
 
-    return JSON.stringify(value);
-  };
+		if (value instanceof Map)
+			return JSON.stringify(Object.fromEntries(value.entries()));
+		if (value instanceof Set) return JSON.stringify(Array.from(value));
 
-  return (
-    <Flex direction="column">
-      {fields.map((field) => (
-        <Flex gap="2" alignItems="center">
-          <Text fontWeight="bold" whiteSpace="pre">
-            {field.description}
-          </Text>
-          <Code fontFamily="monospace" isTruncated>
-            {renderValue(field)}
-          </Code>
-          <CloseButton
-            ml="auto"
-            onClick={() => {
-              Reflect.deleteProperty(event, field);
-              update();
-            }}
-          />
-        </Flex>
-      ))}
-    </Flex>
-  );
+		return JSON.stringify(value);
+	};
+
+	return (
+		<Flex direction="column">
+			{fields.map((field) => (
+				<Flex gap="2" alignItems="center" key={field.description}>
+					<Text fontWeight="bold" whiteSpace="pre">
+						{field.description}
+					</Text>
+					<Code fontFamily="monospace" isTruncated>
+						{renderValue(field)}
+					</Code>
+					<CloseButton
+						ml="auto"
+						onClick={() => {
+							Reflect.deleteProperty(event, field);
+							update();
+						}}
+					/>
+				</Flex>
+			))}
+		</Flex>
+	);
 }

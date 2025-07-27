@@ -1,13 +1,8 @@
 import "./polyfill";
 
 import { CAP_IS_WEB, IS_SERVICE_WORKER_SUPPORTED } from "./env";
-import { GlobalProviders } from "./providers/global";
+import { LocalSettingsProviders } from "./providers/global";
 import { registerServiceWorker } from "./services/worker";
-
-import "./services/debug-api";
-import "./services/lifecycle";
-import "./services/username-search";
-import "./services/decryption-cache";
 
 // setup dayjs
 import dayjs from "dayjs";
@@ -16,6 +11,9 @@ import relativeTimePlugin from "dayjs/plugin/relativeTime";
 dayjs.extend(relativeTimePlugin);
 dayjs.extend(localizedFormat);
 
+import { scan } from "react-scan";
+scan({ enabled: true });
+
 // register nostr: protocol handler
 if (import.meta.env.PROD && CAP_IS_WEB) {
 	try {
@@ -23,7 +21,7 @@ if (import.meta.env.PROD && CAP_IS_WEB) {
 			"web+nostr",
 			new URL("/l/%s", location.origin).toString(),
 		);
-	} catch (e) {
+	} catch (_) {
 		console.log("Failed to register handler");
 	}
 }
@@ -36,9 +34,9 @@ import { logger } from "./helpers/debug";
 logger("Rendering app");
 const root = document.getElementById("root")!;
 createRoot(root).render(
-	<GlobalProviders>
+	<LocalSettingsProviders>
 		<App />
-	</GlobalProviders>,
+	</LocalSettingsProviders>,
 );
 
 // Register service worker if supported

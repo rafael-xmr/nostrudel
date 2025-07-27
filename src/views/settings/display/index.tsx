@@ -2,26 +2,24 @@ import {
 	Button,
 	Flex,
 	FormControl,
-	FormErrorMessage,
 	FormHelperText,
 	FormLabel,
 	Input,
 	Link,
 	Select,
 	Switch,
-	Textarea,
 } from "@chakra-ui/react";
 import { useObservableEagerState } from "applesauce-react/hooks";
 import { Link as RouterLink } from "react-router-dom";
 
 import SimpleView from "../../../components/layout/presets/simple-view";
-import localSettings from "../../../services/preferences";
+import { useLocalSettings } from "~/providers/global/preferences";
 import useSettingsForm from "../use-settings-form";
-import { safeUrl } from "../../../helpers/parse";
 
 export default function DisplaySettings() {
 	const { register, submit, formState } = useSettingsForm();
 
+	const { localSettings } = useLocalSettings();
 	const hideUsernames = useObservableEagerState(localSettings.hideUsernames);
 
 	return (

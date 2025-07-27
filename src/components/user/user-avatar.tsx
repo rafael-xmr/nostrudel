@@ -7,26 +7,29 @@ import {
 } from "applesauce-react/hooks";
 import type { ProfilePointer } from "nostr-tools/nip19";
 import { forwardRef, memo, useMemo } from "react";
-import { useAsync } from "react-use";
+import * as reactUse from "react-use";
 
 import { getIdenticon } from "../../helpers/identicon";
-import { buildImageProxyURL } from "../../helpers/image";
 import { getDisplayName } from "../../helpers/nostr/profile";
 import { safeUrl } from "../../helpers/parse";
 import useAppSettings from "../../hooks/use-user-app-settings";
 import useUserMuteList from "../../hooks/use-user-mute-list";
 import useUserProfile from "../../hooks/use-user-profile";
 import UserDnsIdentityIcon from "./user-dns-identity-icon";
-import localSettings from "../../services/preferences";
+import { useLocalSettings } from "~/providers/global/preferences";
 
 export const UserIdenticon = memo(({ pubkey }: { pubkey: string }) => {
-	const { value: identicon } = useAsync(() => getIdenticon(pubkey), [pubkey]);
+	const { value: identicon } = reactUse.useAsync(
+		() => getIdenticon(pubkey),
+		[pubkey],
+	);
 
 	return identicon ? (
 		<img
 			src={`data:image/svg+xml;base64,${identicon}`}
 			width="100%"
 			style={{ borderRadius: "var(--chakra-radii-lg)" }}
+			alt={getDisplayName(undefined, pubkey)}
 		/>
 	) : null;
 });
@@ -99,6 +102,7 @@ export type MetadataAvatarProps = Omit<AvatarProps, "src"> & {
 export const MetadataAvatar = forwardRef<HTMLDivElement, MetadataAvatarProps>(
 	({ pubkey, metadata, noProxy, children, square = true, ...props }, ref) => {
 		const { imageProxy, showPubkeyColor } = useAppSettings();
+		const { localSettings, imageUtilsManagement } = useLocalSettings();
 		const hideUsernames = useObservableEagerState(localSettings.hideUsernames);
 		const account = useActiveAccount();
 		const picture = useMemo(() => {
@@ -107,7 +111,10 @@ export const MetadataAvatar = forwardRef<HTMLDivElement, MetadataAvatarProps>(
 			if (metadata?.picture) {
 				const src = safeUrl(metadata?.picture);
 				if (src && !noProxy) {
-					const proxyURL = buildImageProxyURL(src, RESIZE_PROFILE_SIZE);
+					const proxyURL = imageUtilsManagement.buildImageProxyURL(
+						src,
+						RESIZE_PROFILE_SIZE,
+					);
 					if (proxyURL) return proxyURL;
 				}
 				return src;

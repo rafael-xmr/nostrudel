@@ -4,7 +4,7 @@ import { useObservableEagerState } from "applesauce-react/hooks";
 import { ChevronDownIcon, ChevronUpIcon } from "../../../components/icons";
 import SimpleView from "../../../components/layout/presets/simple-view";
 import { WASM_RELAY_SUPPORTED } from "../../../env";
-import { eventCache$ } from "../../../services/event-cache";
+import { useLocalSettings } from "~/providers/global/preferences";
 import CitrineRelayCard from "./components/citrine-relay-card";
 import HostedRelayCard from "./components/hosted-relay-card";
 import IndexeddbCard from "./components/indexeddb-card";
@@ -13,7 +13,8 @@ import NostrRelayTrayCard from "./components/nostr-relay-tray-card";
 import WasmWorkerCard from "./components/wasm-worker-card";
 
 export default function CacheRelayView() {
-	const eventCache = useObservableEagerState(eventCache$);
+	const { eventCacheManagement } = useLocalSettings();
+	const eventCache = useObservableEagerState(eventCacheManagement.eventCache$);
 	const showAdvanced = useDisclosure({ defaultIsOpen: eventCache === null });
 
 	return (
@@ -42,11 +43,7 @@ export default function CacheRelayView() {
 				)}
 				<Divider />
 			</Button>
-			{showAdvanced.isOpen && (
-				<>
-					<NoRelayCard />
-				</>
-			)}
+			{showAdvanced.isOpen && <NoRelayCard />}
 		</SimpleView>
 	);
 }

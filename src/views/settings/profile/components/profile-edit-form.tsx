@@ -16,11 +16,11 @@ import {
 	useDisclosure,
 	VStack,
 } from "@chakra-ui/react";
-import { parseNIP05Address, ProfileContent } from "applesauce-core/helpers";
+import { parseNIP05Address } from "applesauce-core/helpers";
 import { IdentityStatus } from "applesauce-loaders/helpers/dns-identity";
 import { useActiveAccount } from "applesauce-react/hooks";
-import { useEffect, useRef, useState } from "react";
-import { useForm, useFormContext } from "react-hook-form";
+import { useRef } from "react";
+import { useFormContext } from "react-hook-form";
 
 import {
 	ChevronDownIcon,
@@ -28,13 +28,13 @@ import {
 	OutboxIcon,
 } from "../../../../components/icons";
 import dnsIdentityLoader from "../../../../services/dns-identity-loader";
-import type { ProfileFormData } from "..";
+import type { ProfileFormData } from "./profile-preview";
 
-function isLightningAddress(addr: string) {
-	const isEmail =
-		/^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
-	return isEmail.test(addr);
-}
+// function isLightningAddress(addr: string) {
+// 	const isEmail =
+// 		/^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+// 	return isEmail.test(addr);
+// }
 
 // Validation methods
 const validateLightningAddress = async (value?: string) => {

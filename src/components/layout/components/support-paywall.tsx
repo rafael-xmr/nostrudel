@@ -1,4 +1,4 @@
-import { hidePaywall } from "../../../services/paywall";
+import { useLocalSettings } from "~/providers/global/preferences";
 import {
 	Button,
 	Modal,
@@ -14,6 +14,9 @@ import SupportButton from "~/components/support-button";
 import { useEffect, useState } from "react";
 
 export default function SupportPaywall() {
+	const { paywallManagement } = useLocalSettings();
+	const hidePaywall = paywallManagement.hidePaywall;
+
 	const [isOpen, setIsOpen] = useState(
 		hidePaywall.value ? hidePaywall.value < unixNow() : false,
 	);

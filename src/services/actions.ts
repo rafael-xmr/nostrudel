@@ -2,19 +2,35 @@ import { ActionHub } from "applesauce-actions";
 import { kinds } from "nostr-tools";
 import { getOutboxes } from "applesauce-core/helpers";
 
-import { eventStore } from "./event-store";
-import factory from "./event-factory";
-import pool from "./pool";
+import type { EventStoreManagement } from "./event-store";
+import type { EventFactoryManagement } from "./event-factory";
+import type { RelayPoolManagement } from "./pool";
 
-const actions = new ActionHub(eventStore, factory, async (event) => {
-  const mailboxes = eventStore.getReplaceable(kinds.RelayList, event.pubkey);
-  const outboxes = mailboxes && getOutboxes(mailboxes);
+export interface ActionsManagement {
+	actions: ActionHub;
+}
 
-  if (!outboxes) throw new Error("Failed to get outboxes");
+export default function createActionsManagement(
+	eventStoreManagement: EventStoreManagement,
+	eventFactoryManagement: EventFactoryManagement,
+	relayPoolManagement: RelayPoolManagement,
+): ActionsManagement {
+	const { eventStore } = eventStoreManagement;
+	const { factory } = eventFactoryManagement;
+	const { pool } = relayPoolManagement;
 
-  // publish the event
-  eventStore.add(event);
-  pool.publish(outboxes, event);
-});
+	const actions = new ActionHub(eventStore, factory, async (event) => {
+		const mailboxes = eventStore.getReplaceable(kinds.RelayList, event.pubkey);
+		const outboxes = mailboxes && getOutboxes(mailboxes);
 
-export default actions;
+		if (!outboxes) throw new Error("Failed to get outboxes");
+
+		// publish the event
+		eventStore.add(event);
+		pool.publish(outboxes, event);
+	});
+
+	return {
+		actions,
+	};
+}

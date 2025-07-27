@@ -21,12 +21,13 @@ import EventShareButton from "../note/timeline-note/components/event-share-butto
 import EventQuoteButton from "../note/event-quote-button";
 import PicturePostSlides from "./picture-slides";
 import PicturePostContents from "./picture-post-content";
-import { getSharableEventAddress } from "../../services/relay-hints";
+import { useLocalSettings } from "~/providers/global/preferences";
 import { ThreadIcon } from "../icons";
 import Timestamp from "../timestamp";
 
 export default function PicturePost({ post }: { post: NostrEvent }) {
-	const nevent = getSharableEventAddress(post);
+	const { relayHintsManagement } = useLocalSettings();
+	const nevent = relayHintsManagement.getSharableEventAddress(post);
 
 	return (
 		<ContentSettingsProvider event={post}>

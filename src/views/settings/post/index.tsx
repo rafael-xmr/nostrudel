@@ -19,7 +19,7 @@ import { Link as RouterLink } from "react-router-dom";
 import { useActiveAccount } from "applesauce-react/hooks";
 import SimpleView from "../../../components/layout/presets/simple-view";
 import useUsersMediaServers from "../../../hooks/use-user-media-servers";
-import localSettings from "../../../services/preferences";
+import { useLocalSettings } from "~/providers/global/preferences";
 import useSettingsForm from "../use-settings-form";
 
 export default function PostSettings() {
@@ -29,6 +29,7 @@ export default function PostSettings() {
 
 	watch("mediaUploadService");
 
+	const { localSettings } = useLocalSettings();
 	const addClientTag = useObservableEagerState(localSettings.addClientTag);
 	const alwaysAuthUpload = useObservableEagerState(
 		localSettings.alwaysAuthUpload,

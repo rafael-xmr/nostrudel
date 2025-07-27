@@ -33,7 +33,7 @@ import {
 	removeAppRelay,
 	toggleAppRelay,
 } from "../../../services/app-relays";
-import localSettings from "../../../services/preferences";
+import { useLocalSettings } from "~/providers/global/preferences";
 import AddRelayForm from "./add-relay-form";
 import RelayControl from "./relay-control";
 
@@ -46,6 +46,7 @@ function RelaySetCard({
 	read: Iterable<string>;
 	write: Iterable<string>;
 }) {
+	const { localSettings } = useLocalSettings();
 	const handleClick = useCallback<MouseEventHandler>((e) => {
 		e.preventDefault();
 		localSettings.readRelays.next(Array.from(read));
@@ -74,6 +75,7 @@ function RelaySetCard({
 
 export default function AppRelaysView() {
 	const account = useActiveAccount();
+	const { localSettings } = useLocalSettings();
 	const readRelays = useObservableEagerState(localSettings.readRelays);
 	const writeRelays = useObservableEagerState(localSettings.writeRelays);
 	const lookupRelays = useObservableEagerState(localSettings.lookupRelays);

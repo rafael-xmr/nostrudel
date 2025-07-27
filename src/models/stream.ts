@@ -1,22 +1,48 @@
-import { Model } from "applesauce-core";
+import type { Model } from "applesauce-core";
 import { getAddressPointersFromList } from "applesauce-core/helpers";
-import { NostrEvent } from "nostr-tools";
-import { ProfilePointer } from "nostr-tools/nip19";
+import type { NostrEvent } from "nostr-tools";
+import type { ProfilePointer } from "nostr-tools/nip19";
 import { combineLatest, filter, of, switchMap } from "rxjs";
 
-import { STREAMER_CARDS_TYPE } from "../views/streams/components/streamer-cards";
-import { AddressableQuery } from "./addressable";
+import createAddressableQueryManagement from "./addressable";
+import type { EventStoreManagement } from "../services/event-store";
+import type { LoadersManagement } from "../services/loaders";
 
-export function StreamCardsQuery(user: ProfilePointer): Model<NostrEvent[] | undefined> {
-  return (events) =>
-    events.model(AddressableQuery, { kind: STREAMER_CARDS_TYPE, pubkey: user.pubkey, relays: user.relays }).pipe(
-      switchMap((event) => {
-        if (!event) return of(undefined);
+export const STREAMER_CARDS_TYPE = 17777;
+export const STREAMER_CARD_TYPE = 37777;
 
-        const addresses = getAddressPointersFromList(event);
-        return combineLatest(
-          addresses.map((address) => events.model(AddressableQuery, address).pipe(filter((a) => !!a))),
-        );
-      }),
-    );
+export function StreamCardsQuery(
+	user: ProfilePointer,
+	eventStoreManagement: EventStoreManagement,
+	loadersManagement: LoadersManagement,
+): Model<NostrEvent[] | undefined> {
+	return (events) =>
+		events
+			.model(
+				createAddressableQueryManagement(
+					eventStoreManagement,
+					loadersManagement,
+				).AddressableQuery,
+				{ kind: STREAMER_CARDS_TYPE, pubkey: user.pubkey, relays: user.relays },
+			)
+			.pipe(
+				switchMap((event) => {
+					if (!event) return of(undefined);
+
+					const addresses = getAddressPointersFromList(event);
+					return combineLatest(
+						addresses.map((address) =>
+							events
+								.model(
+									createAddressableQueryManagement(
+										eventStoreManagement,
+										loadersManagement,
+									).AddressableQuery,
+									address,
+								)
+								.pipe(filter((a) => !!a)),
+						),
+					);
+				}),
+			);
 }

@@ -22,12 +22,12 @@ import useSearchRelays, {
 } from "../../hooks/use-search-relays";
 import { useBreakpointValue } from "../../providers/global/breakpoint-provider";
 import PeopleListProvider from "../../providers/local/people-list-provider";
-import { eventCache$ } from "../../services/event-cache";
-import SearchRelayPicker from "./components/search-relay-picker";
+import { useLocalSettings } from "~/providers/global/preferences";
 import SearchResults from "./components/search-results";
 
 export function SearchPage() {
-	const eventCache = useObservableEagerState(eventCache$);
+	const { eventCacheManagement } = useLocalSettings();
+	const eventCache = useObservableEagerState(eventCacheManagement.eventCache$);
 	const navigate = useNavigate();
 	const searchRelays = useSearchRelays();
 	const localSearchSupported = useCacheRelaySupportsSearch();

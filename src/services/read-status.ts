@@ -3,112 +3,156 @@ import _throttle from "lodash.throttle";
 import { BehaviorSubject } from "rxjs";
 
 import SuperMap from "../classes/super-map";
-import db from "./database";
 import { logger } from "../helpers/debug";
+import type { DatabaseManagement } from "./database";
 
 class ReadStatusService {
-  log = logger.extend("ReadStatusService");
-  status = new SuperMap<string, BehaviorSubject<boolean | undefined>>(
-    () => new BehaviorSubject<boolean | undefined>(undefined),
-  );
-  ttl = new Map<string, number>();
+	log = logger.extend("ReadStatusService");
+	status = new SuperMap<string, BehaviorSubject<boolean | undefined>>(
+		() => new BehaviorSubject<boolean | undefined>(undefined),
+	);
+	ttl = new Map<string, number>();
 
-  private setTTL(key: string, ttl: number) {
-    const current = this.ttl.get(key);
-    if (!current || ttl > current) {
-      this.ttl.set(key, ttl);
-    }
-  }
+	constructor(private db: any) {}
 
-  getStatus(key: string, ttl?: number) {
-    const subject = this.status.get(key);
+	private setTTL(key: string, ttl: number) {
+		const current = this.ttl.get(key);
+		if (!current || ttl > current) {
+			this.ttl.set(key, ttl);
+		}
+	}
 
-    if (ttl) this.setTTL(key, ttl);
-    else this.setTTL(key, dayjs().add(1, "day").unix());
+	getStatus(key: string, ttl?: number) {
+		const subject = this.status.get(key);
 
-    if (subject.value === undefined && !this.readQueue.has(key)) {
-      this.readQueue.add(key);
-      this.throttleRead();
-    }
+		if (ttl) this.setTTL(key, ttl);
+		else this.setTTL(key, dayjs().add(1, "day").unix());
 
-    return subject;
-  }
+		if (subject.value === undefined && !this.readQueue.has(key)) {
+			this.readQueue.add(key);
+			this.throttleRead();
+		}
 
-  setRead(key: string, read = true, ttl?: number) {
-    if (ttl) this.setTTL(key, ttl);
-    else this.setTTL(key, dayjs().add(1, "day").unix());
+		return subject;
+	}
 
-    this.status.get(key).next(read);
-    this.writeQueue.add(key);
-    this.throttleWrite();
-  }
+	setRead(key: string, read = true, ttl?: number) {
+		if (ttl) this.setTTL(key, ttl);
+		else this.setTTL(key, dayjs().add(1, "day").unix());
 
-  private readQueue = new Set<string>();
-  private throttleRead = _throttle(this.read.bind(this), 100);
-  async read() {
-    if (this.readQueue.size === 0) return;
+		this.status.get(key).next(read);
+		this.writeQueue.add(key);
+		this.throttleWrite();
+	}
 
-    const trans = db.transaction("read");
+	private readQueue = new Set<string>();
+	private throttleRead = _throttle(this.read.bind(this), 100);
+	async read() {
+		if (this.readQueue.size === 0) return;
 
-    this.log(`Loading ${this.readQueue.size} from database`);
+		const trans = this.db.transaction("read");
 
-    await Promise.all(
-      Array.from(this.readQueue).map(async (key) => {
-        this.readQueue.delete(key);
-        const subject = this.status.get(key);
-        const status = await trans.store.get(key);
+		this.log(`Loading ${this.readQueue.size} from database`);
 
-        if (status) {
-          subject.next(status.read);
-          if (status.ttl) this.setTTL(key, status.ttl);
-        } else subject.next(false);
-      }),
-    );
-  }
+		await Promise.all(
+			Array.from(this.readQueue).map(async (key) => {
+				this.readQueue.delete(key);
+				const subject = this.status.get(key);
+				const status = await trans.store.get(key);
 
-  private writeQueue = new Set<string>();
-  private throttleWrite = _throttle(this.write.bind(this), 100);
-  async write() {
-    if (this.writeQueue.size === 0) return;
+				if (status) {
+					subject.next(status.read);
+					if (status.ttl) this.setTTL(key, status.ttl);
+				} else subject.next(false);
+			}),
+		);
+	}
 
-    const trans = db.transaction("read", "readwrite");
+	private writeQueue = new Set<string>();
+	private throttleWrite = _throttle(this.write.bind(this), 100);
+	async write() {
+		if (this.writeQueue.size === 0) return;
 
-    let count = 0;
-    const defaultTTL = dayjs().add(1, "day").unix();
-    for (const key of this.writeQueue) {
-      const subject = this.status.get(key);
-      if (subject.value !== undefined) {
-        trans.store.put({ key, read: subject.value, ttl: this.ttl.get(key) ?? defaultTTL });
-        count++;
-      }
-    }
+		const trans = this.db.transaction("read", "readwrite");
 
-    this.writeQueue.clear();
-    await trans.done;
+		let count = 0;
+		const defaultTTL = dayjs().add(1, "day").unix();
+		for (const key of this.writeQueue) {
+			const subject = this.status.get(key);
+			if (subject.value !== undefined) {
+				trans.store.put({
+					key,
+					read: subject.value,
+					ttl: this.ttl.get(key) ?? defaultTTL,
+				});
+				count++;
+			}
+		}
 
-    this.log(`Wrote ${count} to database`);
-  }
+		this.writeQueue.clear();
+		await trans.done;
 
-  async prune() {
-    const expired = await db.getAllKeysFromIndex("read", "ttl", IDBKeyRange.upperBound(dayjs().unix()));
+		this.log(`Wrote ${count} to database`);
+	}
 
-    if (expired.length === 0) return;
+	async prune() {
+		const expired = await this.db.getAllKeysFromIndex(
+			"read",
+			"ttl",
+			IDBKeyRange.upperBound(dayjs().unix()),
+		);
 
-    const tx = db.transaction("read", "readwrite");
-    await Promise.all(expired.map((key) => tx.store.delete(key)));
-    await tx.done;
+		if (expired.length === 0) return;
 
-    this.log(`Removed ${expired.length} expired entries`);
-  }
+		const tx = this.db.transaction("read", "readwrite");
+		await Promise.all(expired.map((key) => tx.store.delete(key)));
+		await tx.done;
+
+		this.log(`Removed ${expired.length} expired entries`);
+	}
 }
 
-const readStatusService = new ReadStatusService();
-
-setInterval(readStatusService.prune.bind(readStatusService), 30_000);
-
-if (import.meta.env.DEV) {
-  // @ts-expect-error debug
-  window.readStatusService = readStatusService;
+export interface ReadStatusManagement {
+	service: ReadStatusService;
+	startAutoPrune: () => void;
+	stopAutoPrune: () => void;
 }
 
-export default readStatusService;
+export default async function createReadStatusManagement(
+	databaseManagement: DatabaseManagement,
+): Promise<ReadStatusManagement> {
+	const db = await databaseManagement.database;
+	const service = new ReadStatusService(db);
+
+	let autoPruneInterval: NodeJS.Timeout | null = null;
+
+	const startAutoPrune = () => {
+		if (autoPruneInterval) return; // Already running
+
+		autoPruneInterval = setInterval(() => {
+			service.prune();
+		}, 30_000);
+	};
+
+	const stopAutoPrune = () => {
+		if (autoPruneInterval) {
+			clearInterval(autoPruneInterval);
+			autoPruneInterval = null;
+		}
+	};
+
+	// Start auto-prune by default
+	startAutoPrune();
+
+	// Debug exposure
+	if (import.meta.env.DEV) {
+		// @ts-expect-error debug
+		window.readStatusService = service;
+	}
+
+	return {
+		service,
+		startAutoPrune,
+		stopAutoPrune,
+	};
+}

@@ -1,7 +1,12 @@
 import { useEventModel } from "applesauce-react/hooks";
-import { ProfilePointer } from "nostr-tools/nip19";
+import type { ProfilePointer } from "nostr-tools/nip19";
 import { ProfileQuery } from "../models";
+import { useLocalSettings } from "~/providers/global/preferences";
 
 export default function useUserProfile(pubkey?: string | ProfilePointer) {
-  return useEventModel(ProfileQuery, pubkey ? [pubkey] : undefined);
+	const { loadersManagement } = useLocalSettings();
+	return useEventModel(
+		ProfileQuery,
+		pubkey ? [pubkey, loadersManagement] : undefined,
+	);
 }

@@ -56,10 +56,9 @@ import {
 	usePublishEvent,
 } from "../../../providers/global/publish-provider";
 import { ContentSettingsProvider } from "../../../providers/local/content-settings";
-import { eventStore } from "../../../services/event-store";
-import localSettings from "../../../services/preferences";
 import { PublishLogEntryDetails } from "../../task-manager/publish-log/entry-details";
 import InsertImageButton from "./insert-image-button";
+import { useLocalSettings } from "~/providers/global/preferences";
 
 type FormValues = {
 	content: string;
@@ -78,7 +77,7 @@ export default function ShortTextNoteForm({
 	initContent = "",
 }: Omit<FlexProps, "children"> & ShortTextNoteFormProps) {
 	const publish = usePublishEvent();
-	const account = useActiveAccount()!;
+	const { localSettings, eventStoreManagement } = useLocalSettings();
 	const { noteDifficulty } = useAppSettings();
 	const addClientTag = useObservableEagerState(localSettings.addClientTag);
 	const promptAddClientTag = useLocalStorageDisclosure(
@@ -148,7 +147,7 @@ export default function ShortTextNoteForm({
 			t[0] === "q" ? getEventPointerFromQTag(t) : undefined,
 		);
 		const events = pointers
-			.map((p) => eventStore.getEvent(p.id))
+			.map((p) => eventStoreManagement.eventStore.getEvent(p.id))
 			.filter((t) => !!t);
 		for (const event of events) publish("Broadcast event", event);
 

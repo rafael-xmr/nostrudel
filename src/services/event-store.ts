@@ -1,15 +1,28 @@
 import { EventStore } from "applesauce-core";
 import { isFromCache } from "applesauce-core/helpers";
-import verifyEvent from "./verify-event";
+import type { EventVerificationManagement } from "./verify-event";
 
-export const eventStore = new EventStore();
+export interface EventStoreManagement {
+	eventStore: EventStore;
+}
 
-// verify all events added to the store
-eventStore.verifyEvent = (event) => {
-  return isFromCache(event) || verifyEvent(event);
-};
+export default function createEventStoreManagement(
+	eventVerificationManagement: EventVerificationManagement,
+): EventStoreManagement {
+	const eventStore = new EventStore();
 
-if (import.meta.env.DEV) {
-  // @ts-expect-error debug
-  window.eventStore = eventStore;
+	// verify all events added to the store
+	eventStore.verifyEvent = (event) => {
+		return isFromCache(event) || eventVerificationManagement.verifyEvent(event);
+	};
+
+	// Debug exposure
+	if (import.meta.env.DEV && typeof window !== "undefined") {
+		// @ts-expect-error debug
+		window.eventStore = eventStore;
+	}
+
+	return {
+		eventStore,
+	};
 }

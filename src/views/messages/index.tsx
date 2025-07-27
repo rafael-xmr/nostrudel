@@ -42,13 +42,9 @@ import useTimelineLoader from "../../hooks/use-timeline-loader";
 import { useUserInbox } from "../../hooks/use-user-mailboxes";
 import IntersectionObserverProvider from "../../providers/local/intersection-observer";
 import RequireDecryptionCache from "../../providers/route/require-decryption-cache";
-import {
-	legacyMessageSubscription,
-	wrappedMessageSubscription,
-} from "../../services/lifecycle";
-import localSettings from "../../services/preferences";
 import { DirectMessageRelays } from "../../models/messages";
 import ReadAuthRequiredAlert from "./components/read-auth-required-alert";
+import { useLocalSettings } from "~/providers/global/preferences";
 
 function MessagePreview({ message }: { message: NostrEvent }) {
 	const { plaintext } = useLegacyMessagePlaintext(message);
@@ -116,7 +112,7 @@ function ConversationCard({
 				to={
 					others.length > 1
 						? `/messages/group/${others.map(npubEncode).join(":")}`
-						: `/messages/${others.map(npubEncode).join(":")}` + location.search
+						: `/messages/${others.map(npubEncode).join(":")}location.search`
 				}
 			/>
 		</LinkBox>
@@ -137,13 +133,20 @@ type WrappedGroup = NonNullable<{
 function Groups() {
 	const account = useActiveAccount()!;
 
+	const { userDataManagement, eventStoreManagement, loadersManagement } =
+		useLocalSettings();
+
 	// Subscribe to incoming messages
-	useObservableState(legacyMessageSubscription);
-	useObservableState(wrappedMessageSubscription);
+	useObservableState(userDataManagement.legacyMessageSubscription);
+	useObservableState(userDataManagement.wrappedMessageSubscription);
 
 	// Create a timeline loader for legacy messages
 	const legacyInboxes = useUserInbox(account.pubkey);
-	const messagesInboxes = useEventModel(DirectMessageRelays, [account.pubkey]);
+	const messagesInboxes = useEventModel(DirectMessageRelays, [
+		account.pubkey,
+		eventStoreManagement,
+		loadersManagement,
+	]);
 	const inboxes = useMemo(
 		() => mergeRelaySets(legacyInboxes, messagesInboxes),
 		[legacyInboxes, messagesInboxes],
@@ -217,9 +220,6 @@ function MessagesHomePage() {
 	const account = useActiveAccount()!;
 
 	// Automatically decrypt new wrapped messages
-	const autoDecryptMessages = useObservableEagerState(
-		localSettings.autoDecryptMessages,
-	);
 	const locked = useEventModel(GiftWrapsModel, [account.pubkey, true]);
 
 	return (

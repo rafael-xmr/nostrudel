@@ -1,42 +1,63 @@
-import { NostrEvent } from "nostr-social-graph";
-import localSettings from "./preferences";
-import { socialGraph$ } from "./social-graph";
+import type { NostrEvent } from "nostr-social-graph";
+import type { SocialGraphManagement } from "./social-graph";
+import type { PreferenceSubject } from "~/classes/preference-subject";
 
-/** Checks if an event should be hidden based on the social graph distance */
-export function shouldHideEvent(event: NostrEvent) {
-  const graph = socialGraph$.value;
-  const distance = graph.getFollowDistance(event.pubkey);
-  if (
-    localSettings.hideEventsOutsideSocialGraph.value !== null &&
-    distance > localSettings.hideEventsOutsideSocialGraph.value
-  )
-    return true;
-
-  return false;
+export interface ContentFilterManagement {
+	shouldHideEvent: (event: NostrEvent) => boolean;
+	shouldBlurMedia: (event: NostrEvent) => boolean;
+	shouldHideEmbed: (event: NostrEvent) => boolean;
 }
 
-/** Checks if media should be blurred based on the social graph distance */
-export function shouldBlurMedia(event: NostrEvent) {
-  const graph = socialGraph$.value;
-  const distance = graph.getFollowDistance(event.pubkey);
-  if (
-    localSettings.blurMediaOutsideSocialGraph.value !== null &&
-    distance > localSettings.blurMediaOutsideSocialGraph.value
-  )
-    return true;
+export default function createContentFilterManagement(
+	socialGraphManagement: SocialGraphManagement,
+	hideEventsOutsideSocialGraph: PreferenceSubject<number | null>,
+	blurMediaOutsideSocialGraph: PreferenceSubject<number | null>,
+	hideEmbedsOutsideSocialGraph: PreferenceSubject<number | null>,
+): ContentFilterManagement {
+	const { socialGraph$ } = socialGraphManagement;
 
-  return false;
-}
+	/** Checks if an event should be hidden based on the social graph distance */
+	const shouldHideEvent = (event: NostrEvent) => {
+		const graph = socialGraph$.value;
+		const distance = graph.getFollowDistance(event.pubkey);
+		if (
+			hideEventsOutsideSocialGraph.value !== null &&
+			distance > hideEventsOutsideSocialGraph.value
+		)
+			return true;
 
-/** Checks if embeds should be hidden based on the social graph distance */
-export function shouldHideEmbed(event: NostrEvent) {
-  const graph = socialGraph$.value;
-  const distance = graph.getFollowDistance(event.pubkey);
-  if (
-    localSettings.hideEmbedsOutsideSocialGraph.value !== null &&
-    distance > localSettings.hideEmbedsOutsideSocialGraph.value
-  )
-    return true;
+		return false;
+	};
 
-  return false;
+	/** Checks if media should be blurred based on the social graph distance */
+	const shouldBlurMedia = (event: NostrEvent) => {
+		const graph = socialGraph$.value;
+		const distance = graph.getFollowDistance(event.pubkey);
+		if (
+			blurMediaOutsideSocialGraph.value !== null &&
+			distance > blurMediaOutsideSocialGraph.value
+		)
+			return true;
+
+		return false;
+	};
+
+	/** Checks if embeds should be hidden based on the social graph distance */
+	const shouldHideEmbed = (event: NostrEvent) => {
+		const graph = socialGraph$.value;
+		const distance = graph.getFollowDistance(event.pubkey);
+		if (
+			hideEmbedsOutsideSocialGraph.value !== null &&
+			distance > hideEmbedsOutsideSocialGraph.value
+		)
+			return true;
+
+		return false;
+	};
+
+	return {
+		shouldHideEvent,
+		shouldBlurMedia,
+		shouldHideEmbed,
+	};
 }

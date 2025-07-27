@@ -1,21 +1,36 @@
 import { EventFactory } from "applesauce-factory";
 
-import { getEventRelayHint, getPubkeyRelayHint } from "./relay-hints";
 import { NIP_89_CLIENT_APP } from "../const";
-import accounts from "./accounts";
-import localSettings from "./preferences";
+import type { AccountsManagement } from "./accounts";
+import type { RelayHintsManagement } from "./relay-hints";
+import type { PreferenceSubject } from "~/classes/preference-subject";
 
-const factory = new EventFactory({
-	signer: accounts.signer,
-	getEventRelayHint,
-	getPubkeyRelayHint: getPubkeyRelayHint,
-	client: localSettings.addClientTag.value ? NIP_89_CLIENT_APP : undefined,
-});
+export interface EventFactoryManagement {
+	factory: EventFactory;
+}
 
-// update event factory when settings change
-localSettings.addClientTag.subscribe((client) => {
-	if (client) factory.context.client = NIP_89_CLIENT_APP;
-	else factory.context.client = undefined;
-});
+export default function createEventFactoryManagement(
+	accountsManagement: AccountsManagement,
+	relayHintsManagement: RelayHintsManagement,
+	addClientTag: PreferenceSubject<boolean>,
+): EventFactoryManagement {
+	const { accounts } = accountsManagement;
+	const { getEventRelayHint, getPubkeyRelayHint } = relayHintsManagement;
 
-export default factory;
+	const factory = new EventFactory({
+		signer: accounts.signer,
+		getEventRelayHint,
+		getPubkeyRelayHint: getPubkeyRelayHint,
+		client: addClientTag.value ? NIP_89_CLIENT_APP : undefined,
+	});
+
+	// update event factory when settings change
+	addClientTag.subscribe((client) => {
+		if (client) factory.context.client = NIP_89_CLIENT_APP;
+		else factory.context.client = undefined;
+	});
+
+	return {
+		factory,
+	};
+}

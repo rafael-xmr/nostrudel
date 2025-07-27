@@ -33,17 +33,8 @@ export default function EventTipButton({
 				{...props}
 				onClick={onOpen}
 				isDisabled={!address}
-				sx={
-					address
-						? {}
-						: {
-								"& .chakra-button__icon": {
-									margin: "0 !important",
-								},
-							}
-				}
 			>
-				{address ? "Tip" : ""}
+				Tip
 			</Button>
 
 			{isOpen && (

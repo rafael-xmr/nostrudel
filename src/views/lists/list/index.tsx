@@ -1,5 +1,4 @@
 import {
-	Box,
 	Button,
 	ButtonGroup,
 	Flex,
@@ -9,16 +8,15 @@ import {
 	useDisclosure,
 } from "@chakra-ui/react";
 import {
-	DecodeResult,
+	type DecodeResult,
 	encodeDecodeResult,
 	getAddressPointersFromList,
 	getEventPointersFromList,
 	getProfilePointersFromList,
-	getTagValue,
 } from "applesauce-core/helpers";
 import { useActiveAccount } from "applesauce-react/hooks";
-import { kinds, NostrEvent } from "nostr-tools";
-import { EventPointer, naddrEncode } from "nostr-tools/nip19";
+import { kinds, type NostrEvent } from "nostr-tools";
+import { type EventPointer, naddrEncode } from "nostr-tools/nip19";
 
 import GenericCommentSection from "../../../components/comment/generic-comment-section";
 import {
@@ -26,14 +24,9 @@ import {
 	EmbedEventPointerCard,
 } from "../../../components/embed-event/card";
 import SimpleView from "../../../components/layout/presets/simple-view";
-import EventQuoteButton from "../../../components/note/event-quote-button";
-import NoteReactions from "../../../components/note/timeline-note/components/note-reactions";
 import OpenGraphCard from "../../../components/open-graph/open-graph-card";
-import UserAvatarLink from "../../../components/user/user-avatar-link";
-import UserDnsIdentity from "../../../components/user/user-dns-identity";
 import UserLink from "../../../components/user/user-link";
 import {
-	getListDescription,
 	getListTitle,
 	getReferencesFromList,
 	isSpecialListKind,
@@ -46,59 +39,7 @@ import ListEditModal from "../components/list-edit-modal";
 import ListFavoriteButton from "../components/list-favorite-button";
 import ListMenu from "../components/list-menu";
 import UserCard from "../components/user-card";
-import FollowSetView from "./follow-set";
-
-export function ListPageHeader({ list }: { list: NostrEvent }) {
-	const title = getListTitle(list);
-	const description = getListDescription(list);
-	const image = getTagValue(list, "image");
-
-	return (
-		<>
-			<Box>
-				{image && (
-					<Box
-						aspectRatio={3 / 1}
-						w="full"
-						backgroundImage={`url(${image})`}
-						backgroundPosition="center"
-						backgroundSize="cover"
-						backgroundRepeat="no-repeat"
-						mb="4"
-						rounded="md"
-					/>
-				)}
-				<Flex direction="column" gap="2">
-					<Heading size="lg">{title}</Heading>
-					<Flex gap="2" alignItems="center">
-						<UserAvatarLink pubkey={list.pubkey} size="sm" />
-						<UserLink pubkey={list.pubkey} fontWeight="bold" fontSize="lg" />
-						<UserDnsIdentity pubkey={list.pubkey} />
-					</Flex>
-				</Flex>
-			</Box>
-			{description && (
-				<Box p="2" whiteSpace="pre-line">
-					{description}
-				</Box>
-			)}
-			<Flex gap="2" role="toolbar" aria-label="List actions">
-				<EventQuoteButton
-					event={list}
-					size="sm"
-					variant="ghost"
-					aria-label="Quote follow list"
-				/>
-				<NoteReactions
-					event={list}
-					size="sm"
-					variant="ghost"
-					aria-label="React to follow list"
-				/>
-			</Flex>
-		</>
-	);
-}
+import FollowSetView, { ListPageHeader } from "./follow-set";
 
 function BookmarkedEvent({ pointer }: { pointer: EventPointer }) {
 	const event = useSingleEvent(pointer);

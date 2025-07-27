@@ -32,21 +32,20 @@ import { SOCIAL_GRAPH_DOWNLOAD_URL } from "../../../const";
 import { useAppTitle } from "../../../hooks/use-app-title";
 import useAsyncAction from "../../../hooks/use-async-action";
 import { useBreakpointValue } from "../../../providers/global/breakpoint-provider";
-import { updateSocialGraphCron } from "../../../services/cron";
-import localSettings from "../../../services/preferences";
-import {
-	clearSocialGraph,
-	exportGraph,
-	importGraph,
-	loadSocialGraphFromUrl,
-	socialGraph$,
-} from "../../../services/social-graph";
+import { useLocalSettings } from "~/providers/global/preferences";
 
 function FollowDistanceGroup({
 	distance,
 	max,
 	label,
-}: { distance: number; max: number; label: string }) {
+}: {
+	distance: number;
+	max: number;
+	label: string;
+}) {
+	const {
+		socialGraphManagement: { socialGraph$ },
+	} = useLocalSettings();
 	const users = useObservableEagerMemo(
 		() =>
 			socialGraph$.pipe(
@@ -76,10 +75,10 @@ function FollowDistanceGroup({
 			</Box>
 			<AvatarGroup spacing={2}>
 				{Array.from(users ?? [])
-					.sort((a, b) => Math.random() - 0.5)
+					.sort((_a, _b) => Math.random() - 0.5)
 					.slice(0, max)
 					.map((pubkey) => (
-						<UserAvatarLink pubkey={pubkey} size="md" />
+						<UserAvatarLink pubkey={pubkey} size="md" key={pubkey} />
 					))}
 			</AvatarGroup>
 		</Flex>
@@ -87,9 +86,13 @@ function FollowDistanceGroup({
 }
 
 function SocialGraphCronSettings() {
+	const { localSettings, cronTaskManagement } = useLocalSettings();
+	const updateSocialGraphCron = cronTaskManagement.updateSocialGraphCron;
+
 	const running = useObservableEagerState(updateSocialGraphCron.running);
 	const status = useObservableEagerState(updateSocialGraphCron.status);
 	const interval = useObservableEagerState(updateSocialGraphCron.interval);
+
 	const distance = useObservableEagerState(
 		localSettings.updateSocialGraphDistance,
 	);
@@ -194,6 +197,18 @@ function SocialGraphCronSettings() {
 }
 
 export default function SocialGraphSettings() {
+	const {
+		socialGraphManagement,
+		cronTaskManagement: { updateSocialGraphCron },
+	} = useLocalSettings();
+	const {
+		socialGraph$,
+		loadSocialGraphFromUrl,
+		clearSocialGraph,
+		exportGraph,
+		importGraph,
+	} = socialGraphManagement;
+
 	useAppTitle("Social Graph");
 	const toast = useToast();
 	const root = useObservableEagerMemo(

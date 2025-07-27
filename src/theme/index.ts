@@ -1,4 +1,4 @@
-import { extendTheme, Theme, DeepPartial } from "@chakra-ui/react";
+import { extendTheme, type Theme, type DeepPartial } from "@chakra-ui/react";
 import chroma from "chroma-js";
 
 import defaultTheme from "./default";

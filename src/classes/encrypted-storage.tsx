@@ -1,130 +1,142 @@
 import { cbc } from "@noble/ciphers/aes";
 import { pbkdf2 } from "@noble/hashes/pbkdf2";
-import { sha256 } from "@noble/hashes/sha2";
+import { sha256 } from "@noble/hashes/sha256";
 import { bytesToUtf8, utf8ToBytes } from "@noble/hashes/utils";
-import "localforage";
 
-import localSettings from "../services/preferences";
-
-// Encryption utility class
-export default class SecureStorage {
-	private key: Uint8Array | null = null;
-	private salt = localSettings.encryptionSalt.value;
-
-	get unlocked() {
-		return this.key !== null;
-	}
-
-	constructor(public database: LocalForageDbMethods) {}
-
-	// Generate encryption key from password
-	private async deriveKey(pass: string): Promise<Uint8Array> {
-		// Convert password to bytes
-		const passBytes = utf8ToBytes(pass);
-
-		// Use PBKDF2 to derive a key from the password
-		// 32 bytes key for AES-256, with 10000 iterations
-		const key = pbkdf2(sha256, passBytes, this.salt, { c: 10000, dkLen: 32 });
-
-		return key;
-	}
-
-	// Encrypt and store data
-	async setItem(
+export interface SecureStorage {
+	readonly unlocked: boolean;
+	readonly database: LocalForageDbMethods;
+	setItem(
 		key: string,
 		value: string,
-		encryptionKey = this.key,
-	): Promise<boolean> {
-		if (!encryptionKey) throw new Error("Storage locked");
+		encryptionKey?: Uint8Array,
+	): Promise<boolean>;
+	getItem(key: string, encryptionKey?: Uint8Array): Promise<string | null>;
+	removeItem(key: string): Promise<void>;
+	clear(): Promise<void>;
+	unlock(password: string, testKey?: string): Promise<boolean>;
+	lock(): void;
+}
 
-		try {
-			// Convert value to string if it's an object
-			const valueBytes = utf8ToBytes(value);
+// Factory function to create SecureStorage
+export default function createSecureStorage(
+	database: LocalForageDbMethods,
+	salt: Uint8Array,
+): SecureStorage {
+	let key: Uint8Array | null = null;
 
-			// Generate a random IV for CBC mode
-			const iv = crypto.getRandomValues(new Uint8Array(16));
+	return {
+		get unlocked() {
+			return key !== null;
+		},
+		database,
 
-			// Create AES-CBC cipher
-			const cipher = cbc(encryptionKey, iv);
+		// Generate encryption key from password
+		async unlock(password: string, testKey = "_pass_test_"): Promise<boolean> {
+			try {
+				// Convert password to bytes
+				const passBytes = utf8ToBytes(password);
 
-			// Encrypt the data
-			const encryptedData = cipher.encrypt(valueBytes);
+				// Use PBKDF2 to derive a key from the password
+				const derivedKey = pbkdf2(sha256, passBytes, salt, {
+					c: 10000,
+					dkLen: 32,
+				});
 
-			// Store IV and encrypted data directly as binary
-			const dataToStore = { iv, data: encryptedData };
+				// Try to get a known test value with this password
+				const testValue = await this.getItem(testKey, derivedKey);
 
-			// Store the encrypted data - LocalForage can handle this directly
-			await this.database.setItem(key, dataToStore);
-			return true;
-		} catch (error) {
-			console.error("Encryption error:", error);
+				// If we've never set a test value with this password before, set one
+				if (testValue === null) {
+					// First setup
+					await this.setItem(testKey, "password verification data", derivedKey);
+					key = derivedKey;
+					return true;
+				}
+				if (testValue === "password verification data") {
+					// Save the key for later
+					key = derivedKey;
+					return true;
+				}
+			} catch (error) {
+				// decryption failed, do nothing
+			}
+
 			return false;
-		}
-	}
+		},
 
-	// Retrieve and decrypt data
-	async getItem(key: string, encryptionKey = this.key): Promise<string | null> {
-		if (!encryptionKey) throw new Error("Storage locked");
+		lock() {
+			key = null;
+		},
 
-		// Get encrypted data
-		const encryptedPackage = (await this.database.getItem(key)) as {
-			iv: Uint8Array;
-			data: Uint8Array;
-		} | null;
-		if (!encryptedPackage) return null;
+		// Encrypt and store data
+		async setItem(
+			itemKey: string,
+			value: string,
+			encryptionKey = key,
+		): Promise<boolean> {
+			if (!encryptionKey) throw new Error("Storage locked");
 
-		// Create AES-CBC decipher
-		const decipher = cbc(encryptionKey, encryptedPackage.iv);
+			try {
+				// Convert value to bytes
+				const valueBytes = utf8ToBytes(value);
 
-		// Decrypt the data
-		let decryptedBytes: Uint8Array;
-		try {
-			decryptedBytes = decipher.decrypt(encryptedPackage.data);
-		} catch (e) {
-			throw new Error("Decryption failed, incorrect password");
-		}
+				// Generate a random IV for CBC mode
+				const iv = crypto.getRandomValues(new Uint8Array(16));
 
-		// Convert bytes to UTF-8 string
-		const decryptedText = bytesToUtf8(decryptedBytes);
+				// Create AES-CBC cipher
+				const cipher = cbc(encryptionKey, iv);
 
-		return decryptedText;
-	}
+				// Encrypt the data
+				const encryptedData = cipher.encrypt(valueBytes);
 
-	// Remove an item
-	async removeItem(key: string): Promise<void> {
-		return this.database.removeItem(key);
-	}
+				// Store IV and encrypted data
+				const dataToStore = { iv, data: encryptedData };
 
-	// Clear all stored data
-	async clear(): Promise<void> {
-		return this.database.clear();
-	}
-
-	// Verify if a password can decrypt stored data
-	async unlock(pass: string, testKey = "_pass_test_"): Promise<boolean> {
-		// Create a key from the password
-		const key = await this.deriveKey(pass);
-
-		try {
-			// Try to get a known test value with this password
-			const testValue = await this.getItem(testKey, key);
-
-			// If we've never set a test value with this password before, set one
-			if (testValue === null) {
-				// First setup
-				await this.setItem(testKey, "password verification data", key);
-				this.key = await this.deriveKey(pass);
+				await database.setItem(itemKey, dataToStore);
 				return true;
+			} catch (error) {
+				console.error("Encryption error:", error);
+				return false;
 			}
-			if (testValue === "password verification data") {
-				// Save the key for later
-				this.key = await this.deriveKey(pass);
-				return true;
-			}
-		} catch (error) {
-			// decryption failed, do nothing
-		}
+		},
 
-		return false;
-	}
+		// Retrieve and decrypt data
+		async getItem(
+			itemKey: string,
+			encryptionKey = key,
+		): Promise<string | null> {
+			if (!encryptionKey) throw new Error("Storage locked");
+
+			// Get encrypted data
+			const encryptedPackage = (await database.getItem(itemKey)) as {
+				iv: Uint8Array;
+				data: Uint8Array;
+			} | null;
+			if (!encryptedPackage) return null;
+
+			try {
+				// Create AES-CBC decipher
+				const decipher = cbc(encryptionKey, encryptedPackage.iv);
+
+				// Decrypt the data
+				const decryptedBytes = decipher.decrypt(encryptedPackage.data);
+
+				// Convert bytes to UTF-8 string
+				return bytesToUtf8(decryptedBytes);
+			} catch (e) {
+				throw new Error("Decryption failed, incorrect password");
+			}
+		},
+
+		// Remove an item
+		async removeItem(itemKey: string): Promise<void> {
+			return database.removeItem(itemKey);
+		},
+
+		// Clear all stored data
+		async clear(): Promise<void> {
+			return database.clear();
+		},
+	};
 }

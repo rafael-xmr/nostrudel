@@ -16,8 +16,7 @@ import { useId, useMemo } from "react";
 
 import SimpleView from "../../../components/layout/presets/simple-view";
 import { useAppTitle } from "../../../hooks/use-app-title";
-import localSettings from "../../../services/preferences";
-import { socialGraph$ } from "../../../services/social-graph";
+import { useLocalSettings } from "~/providers/global/preferences";
 
 function SocialGraphSlider({
 	value,
@@ -40,7 +39,8 @@ function SocialGraphSlider({
 		"5th degree",
 		"Everyone",
 	];
-	const graph = useObservableEagerState(socialGraph$);
+	const { socialGraphManagement } = useLocalSettings();
+	const graph = useObservableEagerState(socialGraphManagement.socialGraph$);
 
 	const count = useMemo(() => {
 		if (value === null) return null;
@@ -98,6 +98,7 @@ function SocialGraphSlider({
 export default function ContentPoliciesSettings() {
 	useAppTitle("Content Policies");
 
+	const { localSettings } = useLocalSettings();
 	const hideEventsOutsideSocialGraph = useObservableEagerState(
 		localSettings.hideEventsOutsideSocialGraph,
 	);

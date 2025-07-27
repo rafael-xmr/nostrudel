@@ -1,4 +1,4 @@
-import { Link, LinkProps } from "@chakra-ui/react";
+import { Link, type LinkProps } from "@chakra-ui/react";
 import {
 	useActiveAccount,
 	useObservableEagerState,
@@ -9,7 +9,7 @@ import { Link as RouterLink } from "react-router-dom";
 import { getDisplayName } from "../../helpers/nostr/profile";
 import useAppSettings from "../../hooks/use-user-app-settings";
 import useUserProfile from "../../hooks/use-user-profile";
-import localSettings from "../../services/preferences";
+import { useLocalSettings } from "~/providers/global/preferences";
 
 export type UserLinkProps = LinkProps & {
 	pubkey: string;
@@ -28,6 +28,7 @@ export default function UserLink({
 	const metadata = useUserProfile({ pubkey, relays });
 	const account = useActiveAccount();
 	const { removeEmojisInUsernames, showPubkeyColor } = useAppSettings();
+	const { localSettings } = useLocalSettings();
 	const hideUsernames = useObservableEagerState(localSettings.hideUsernames);
 	const color = "#" + pubkey.slice(0, 6);
 

@@ -30,12 +30,13 @@ import useThreadTimelineLoader from "../../hooks/use-thread-timeline-loader";
 import { useTimelineCurserIntersectionCallback } from "../../hooks/use-timeline-cursor-intersection-callback";
 import IntersectionObserverProvider from "../../providers/local/intersection-observer";
 import { ContentSettingsProvider } from "../../providers/local/content-settings";
-import { getSharableEventAddress } from "../../services/relay-hints";
+import { useLocalSettings } from "~/providers/global/preferences";
 import { ExpandableToggleButton } from "../notifications/components/notification-item";
 import ThreadPost from "./components/thread-post";
 
 function ParentNote({ note, level = 0 }: { note: NostrEvent; level?: number }) {
 	const ref = useEventIntersectionRef(note);
+	const { relayHintsManagement } = useLocalSettings();
 	const more = useDisclosure({ defaultIsOpen: level < 2 });
 
 	return (
@@ -67,7 +68,7 @@ function ParentNote({ note, level = 0 }: { note: NostrEvent; level?: number }) {
 				<UserDnsIdentityIcon pubkey={note.pubkey} mr="2" />
 				<Link
 					as={RouterLink}
-					to={`/n/${getSharableEventAddress(note)}`}
+					to={`/n/${relayHintsManagement.getSharableEventAddress(note)}`}
 					aria-label={`Posted at ${new Date(note.created_at * 1000).toLocaleString()}`}
 				>
 					<Timestamp timestamp={note.created_at} />
@@ -81,7 +82,7 @@ function ParentNote({ note, level = 0 }: { note: NostrEvent; level?: number }) {
 			) : (
 				<Link
 					as={RouterLink}
-					to={`/n/${getSharableEventAddress(note)}`}
+					to={`/n/${relayHintsManagement.getSharableEventAddress(note)}`}
 					noOfLines={1}
 					fontStyle="italic"
 					aria-expanded="false"
@@ -96,7 +97,10 @@ function ParentNote({ note, level = 0 }: { note: NostrEvent; level?: number }) {
 function Parents({
 	pointer,
 	thread,
-}: { pointer: EventPointer; thread: Thread }) {
+}: {
+	pointer: EventPointer;
+	thread: Thread;
+}) {
 	const posts: ReactNode[] = [];
 
 	let level = 0;

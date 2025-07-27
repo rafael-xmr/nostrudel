@@ -1,41 +1,57 @@
-import { TimelineModel } from "applesauce-core/models";
-import { useEventModel } from "applesauce-react/hooks";
-import sum from "hash-sum";
-import { Filter, NostrEvent } from "nostr-tools";
-import { useMemo } from "react";
-import { useThrottle } from "react-use";
+import { useEffect, useState } from "react";
 
-import timelineCacheService from "../services/timeline-cache";
-import useSimpleSubscription from "./use-forward-subscription";
+import hash_sum from "hash-sum";
+import type { Filter, NostrEvent } from "nostr-tools";
+
+import { useLocalSettings } from "~/providers/global/preferences";
+import {
+	createTimelineLoader,
+	type TimelineLoader,
+} from "applesauce-loaders/loaders";
 
 type Options = {
-  eventFilter?: (event: NostrEvent) => boolean;
+	eventFilter?: (event: NostrEvent) => boolean;
+	since?: number;
 };
 
 export default function useTimelineLoader(
-  key: string,
-  relays: string[],
-  filters: Filter | Filter[] | undefined,
-  opts?: Options,
+	relays: string[],
+	filters: Filter | undefined,
+	opts?: Options,
 ) {
-  // start a forward subscription while component is mounted
-  useSimpleSubscription(relays, filters);
+	const {
+		relayPoolManagement: { pool },
+		eventStoreManagement: { eventStore },
+		eventCacheManagement: { cacheRequest },
+	} = useLocalSettings();
 
-  const loader = useMemo(() => {
-    if (filters) return timelineCacheService.createTimeline(key, relays, Array.isArray(filters) ? filters : [filters]);
-  }, [key, sum(filters), relays.join(",")]);
+	const [timeline, setEvents] = useState<NostrEvent[]>([]);
+	const [loader, setTimelineLoader] = useState<TimelineLoader>();
 
-  const timeline = useEventModel(TimelineModel, filters && [filters]) ?? [];
-  let throttled = useThrottle(timeline, 50);
+	useEffect(() => {
+		const loader = createTimelineLoader(pool, relays, filters || {}, {
+			cache: cacheRequest,
+			eventStore,
+		});
 
-  // set event filter
-  if (opts?.eventFilter)
-    throttled = throttled.filter((e) => {
-      try {
-        return opts.eventFilter && opts.eventFilter(e);
-      } catch (error) {}
-      return false;
-    });
+		setTimelineLoader(loader);
 
-  return { loader, timeline: throttled };
+		const subscription = loader().subscribe((event) => {
+			if (opts?.eventFilter?.(event)) {
+				setEvents((prev) => {
+					let newEvents = [...prev, event];
+
+					if (newEvents.length > 50) {
+						newEvents = newEvents.slice(50);
+					}
+
+					return newEvents;
+				});
+			}
+		});
+
+		return () => subscription.unsubscribe();
+	}, [hash_sum(relays), hash_sum(filters)]);
+
+	return { loader, timeline };
 }

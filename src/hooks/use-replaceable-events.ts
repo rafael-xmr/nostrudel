@@ -7,11 +7,14 @@ import {
 	type CustomAddressPointer,
 	parseCoordinate,
 } from "../helpers/nostr/event";
-import { AddressableQuery } from "../models";
+
+import createAddressableQueryManagement from "../models/addressable";
+import { useLocalSettings } from "~/providers/global/preferences";
 
 export default function useReplaceableEvents(
 	coordinates: string[] | CustomAddressPointer[] | undefined,
 ): NostrEvent[] {
+	const { eventStoreManagement, loadersManagement } = useLocalSettings();
 	const eventStore = useEventStore();
 
 	return (
@@ -21,7 +24,15 @@ export default function useReplaceableEvents(
 			const models = coordinates
 				.map((str) => (typeof str === "string" ? parseCoordinate(str) : str))
 				.filter((c) => c !== null)
-				.map((cord) => eventStore.model(AddressableQuery, cord));
+				.map((cord) =>
+					eventStore.model(
+						createAddressableQueryManagement(
+							eventStoreManagement,
+							loadersManagement,
+						).AddressableQuery,
+						cord,
+					),
+				);
 
 			return combineLatest(models).pipe(
 				map((events) => events.filter((e) => e !== undefined)),
